@@ -35,25 +35,50 @@ const Dashboard = () => {
     q2_7_chargingCenters: '',
     q2_8_posCommitment: '',
     q3a_1_integratedSystem: '',
+    q3a_2_techSpecs: '',
+    q3a_3_appSupport: '',
     q3a_4_webIntegration: '',
+    q3a_5_reporting: '',
+    q3a_6_training: '',
     q3b_1_certificates: '',
+    q3b_2_encryption: '',
     q3b_3_rto_bcp: '',
     q3b_4_backups: '',
     q3b_5_supportSla: '',
+    q3b_6_penTest: '',
+    q3b_7_monitoring: '',
+    q3b_8_incident: '',
     q4_1_bankGuarantee: '',
+    q4_2_penaltyClause: '',
     q4_3_dataOwnership: '',
+    q4_4_exitClause: '',
+    q4_5_liability: '',
     q4_6_jurisdiction: '',
+    q4_7_auditRight: '',
     q4_8_contractDuration: '',
+    q4_9_renewal: '',
     q5_1_extraFeatures: '',
+    q5_2_innovation: '',
+    q5_3_scholarships: '',
+    q5_4_staffTraining: '',
+    q5_5_mobileApp: '',
+    q5_6_foreignStudents: '',
+    q5_7_complaints: '',
+    q5_8_socialResp: '',
     additionalNotes: '',
     signedBy: '',
-    position: ''
+    position: '',
+    documentUrl: ''
   });
 
   const mapToDb = (data) => {
+    const map = {
+      documentUrl: 'document_url'
+    };
     const result = {};
     for (const key in data) {
-      result[key.toLowerCase()] = data[key];
+      const dbKey = map[key] || key.toLowerCase();
+      result[dbKey] = data[key];
     }
     return result;
   };
@@ -70,7 +95,8 @@ const Dashboard = () => {
       officialaddress: 'officialAddress',
       additionalnotes: 'additionalNotes',
       signedby: 'signedBy',
-      lastupdated: 'lastUpdated'
+      lastupdated: 'lastUpdated',
+      document_url: 'documentUrl'
     };
     const result = {};
     for (const key in data) {
@@ -113,11 +139,11 @@ const Dashboard = () => {
   const requiredFieldsByStep = {
     1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'marketExperience', 'govInstitutionsCount', 'paidCapital', 'officialAddress'],
     2: ['q2_1_settlement', 'q2_2_commissions', 'q2_3_intermediary', 'q2_4_delayPenalty', 'q2_5_atmCommitment', 'q2_6_studentCards', 'q2_7_chargingCenters', 'q2_8_posCommitment'],
-    3: ['q3a_1_integratedSystem', 'q3a_4_webIntegration'],
-    4: ['q3b_1_certificates', 'q3b_3_rto_bcp', 'q3b_4_backups', 'q3b_5_supportSla'],
-    5: ['q4_1_bankGuarantee', 'q4_3_dataOwnership', 'q4_6_jurisdiction', 'q4_8_contractDuration'],
-    6: ['q5_1_extraFeatures'],
-    7: ['additionalNotes', 'signedBy', 'position']
+    3: ['q3a_1_integratedSystem', 'q3a_2_techSpecs', 'q3a_3_appSupport', 'q3a_4_webIntegration', 'q3a_5_reporting', 'q3a_6_training'],
+    4: ['q3b_1_certificates', 'q3b_2_encryption', 'q3b_3_rto_bcp', 'q3b_4_backups', 'q3b_5_supportSla', 'q3b_6_penTest', 'q3b_7_monitoring', 'q3b_8_incident'],
+    5: ['q4_1_bankGuarantee', 'q4_2_penaltyClause', 'q4_3_dataOwnership', 'q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal'],
+    6: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_mobileApp', 'q5_6_foreignStudents', 'q5_7_complaints', 'q5_8_socialResp'],
+    7: ['signedBy', 'position']
   };
 
   const handleInputChange = (e) => {
@@ -127,6 +153,41 @@ const Dashboard = () => {
     setIsSaved(false);
     if (errors.includes(name)) {
       setErrors(prev => prev.filter(f => f !== name));
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    if (isSubmitted) return;
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('حجم الملف كبير جداً. الحد الأقصى هو 10 ميغابايت.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.username}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, documentUrl: publicUrl }));
+      alert('تم رفع المستند بنجاح!');
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('حدث خطأ أثناء رفع المستند. تأكد من إعداد مساحة التخزين (Storage) في Supabase.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -183,15 +244,36 @@ const Dashboard = () => {
       
       const submitData = async () => {
         try {
-          const { error } = await supabase
+          const payload = mapToDb({
+            ...formData,
+            username: user.username,
+            status: 'final',
+            lastUpdated: new Date().toISOString(),
+            evaluation_score: formData.evaluation_score || 0
+          });
+
+          // Check if a submission already exists for this user
+          const { data: existing } = await supabase
             .from('submissions')
-            .upsert([mapToDb({ 
-              ...formData, 
-              username: user.username, 
-              status: 'final',
-              lastUpdated: new Date().toISOString(),
-              evaluation_score: formData.evaluation_score || 0
-            })]);
+            .select('id')
+            .eq('username', user.username)
+            .single();
+
+          let error;
+          if (existing?.id) {
+            // Update existing record
+            const { error: updateError } = await supabase
+              .from('submissions')
+              .update(payload)
+              .eq('id', existing.id);
+            error = updateError;
+          } else {
+            // Insert new record
+            const { error: insertError } = await supabase
+              .from('submissions')
+              .insert([payload]);
+            error = insertError;
+          }
             
           if (!error) {
             setIsSubmitting(false);
@@ -199,11 +281,13 @@ const Dashboard = () => {
             setShowSuccess(true);
             window.scrollTo(0, 0);
           } else {
-            alert('حدث خطأ أثناء إرسال العرض. يرجى المحاولة لاحقاً.');
+            console.error('Submit error:', error);
+            alert('خطأ في الإرسال: ' + error.message);
             setIsSubmitting(false);
           }
         } catch (err) {
           console.error('Error submitting:', err);
+          alert('خطأ غير متوقع: ' + err.message);
           setIsSubmitting(false);
         }
       };
@@ -251,51 +335,95 @@ const Dashboard = () => {
       case 3:
         return (
           <div className="space-y-6 animate-fade-in">
-            <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">ثالثاً: أ- الالتزامات التقنية والأمنية (6 أسئلة)</h3>
+            <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)</h3>
             <div className="space-y-6">
-              <QuestionField id="q3a_1_integratedSystem" label="1. هل النظام متكامل مع تقارير لوحة تحكم (Dashboard) تظهر الحركات آنياً؟ يرجى إرفاق دليل تعريفي." value={formData.q3a_1_integratedSystem} onChange={handleInputChange} isError={errors.includes('q3a_1_integratedSystem')} />
-              <QuestionField id="q3a_4_webIntegration" label="2. هل يمكن ربط النظام مع موقع الجامعة والأنظمة المالية الداخلية عبر API؟" value={formData.q3a_4_webIntegration} onChange={handleInputChange} isError={errors.includes('q3a_4_webIntegration')} />
+              <QuestionField id="q3a_1_integratedSystem" label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟ يرجى شرح آلية وصول الجامعة (صلاحيات الإدارة، التقارير، تصدير البيانات بصيغ PDF/Excel)" value={formData.q3a_1_integratedSystem} onChange={handleInputChange} isError={errors.includes('q3a_1_integratedSystem')} />
+              <QuestionField id="q3a_2_techSpecs" label="2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟ مثلاً خاصة بلجان المشتريات." value={formData.q3a_2_techSpecs} onChange={handleInputChange} isError={errors.includes('q3a_2_techSpecs')} />
+              <QuestionField id="q3a_3_appSupport" label="3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟ وهل يمكن جدولة تقارير دورية تلقائية؟" value={formData.q3a_3_appSupport} onChange={handleInputChange} isError={errors.includes('q3a_3_appSupport')} />
+              <QuestionField id="q3a_4_webIntegration" label="4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود دون الحاجة للحضور الشخصي؟ من يتحمل تكلفة التطوير والصيانة؟" value={formData.q3a_4_webIntegration} onChange={handleInputChange} isError={errors.includes('q3a_4_webIntegration')} />
+              <QuestionField id="q3a_5_reporting" label="5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية والعملات المدعومة." value={formData.q3a_5_reporting} onChange={handleInputChange} isError={errors.includes('q3a_5_reporting')} />
+              <QuestionField id="q3a_6_training" label="6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟" value={formData.q3a_6_training} onChange={handleInputChange} isError={errors.includes('q3a_6_training')} />
             </div>
           </div>
         );
+
       case 4:
         return (
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)</h3>
             <div className="space-y-6">
-              <QuestionField id="q3b_1_certificates" label="1. ما هي الشهادات الأمنية العالمية الحاصل عليها النظام؟ (PCI-DSS, ISO 27001...)" value={formData.q3b_1_certificates} onChange={handleInputChange} isError={errors.includes('q3b_1_certificates')} />
-              <QuestionField id="q3b_3_rto_bcp" label="2. ما هي خطة استمرارية الأعمال (BCP)؟ وما هي المدة الزمنية المستغرقة للتعافي من الكوارث (RTO)؟" value={formData.q3b_3_rto_bcp} onChange={handleInputChange} isError={errors.includes('q3b_3_rto_bcp')} />
-              <QuestionField id="q3b_4_backups" label="3. ما هي سياسة النسخ الاحتياطي؟ وهل يوجد موقع بديل (DR Site) داخل العراق؟" value={formData.q3b_4_backups} onChange={handleInputChange} isError={errors.includes('q3b_4_backups')} />
-              <QuestionField id="q3b_5_supportSla" label="4. هل يتوفر دعم فني 24/7؟ يرجى ذكر قنوات التواصل الرسمية." value={formData.q3b_5_supportSla} onChange={handleInputChange} isError={errors.includes('q3b_5_supportSla')} />
+              <QuestionField id="q3b_1_certificates" label="1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها) يرجى إرفاق نسخ من الشهادات." value={formData.q3b_1_certificates} onChange={handleInputChange} isError={errors.includes('q3b_1_certificates')} />
+              <QuestionField id="q3b_2_encryption" label="2. ما هو بروتوكول التشفير المستخدم في المعاملات؟ (TLS 1.2+، AES-256، إلخ)" value={formData.q3b_2_encryption} onChange={handleInputChange} isError={errors.includes('q3b_2_encryption')} />
+              <QuestionField id="q3b_3_rto_bcp" label="3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟ وما هي خطة الاستمرارية عند الكوارث (BCP)؟ (مهم في أيام الامتحانات ومواسم القبول)" value={formData.q3b_3_rto_bcp} onChange={handleInputChange} isError={errors.includes('q3b_3_rto_bcp')} />
+              <QuestionField id="q3b_4_backups" label="4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟ وما مدة الاحتفاظ بها؟" value={formData.q3b_4_backups} onChange={handleInputChange} isError={errors.includes('q3b_4_backups')} />
+              <QuestionField id="q3b_5_supportSla" label="5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟ وما مدة الاستجابة المضمونة عند الأعطال؟ (SLA)" value={formData.q3b_5_supportSla} onChange={handleInputChange} isError={errors.includes('q3b_5_supportSla')} />
+              <QuestionField id="q3b_6_penTest" label="6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟ وهل ستزودون الجامعة بتقاريرها السنوية؟" value={formData.q3b_6_penTest} onChange={handleInputChange} isError={errors.includes('q3b_6_penTest')} />
+              <QuestionField id="q3b_7_monitoring" label="7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين، هل هو داخل العراق أم خارجه؟)" value={formData.q3b_7_monitoring} onChange={handleInputChange} isError={errors.includes('q3b_7_monitoring')} />
+              <QuestionField id="q3b_8_incident" label="8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟ وهل هي متعددة في حالة الانقطاع؟" value={formData.q3b_8_incident} onChange={handleInputChange} isError={errors.includes('q3b_8_incident')} />
             </div>
           </div>
         );
+
       case 5:
         return (
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">رابعاً: الالتزامات القانونية والتعاقدية (9 أسئلة)</h3>
             <div className="space-y-6">
-              <QuestionField id="q4_1_bankGuarantee" label="1. هل تلتزمون بتقديم خطاب ضمان مصرفي بقيمة العقد؟" value={formData.q4_1_bankGuarantee} onChange={handleInputChange} isError={errors.includes('q4_1_bankGuarantee')} />
-              <QuestionField id="q4_3_dataOwnership" label="2. هل تلتزمون بأن كافة البيانات ملك لجامعة بابل ويمنع استخدامها أو بيعها لأي طرف ثالث؟" value={formData.q4_3_dataOwnership} onChange={handleInputChange} isError={errors.includes('q4_3_dataOwnership')} />
-              <QuestionField id="q4_6_jurisdiction" label="3. هل توافقون على خضوع العقد للقوانين العراقية واختصاص المحاكم العراقية في حال النزاع؟" value={formData.q4_6_jurisdiction} onChange={handleInputChange} isError={errors.includes('q4_6_jurisdiction')} />
-              <QuestionField id="q4_8_contractDuration" label="4. ما هي مدة العقد المقترحة؟ وشروط التجديد التلقائي؟" value={formData.q4_8_contractDuration} onChange={handleInputChange} isError={errors.includes('q4_8_contractDuration')} />
+              <QuestionField id="q4_1_bankGuarantee" label="1. هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟ ما قيمته المقترحة ومدته؟ (الضمانات غير المصرفية غير مقبولة)" value={formData.q4_1_bankGuarantee} onChange={handleInputChange} isError={errors.includes('q4_1_bankGuarantee')} />
+              <QuestionField id="q4_2_penaltyClause" label="2. هل تلتزمون بسرية البيانات وعدم مشاركتها مع أي جهة ثالثة؟ وهل توافقون على توقيع اتفاقية عدم إفصاح (NDA) رسمية؟" value={formData.q4_2_penaltyClause} onChange={handleInputChange} isError={errors.includes('q4_2_penaltyClause')} />
+              <QuestionField id="q4_3_dataOwnership" label="3. هل توافقون على أن ملكية البيانات تعود للجامعة حصراً، وأنه يحق لها استردادها كاملةً عند انتهاء العقد وفي أي وقت تحتاجه؟" value={formData.q4_3_dataOwnership} onChange={handleInputChange} isError={errors.includes('q4_3_dataOwnership')} />
+              <QuestionField id="q4_4_exitClause" label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟ يرجى التوضيح: (عدد الدورات، عدد ساعات التدريب، هل هي حضورية أم إلكترونية؟)" value={formData.q4_4_exitClause} onChange={handleInputChange} isError={errors.includes('q4_4_exitClause')} />
+              <QuestionField id="q4_5_liability" label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري، أو بإشعار مسبق مدته (30) يوماً في الحالات الأخرى؟" value={formData.q4_5_liability} onChange={handleInputChange} isError={errors.includes('q4_5_liability')} />
+              <QuestionField id="q4_6_jurisdiction" label="6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل للفصل في أي نزاع؟" value={formData.q4_6_jurisdiction} onChange={handleInputChange} isError={errors.includes('q4_6_jurisdiction')} />
+              <QuestionField id="q4_7_auditRight" label="7. في حال عدم التوصل إلى حل ودي خلال (15) يوماً، هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية المعمول بها؟" value={formData.q4_7_auditRight} onChange={handleInputChange} isError={errors.includes('q4_7_auditRight')} />
+              <QuestionField id="q4_8_contractDuration" label="8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟ وهل توافقون على إعادة التفاوض على الشروط عند كل تجديد؟" value={formData.q4_8_contractDuration} onChange={handleInputChange} isError={errors.includes('q4_8_contractDuration')} />
+              <QuestionField id="q4_9_renewal" label="9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة الزمنية لحل الشكوى؟" value={formData.q4_9_renewal} onChange={handleInputChange} isError={errors.includes('q4_9_renewal')} />
             </div>
           </div>
         );
+
       case 6:
         return (
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)</h3>
             <div className="space-y-6">
-              <QuestionField id="q5_1_extraFeatures" label="ذكر أي ميزات أو خدمات إضافية مجانية تقدمها الشركة للجامعة (منح، تدريب، تطوير بنية تحتية...)" value={formData.q5_1_extraFeatures} onChange={handleInputChange} isError={errors.includes('q5_1_extraFeatures')} />
+              <QuestionField id="q5_1_extraFeatures" label="1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟" value={formData.q5_1_extraFeatures} onChange={handleInputChange} isError={errors.includes('q5_1_extraFeatures')} />
+              <QuestionField id="q5_2_innovation" label="2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني، حسابات توفير؟" value={formData.q5_2_innovation} onChange={handleInputChange} isError={errors.includes('q5_2_innovation')} />
+              <QuestionField id="q5_3_scholarships" label="3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها دون تدهور في الأداء؟ (مهم للتحقق من الطاقة الاستيعابية أيام الذروة)" value={formData.q5_3_scholarships} onChange={handleInputChange} isError={errors.includes('q5_3_scholarships')} />
+              <QuestionField id="q5_4_staffTraining" label="4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية لكليات الجامعة؟" value={formData.q5_4_staffTraining} onChange={handleInputChange} isError={errors.includes('q5_4_staffTraining')} />
+              <QuestionField id="q5_5_mobileApp" label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية للحركات؟ ما التفاصيل؟" value={formData.q5_5_mobileApp} onChange={handleInputChange} isError={errors.includes('q5_5_mobileApp')} />
+              <QuestionField id="q5_6_foreignStudents" label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد بالسعر الرسمي؟" value={formData.q5_6_foreignStudents} onChange={handleInputChange} isError={errors.includes('q5_6_foreignStudents')} />
+              <QuestionField id="q5_7_complaints" label="7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟ يرجى التفصيل." value={formData.q5_7_complaints} onChange={handleInputChange} isError={errors.includes('q5_7_complaints')} />
+              <QuestionField id="q5_8_socialResp" label="8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟" value={formData.q5_8_socialResp} onChange={handleInputChange} isError={errors.includes('q5_8_socialResp')} />
             </div>
           </div>
         );
+
+
       case 7:
         return (
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-6">
-              <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4">سادساً: ملاحظات إضافية</h3>
+              <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4">سادساً: المرفقات والملاحظات</h3>
+              
+              <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-blue-200 text-center">
+                <h4 className="font-bold text-blue-900 mb-2">إرفاق المستندات المطلوبة (اختياري / إن وجدت)</h4>
+                <p className="text-sm text-gray-500 mb-4">يمكنك رفع ملف PDF واحد يحتوي على إجازة البنك، المخططات التقنية، أو أي مرفقات أخرى (الحد الأقصى 10MB).</p>
+                {formData.documentUrl ? (
+                  <div className="flex items-center justify-center gap-3 bg-green-50 text-green-700 p-4 rounded-xl font-bold">
+                    <CheckCircle2 className="w-5 h-5" />
+                    تم رفع المستند بنجاح
+                    <a href={formData.documentUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline text-sm mr-4">عرض الملف</a>
+                    <button type="button" onClick={() => setFormData(prev => ({...prev, documentUrl: ''}))} className="text-red-500 text-xs underline mr-2">حذف</button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-6 py-3 rounded-xl font-bold transition-all inline-block">
+                    {isSubmitting ? 'جاري الرفع...' : 'اختر ملفاً لرفعه'}
+                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={isSubmitting} />
+                  </label>
+                )}
+              </div>
+
               <textarea 
                 name="additionalNotes"
                 placeholder="مساحة كافية لإضافة أي تفاصيل لم تذكر في الأسئلة السابقة..."
@@ -336,7 +464,7 @@ const Dashboard = () => {
               <img src="./logo.jpg" alt="University Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-lg font-black text-blue-950">استمارة عروض الدفع الإلكتروني</h1>
+              <h1 className="text-lg font-black text-blue-950">معايير التعاقد مع شركات الدفع الالكتروني</h1>
               <p className="text-[10px] font-bold text-gray-400">جامعة بابل - للعام الدراسي 2026/2027</p>
             </div>
           </div>
@@ -476,8 +604,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', isError }) =>
       name={name}
       value={value}
       onChange={onChange}
-      className={`w-full p-4 rounded-2xl border-2 outline-none transition-all font-bold ${isError ? 'bg-red-50 border-red-200 focus:border-red-400 text-red-900' : 'bg-gray-50 border-transparent focus:bg-white focus:border-blue-200 text-blue-950'}`}
-      required
+      className={`w-full p-4 rounded-2xl border-2 outline-none transition-all font-bold ${isError ? 'bg-red-50 border-red-400 focus:border-red-500 text-red-900' : 'bg-gray-50 border-transparent focus:bg-white focus:border-blue-200 text-blue-950'}`}
     />
   </div>
 );
@@ -490,9 +617,8 @@ const QuestionField = ({ id, label, value, onChange, isError }) => (
       name={id}
       value={value}
       onChange={onChange}
-      className={`w-full h-32 p-6 rounded-2xl border-2 outline-none transition-all font-bold ${isError ? 'bg-white border-red-300 focus:border-red-500' : 'bg-white border-gray-100 focus:border-blue-400'}`}
+      className={`w-full h-32 p-6 rounded-2xl border-2 outline-none transition-all font-bold ${isError ? 'bg-red-50 border-red-400 focus:border-red-500 text-red-900' : 'bg-white border-gray-100 focus:border-blue-400'}`}
       placeholder="اكتب إجابتك هنا بتفصيل..."
-      required
     />
   </div>
 );

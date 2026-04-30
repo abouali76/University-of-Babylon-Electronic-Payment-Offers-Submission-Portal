@@ -56,7 +56,7 @@ const PrintTemplate = ({ data }) => {
       <div style={styles.header}>
         <div style={{ textAlign: 'right' }}>
           <h1 style={{ fontSize: '22px', fontWeight: '900', color: '#1e1b4b', margin: 0 }}>جامعة بابل</h1>
-          <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0 0 0' }}>قسم الشؤون المالية / لجنة الدفع الإلكتروني</p>
+          <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0 0 0' }}>لجنة معايير التعاقد مع شركات الدفع الالكتروني</p>
         </div>
         <img src="./logo.jpg" alt="Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
         <div style={{ textAlign: 'left', fontSize: '9px', fontWeight: 'bold', color: '#64748b' }}>
@@ -66,7 +66,7 @@ const PrintTemplate = ({ data }) => {
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: '900', border: '1.5px solid #1e1b4b', display: 'inline-block', padding: '6px 25px', borderRadius: '8px' }}>استمارة عرض الدفع الإلكتروني (نسخة رسمية)</h2>
+        <h2 style={{ fontSize: '16px', fontWeight: '900', border: '1.5px solid #1e1b4b', display: 'inline-block', padding: '6px 25px', borderRadius: '8px' }}>استمارة معايير التعاقد مع شركات الدفع الالكتروني (نسخة رسمية)</h2>
       </div>
 
       <section style={{ marginBottom: '15px' }}>

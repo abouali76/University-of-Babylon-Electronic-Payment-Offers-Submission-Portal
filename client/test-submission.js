@@ -53,9 +53,13 @@ async function test() {
   };
 
   const mapToDb = (data) => {
+    const map = {
+      documentUrl: 'document_url'
+    };
     const result = {};
     for (const key in data) {
-      result[key.toLowerCase()] = data[key];
+      const dbKey = map[key] || key.toLowerCase();
+      result[dbKey] = data[key];
     }
     return result;
   };

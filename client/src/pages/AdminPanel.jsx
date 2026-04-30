@@ -33,7 +33,8 @@ const AdminPanel = () => {
       officialaddress: 'officialAddress',
       additionalnotes: 'additionalNotes',
       signedby: 'signedBy',
-      lastupdated: 'lastUpdated'
+      lastupdated: 'lastUpdated',
+      document_url: 'documentUrl'
     };
     const result = {};
     for (const key in data) {
@@ -198,7 +199,7 @@ const AdminPanel = () => {
               <img src="./logo.jpg" alt="University Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-indigo-950 tracking-tight">لوحة تحكم ادارة لجنة الدفع الالكتروني</h1>
+              <h1 className="text-xl font-black text-indigo-950 tracking-tight">لوحة تحكم ادارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">University of Babylon Central Admin</p>
             </div>
           </div>
@@ -447,6 +448,8 @@ const AdminPanel = () => {
                   { key: 'govInstitutionsCount', label: 'عدد المؤسسات الحكومية المخدَّمة' },
                   { key: 'paidCapital', label: 'رأس المال المدفوع / الملاءة المالية' },
                   { key: 'officialAddress', label: 'المقر الرئيسي والعنوان' },
+                  { key: 'documentUrl', label: 'المستندات المرفقة' },
+                  { key: 'additionalNotes', label: 'ملاحظات إضافية من الشركة' },
                 ]} />
 
                 <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" data={selectedSubmission} fields={[
@@ -486,6 +489,7 @@ const AdminPanel = () => {
           </div>
         )}
       </main>
+      </div>
       {/* Custom Confirm Modal */}
       {confirmModal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -538,7 +542,14 @@ const DetailSection = ({ title, data, fields }) => (
       {fields.map(f => (
         <div key={f.key} className="bg-gray-50/50 p-8 rounded-[2rem] border-2 border-transparent group hover:bg-white hover:border-indigo-600/10 hover:shadow-2xl hover:shadow-indigo-900/5 transition-all duration-500">
           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block group-hover:text-indigo-600 transition-colors">{f.label}</label>
-          <p className="text-sm font-bold text-gray-700 leading-relaxed whitespace-pre-wrap">{data[f.key] || '--- لم يتم ملء هذه الفقرة بعد ---'}</p>
+          {f.key === 'documentUrl' && data[f.key] ? (
+            <a href={data[f.key]} target="_blank" rel="noreferrer" className="text-indigo-600 underline font-black flex items-center gap-2 hover:text-indigo-900 transition-colors">
+              <ExternalLink className="w-4 h-4" />
+              عرض المستند المرفوع (إجازة البنك / المخططات)
+            </a>
+          ) : (
+            <p className="text-sm font-bold text-gray-700 leading-relaxed whitespace-pre-wrap">{data[f.key] || '--- لم يتم ملء هذه الفقرة بعد ---'}</p>
+          )}
         </div>
       ))}
     </div>

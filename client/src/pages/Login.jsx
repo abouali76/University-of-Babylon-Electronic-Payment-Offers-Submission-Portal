@@ -45,7 +45,7 @@ const Login = () => {
       }
 
       if (username === 'admin' && password === 'admin123') {
-        const userData = { username: 'admin', role: 'admin', name: 'مدير لجنة الدفع الالكتروني' };
+        const userData = { username: 'admin', role: 'admin', name: 'مدير لجنة معايير التعاقد' };
         localStorage.setItem('currentUser', JSON.stringify(userData));
         navigate('/admin');
         window.location.reload();
@@ -77,7 +77,7 @@ const Login = () => {
               </div>
               <h1 className="text-3xl font-black text-indigo-950 tracking-tight mb-1">جامعة بابل</h1>
               <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] leading-relaxed mb-1">
-                بوابة تقديم عروض الدفع الإلكتروني
+                معايير التعاقد مع شركات الدفع الالكتروني
               </p>
               <div className="h-1 w-12 bg-indigo-900 mx-auto rounded-full mt-4"></div>
             </div>
