@@ -22,7 +22,9 @@ const AdminPanel = () => {
   }, []);
 
   const mapFromDb = (data) => {
-    const map = {
+    if (!data) return {};
+    
+    const toCamelMap = {
       companyname: 'companyName',
       submissiondate: 'submissionDate',
       representativename: 'representativeName',
@@ -34,11 +36,23 @@ const AdminPanel = () => {
       additionalnotes: 'additionalNotes',
       signedby: 'signedBy',
       lastupdated: 'lastUpdated',
-      document_url: 'documentUrl'
+      document_url: 'documentUrl',
+      q2_4_delaypenalty: 'q2_4_delayPenalty',
+      q2_5_atmcommitment: 'q2_5_atmCommitment',
+      q2_6_studentcards: 'q2_6_studentCards',
+      q2_7_chargingcenters: 'q2_7_chargingCenters',
+      q2_8_poscommitment: 'q2_8_posCommitment',
+      q3a_1_integratedsystem: 'q3a_1_integratedSystem',
+      q3a_4_webintegration: 'q3a_4_webIntegration',
+      q3b_5_supportsla: 'q3b_5_supportSla',
+      q4_8_contractduration: 'q4_8_contractDuration',
+      q4_2_penaltyclause: 'q4_2_penaltyClause'
     };
+
     const result = {};
     for (const key in data) {
-      result[map[key] || key] = data[key];
+      const uiKey = toCamelMap[key.toLowerCase()] || key;
+      result[uiKey] = data[key];
     }
     return result;
   };

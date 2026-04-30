@@ -72,19 +72,24 @@ const Dashboard = () => {
   });
 
   const mapToDb = (data) => {
-    const map = {
-      documentUrl: 'document_url'
+    // These fields differ from the CamelCase used in the UI
+    const specialMappings = {
+      documentUrl: 'document_url',
+      // Add any other specific mappings if the DB column differs from UI key
     };
+    
     const result = {};
     for (const key in data) {
-      const dbKey = map[key] || key.toLowerCase();
+      const dbKey = specialMappings[key] || key;
       result[dbKey] = data[key];
     }
     return result;
   };
 
   const mapFromDb = (data) => {
-    const map = {
+    if (!data) return {};
+    
+    const toCamelMap = {
       companyname: 'companyName',
       submissiondate: 'submissionDate',
       representativename: 'representativeName',
@@ -96,11 +101,25 @@ const Dashboard = () => {
       additionalnotes: 'additionalNotes',
       signedby: 'signedBy',
       lastupdated: 'lastUpdated',
-      document_url: 'documentUrl'
+      document_url: 'documentUrl',
+      q2_4_delaypenalty: 'q2_4_delayPenalty',
+      q2_5_atmcommitment: 'q2_5_atmCommitment',
+      q2_6_studentcards: 'q2_6_studentCards',
+      q2_7_chargingcenters: 'q2_7_chargingCenters',
+      q2_8_poscommitment: 'q2_8_posCommitment',
+      q3a_1_integratedsystem: 'q3a_1_integratedSystem',
+      q3a_4_webintegration: 'q3a_4_webIntegration',
+      q3b_5_supportsla: 'q3b_5_supportSla',
+      q4_8_contractduration: 'q4_8_contractDuration',
+      q4_2_penaltyclause: 'q4_2_penaltyClause',
+      evaluation_score: 'evaluation_score' // keep as is or map if needed
     };
+
     const result = {};
     for (const key in data) {
-      result[map[key] || key] = data[key];
+      // Map lowercase or underscore keys to their CamelCase UI equivalent
+      const uiKey = toCamelMap[key.toLowerCase()] || key;
+      result[uiKey] = data[key];
     }
     return result;
   };

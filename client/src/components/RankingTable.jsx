@@ -16,6 +16,20 @@ const RankingTable = ({ submissions: initialSubmissions }) => {
     }
   }, [initialSubmissions]);
 
+  const mapFromDb = (data) => {
+    if (!data) return {};
+    const toCamelMap = {
+      companyname: 'companyName',
+      marketexperience: 'marketExperience'
+    };
+    const result = {};
+    for (const key in data) {
+      const uiKey = toCamelMap[key.toLowerCase()] || key;
+      result[uiKey] = data[key];
+    }
+    return result;
+  };
+
   const fetchPublicSubmissions = async () => {
     try {
       const { data, error } = await supabase
@@ -24,7 +38,8 @@ const RankingTable = ({ submissions: initialSubmissions }) => {
         .eq('status', 'final');
         
       if (data) {
-        const sorted = data.sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
+        const mappedData = data.map(s => mapFromDb(s));
+        const sorted = mappedData.sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
         setSubmissions(sorted);
       }
     } catch (err) {
