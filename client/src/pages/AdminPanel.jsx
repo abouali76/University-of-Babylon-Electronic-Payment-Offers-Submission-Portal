@@ -24,17 +24,19 @@ const AdminPanel = () => {
     setLoading(false);
   }, []);
 
-  const handleAddUser = (e) => {
-    e.preventDefault();
-    const newUsername = e.target.username?.value;
-    const newPassword = e.target.password?.value;
-    const newDisplayName = e.target.displayName?.value;
-
-    if (!newUsername || !newPassword) return;
-    const updatedUsers = [...dynamicUsers, { username: newUsername, password: newPassword, name: newDisplayName || newUsername }];
+  const handleAddUser = (data) => {
+    const { username, password, displayName } = data;
+    if (!username || !password) return;
+    
+    const newUser = { 
+      username: username.trim(), 
+      password: password.trim(), 
+      name: (displayName || username).trim() 
+    };
+    
+    const updatedUsers = [...dynamicUsers, newUser];
     localStorage.setItem('uob_dynamic_users', JSON.stringify(updatedUsers));
     setDynamicUsers(updatedUsers);
-    e.target.reset();
     setShowAddUser(false);
   };
 
@@ -156,6 +158,19 @@ const AdminPanel = () => {
             >
               <UserPlus className="w-4 h-4" />
               إضافة حساب شركة
+            </button>
+
+            <button 
+              onClick={() => {
+                if(window.confirm('سيتم حذف كافة البيانات المسجلة محلياً. هل أنت متأكد؟')) {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }}
+              className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-sm"
+              title="تصفير النظام بالكامل"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
 
             <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm group" title="تسجيل الخروج">
@@ -412,7 +427,7 @@ const AdminPanel = () => {
 
         {view === 'compare' && (
           <div className="space-y-8 animate-fade-in">
-             <RankingTable />
+             <RankingTable submissions={submissions} />
           </div>
         )}
       </main>

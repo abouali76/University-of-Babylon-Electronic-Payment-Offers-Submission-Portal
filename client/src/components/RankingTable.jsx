@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Download, BarChart3, Building2 } from 'lucide-react';
 import { exportToPdf } from '../utils/exportPdf';
 
-const RankingTable = () => {
+const RankingTable = ({ submissions: initialSubmissions }) => {
   const [submissions, setSubmissions] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('uob_all_submissions') || '[]');
+    const dataToUse = initialSubmissions || JSON.parse(localStorage.getItem('uob_all_submissions') || '[]');
     // Sort by score
-    const sorted = [...saved].sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
+    const sorted = [...dataToUse].sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
     setSubmissions(sorted);
-  }, []);
+  }, [initialSubmissions]);
 
   const handlePrint = async () => {
     setIsExporting(true);
@@ -19,7 +19,15 @@ const RankingTable = () => {
     setIsExporting(false);
   };
 
-  if (submissions.length === 0) return null;
+  if (submissions.length === 0) {
+    return (
+      <div className="w-full max-w-5xl mx-auto mt-20 px-4 text-center py-20 bg-white/40 backdrop-blur-xl rounded-[3rem] border border-dashed border-gray-300">
+        <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-xl font-black text-gray-500">لا يوجد بيانات حالياً</h3>
+        <p className="text-gray-400 font-bold mt-2">سيظهر الترتيب هنا بمجرد تقديم الشركات لعروضها وتقييمها</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-20 px-4 animate-fade-in">
