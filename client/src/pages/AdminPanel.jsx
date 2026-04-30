@@ -349,6 +349,15 @@ const AdminPanel = () => {
                           </span>
                         )}
                       </td>
+                      <td className="px-8 py-6 text-center">
+                        {c.documentUrl ? (
+                          <a href={c.documentUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="فتح الملف المرفق">
+                            <FileText className="w-5 h-5" />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] font-bold text-gray-200">لا يوجد</span>
+                        )}
+                      </td>
                       <td className="px-8 py-6">
                         <div className="text-xs font-bold text-gray-500">{c.submissionDate || '---'}</div>
                         <div className="text-[10px] text-gray-300">آخر تعديل: {c.lastUpdated ? new Date(c.lastUpdated).toLocaleDateString() : 'لم يبدأ بعد'}</div>
@@ -429,24 +438,26 @@ const AdminPanel = () => {
             <div className="bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden">
               <div className="bg-indigo-950 p-12 text-white relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div>
-                    <div className="flex items-center gap-4 mb-4">
-                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${selectedSubmission.isSubmitted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
-                         {selectedSubmission.isSubmitted ? 'عرض رسمي مكتمل' : 'قيد الإعداد / لم يتم الإرسال'}
-                       </span>
+                    <h2 className="text-4xl font-black mb-4 tracking-tight">{selectedSubmission.companyName}</h2>
+                    <div className="flex flex-wrap gap-3">
+                      <span className="bg-white/10 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase">اسم الممثل: {selectedSubmission.representativeName}</span>
+                      <span className="bg-indigo-500/40 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase">رأس المال: {selectedSubmission.paidCapital}</span>
                     </div>
-                    <h2 className="text-5xl font-black mb-2 tracking-tight">{selectedSubmission.companyName}</h2>
-                    <p className="opacity-60 font-bold flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      مراجعة الأسئلة والالتزامات الـ 39 لعام 2026
-                    </p>
                   </div>
-                  <div className="text-center bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/10 min-w-[240px] shadow-2xl">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-3">نقاط تقييم اللجنة العليا</p>
-                    <div className="flex items-center justify-center gap-4">
-                       <div className="text-6xl font-black text-amber-400">{selectedSubmission.evaluation_score || 0}<span className="text-xl opacity-30">/10</span></div>
-                    </div>
+                  <div className="flex gap-4">
+                    {selectedSubmission.documentUrl && (
+                      <a 
+                        href={selectedSubmission.documentUrl} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="bg-amber-400 text-indigo-950 px-8 py-4 rounded-2xl font-black text-xs flex items-center gap-3 hover:bg-amber-300 transition-all shadow-xl shadow-amber-400/20 active:scale-95"
+                      >
+                        <FileText className="w-5 h-5" />
+                        عرض المستندات المحملة
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
