@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogIn, User, Lock, Loader2, ShieldCheck, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../utils/supabaseClient';
 import RankingTable from '../components/RankingTable';
 
 const Login = () => {
@@ -18,32 +19,46 @@ const Login = () => {
     }
   }, [navigate]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
-      const dynamicUsers = JSON.parse(localStorage.getItem('uob_dynamic_users') || '[]');
-      const foundUser = dynamicUsers.find(u => u.username === username && u.password === password);
-      
-      let userData = null;
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
 
-      if (username === 'admin' && password === 'admin123') {
-        userData = { username: 'admin', role: 'admin', name: 'مدير لجنة الدفع الالكتروني' };
-      } else if (foundUser) {
-        userData = { username: foundUser.username, role: 'company', name: foundUser.name || foundUser.username };
-      }
-
-      if (userData) {
+      if (data) {
+        const userData = { 
+          username: data.username, 
+          role: data.role, 
+          name: data.name || data.username 
+        };
         localStorage.setItem('currentUser', JSON.stringify(userData));
         navigate(userData.role === 'admin' ? '/admin' : '/dashboard');
-        window.location.reload(); // Ensure state refreshes
-      } else {
-        setError('خطأ في اسم المستخدم أو كلمة المرور. يرجى التواصل مع إدارة الجامعة.');
+        window.location.reload();
+        return;
       }
+
+      if (username === 'admin' && password === 'admin123') {
+        const userData = { username: 'admin', role: 'admin', name: 'مدير لجنة الدفع الالكتروني' };
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        navigate('/admin');
+        window.location.reload();
+        return;
+      }
+
+      setError('خطأ في اسم المستخدم أو كلمة المرور. يرجى التواصل مع إدارة الجامعة.');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('حدث خطأ أثناء الاتصال بقاعدة البيانات.');
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (

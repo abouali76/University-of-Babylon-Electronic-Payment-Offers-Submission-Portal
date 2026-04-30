@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Download, BarChart3, Building2 } from 'lucide-react';
+import { supabase } from '../utils/supabaseClient';
 import { exportToPdf } from '../utils/exportPdf';
 
 const RankingTable = ({ submissions: initialSubmissions }) => {
@@ -7,11 +8,29 @@ const RankingTable = ({ submissions: initialSubmissions }) => {
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    const dataToUse = initialSubmissions || JSON.parse(localStorage.getItem('uob_all_submissions') || '[]');
-    // Sort by score
-    const sorted = [...dataToUse].sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
-    setSubmissions(sorted);
+    if (initialSubmissions) {
+      const sorted = [...initialSubmissions].sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
+      setSubmissions(sorted);
+    } else {
+      fetchPublicSubmissions();
+    }
   }, [initialSubmissions]);
+
+  const fetchPublicSubmissions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('status', 'final');
+        
+      if (data) {
+        const sorted = data.sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
+        setSubmissions(sorted);
+      }
+    } catch (err) {
+      console.error('Error fetching rankings:', err);
+    }
+  };
 
   const handlePrint = async () => {
     setIsExporting(true);

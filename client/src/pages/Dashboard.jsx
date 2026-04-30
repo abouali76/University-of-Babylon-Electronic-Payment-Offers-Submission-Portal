@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Send, LogOut, CheckCircle2, AlertCircle, Building2, User, Phone, Mail, FileCheck, ShieldCheck, HelpCircle } from 'lucide-react';
+import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 import { exportToPdf } from '../utils/exportPdf';
 
@@ -55,18 +56,29 @@ const Dashboard = () => {
       navigate('/login');
     } else {
       setUser(currentUser);
-      const allSubmissions = JSON.parse(localStorage.getItem('uob_all_submissions') || '[]');
-      const existing = allSubmissions.find(s => s.username === currentUser.username);
-      if (existing) {
-        setFormData(existing);
-        setIsSubmitted(true);
-        setShowSuccess(true);
-      } else {
-        const draft = localStorage.getItem(`draft_${currentUser.username}`);
-        if (draft) setFormData(JSON.parse(draft));
-      }
+      fetchSubmission(currentUser.username);
     }
   }, [navigate]);
+
+  const fetchSubmission = async (username) => {
+    try {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('username', username)
+        .single();
+        
+      if (data) {
+        setFormData(data);
+        if (data.status === 'final') {
+          setIsSubmitted(true);
+          setShowSuccess(true);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching submission:', err);
+    }
+  };
 
   const requiredFieldsByStep = {
     1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'marketExperience', 'govInstitutionsCount', 'paidCapital', 'officialAddress'],
@@ -94,10 +106,24 @@ const Dashboard = () => {
     setIsSubmitting(false);
   };
 
-  const saveDraft = () => {
-    localStorage.setItem(`draft_${user.username}`, JSON.stringify(formData));
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const saveDraft = async () => {
+    try {
+      const { error } = await supabase
+        .from('submissions')
+        .upsert([{ 
+          ...formData, 
+          username: user.username, 
+          status: 'draft',
+          lastUpdated: new Date().toISOString()
+        }]);
+        
+      if (!error) {
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error('Error saving draft:', err);
+    }
   };
 
   const logout = () => {
@@ -126,22 +152,35 @@ const Dashboard = () => {
       window.scrollTo(0, 0);
     } else {
       setIsSubmitting(true);
-      const allSubmissions = JSON.parse(localStorage.getItem('uob_all_submissions') || '[]');
-      const newSubmission = {
-        ...formData,
-        username: user.username,
-        lastUpdated: new Date().toISOString(),
-        evaluation_score: 0
-      };
-      const filtered = allSubmissions.filter(s => s.username !== user.username);
-      localStorage.setItem('uob_all_submissions', JSON.stringify([...filtered, newSubmission]));
       
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setIsSubmitted(true);
-        setShowSuccess(true);
-        window.scrollTo(0, 0);
-      }, 1500);
+      const submitData = async () => {
+        try {
+          const { error } = await supabase
+            .from('submissions')
+            .upsert([{ 
+              ...formData, 
+              username: user.username, 
+              status: 'final',
+              lastUpdated: new Date().toISOString(),
+              evaluation_score: formData.evaluation_score || 0
+            }]);
+            
+          if (!error) {
+            setIsSubmitting(false);
+            setIsSubmitted(true);
+            setShowSuccess(true);
+            window.scrollTo(0, 0);
+          } else {
+            alert('حدث خطأ أثناء إرسال العرض. يرجى المحاولة لاحقاً.');
+            setIsSubmitting(false);
+          }
+        } catch (err) {
+          console.error('Error submitting:', err);
+          setIsSubmitting(false);
+        }
+      };
+      
+      submitData();
     }
   };
 

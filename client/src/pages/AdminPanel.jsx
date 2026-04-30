@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 import { exportToPdf } from '../utils/exportPdf';
 import RankingTable from '../components/RankingTable';
@@ -17,58 +18,104 @@ const AdminPanel = () => {
   const [showAddUser, setShowAddUser] = useState(false);
 
   useEffect(() => {
-    const savedSubmissions = JSON.parse(localStorage.getItem('uob_all_submissions') || '[]');
-    const savedUsers = JSON.parse(localStorage.getItem('uob_dynamic_users') || '[]');
-    setSubmissions(savedSubmissions);
-    setDynamicUsers(savedUsers);
-    setLoading(false);
+    fetchData();
   }, []);
 
-  const handleAddUser = (data) => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const { data: usersData } = await supabase.from('users').select('*').eq('role', 'company');
+      const { data: subsData } = await supabase.from('submissions').select('*');
+      
+      setDynamicUsers(usersData || []);
+      setSubmissions(subsData || []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddUser = async (data) => {
     const { username, password, displayName } = data;
     if (!username || !password) return;
     
-    const newUser = { 
-      username: username.trim(), 
-      password: password.trim(), 
-      name: (displayName || username).trim() 
-    };
-    
-    const updatedUsers = [...dynamicUsers, newUser];
-    localStorage.setItem('uob_dynamic_users', JSON.stringify(updatedUsers));
-    setDynamicUsers(updatedUsers);
-    setShowAddUser(false);
+    try {
+      const { error } = await supabase.from('users').insert([{ 
+        username: username.trim(), 
+        password: password.trim(), 
+        name: (displayName || username).trim(),
+        role: 'company'
+      }]);
+      
+      if (!error) {
+        fetchData();
+        setShowAddUser(false);
+      } else {
+        alert('حدث خطأ أثناء إضافة المستخدم. قد يكون اسم المستخدم موجوداً مسبقاً.');
+      }
+    } catch (err) {
+      console.error('Error adding user:', err);
+    }
   };
 
+  const [confirmModal, setConfirmModal] = useState({ show: false, type: '', username: '', title: '' });
+
   const handleDeleteSubmission = (username) => {
-    if (!window.confirm('هل تريد تصفير العرض لهذه الشركة؟')) return;
-    
-    const updatedSubmissions = submissions.filter(s => s.username !== username);
-    localStorage.setItem('uob_all_submissions', JSON.stringify(updatedSubmissions));
-    setSubmissions(updatedSubmissions);
-    localStorage.removeItem(`draft_${username}`);
+    setConfirmModal({
+      show: true,
+      type: 'reset',
+      username,
+      title: 'هل تريد تصفير العرض لهذه الشركة؟ سيتم حذف المسودة والتقديم الحالي.'
+    });
   };
 
   const handleDeleteCompany = (username) => {
-    if (!window.confirm('حذف حساب الشركة نهائياً؟')) return;
-    
-    const updatedUsers = dynamicUsers.filter(u => u.username !== username);
-    const updatedSubmissions = submissions.filter(s => s.username !== username);
-    
-    localStorage.setItem('uob_dynamic_users', JSON.stringify(updatedUsers));
-    localStorage.setItem('uob_all_submissions', JSON.stringify(updatedSubmissions));
-    
-    setDynamicUsers(updatedUsers);
-    setSubmissions(updatedSubmissions);
+    setConfirmModal({
+      show: true,
+      type: 'delete',
+      username,
+      title: 'حذف حساب الشركة نهائياً؟ سيتم مسح كافة البيانات المرتبطة بها.'
+    });
   };
 
-  const handleUpdateScore = (username, score) => {
-    const updatedSubmissions = submissions.map(s => {
-      if (s.username === username) return { ...s, evaluation_score: score };
-      return s;
-    });
-    setSubmissions(updatedSubmissions);
-    localStorage.setItem('uob_all_submissions', JSON.stringify(updatedSubmissions));
+  const executeDelete = async () => {
+    const { type, username } = confirmModal;
+    try {
+      if (type === 'reset') {
+        const { error } = await supabase.from('submissions').delete().eq('username', username);
+        if (!error) {
+          setSubmissions(prev => prev.filter(s => s.username !== username));
+        }
+      } else if (type === 'delete') {
+        await supabase.from('submissions').delete().eq('username', username);
+        const { error } = await supabase.from('users').delete().eq('username', username);
+        if (!error) {
+          setDynamicUsers(prev => prev.filter(u => u.username !== username));
+          setSubmissions(prev => prev.filter(s => s.username !== username));
+        }
+      }
+    } catch (err) {
+      console.error('Error deleting:', err);
+    }
+    setConfirmModal({ show: false, type: '', username: '', title: '' });
+  };
+
+  const handleUpdateScore = async (username, score) => {
+    try {
+      const { error } = await supabase
+        .from('submissions')
+        .update({ evaluation_score: score })
+        .eq('username', username);
+        
+      if (!error) {
+        setSubmissions(prev => prev.map(s => 
+          s.username === username ? { ...s, evaluation_score: score } : s
+        ));
+      }
+    } catch (err) {
+      console.error('Error updating score:', err);
+    }
   };
 
   const logout = () => {
@@ -418,6 +465,32 @@ const AdminPanel = () => {
           </div>
         )}
       </main>
+      {/* Custom Confirm Modal */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-indigo-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setConfirmModal({ ...confirmModal, show: false })}></div>
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full relative z-10 shadow-2xl animate-scale-up border border-white">
+            <div className={`w-20 h-20 ${confirmModal.type === 'delete' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'} rounded-3xl flex items-center justify-center mx-auto mb-6`}>
+              {confirmModal.type === 'delete' ? <Trash2 className="w-10 h-10" /> : <FileX className="w-10 h-10" />}
+            </div>
+            <h3 className="text-xl font-black text-indigo-950 text-center mb-4 leading-relaxed">{confirmModal.title}</h3>
+            <div className="flex gap-4 mt-8">
+              <button 
+                onClick={executeDelete}
+                className={`flex-1 py-4 rounded-2xl font-black text-white transition-all active:scale-95 shadow-xl ${confirmModal.type === 'delete' ? 'bg-red-600 hover:bg-red-700 shadow-red-600/20' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'}`}
+              >
+                تأكيد الحذف
+              </button>
+              <button 
+                onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all active:scale-95"
+              >
+                تراجع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
