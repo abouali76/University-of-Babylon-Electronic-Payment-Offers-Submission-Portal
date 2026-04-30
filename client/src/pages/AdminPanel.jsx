@@ -41,15 +41,16 @@ const AdminPanel = () => {
   };
 
   const handleDeleteSubmission = (username) => {
-    if (!window.confirm('هل أنت متأكد من حذف "العرض المقدم" فقط لهذه الشركة؟ سيبقى حساب الشركة فعالاً ويمكنهم إعادة التقديم.')) return;
+    if (!window.confirm('هل تريد تصفير العرض لهذه الشركة؟')) return;
     
     const updatedSubmissions = submissions.filter(s => s.username !== username);
     localStorage.setItem('uob_all_submissions', JSON.stringify(updatedSubmissions));
     setSubmissions(updatedSubmissions);
+    localStorage.removeItem(`draft_${username}`);
   };
 
   const handleDeleteCompany = (username) => {
-    if (!window.confirm('تحذير: أنت على وشك حذف "حساب الشركة" بالكامل مع كافة عروضها. هل تريد الاستمرار؟')) return;
+    if (!window.confirm('حذف حساب الشركة نهائياً؟')) return;
     
     const updatedUsers = dynamicUsers.filter(u => u.username !== username);
     const updatedSubmissions = submissions.filter(s => s.username !== username);
@@ -242,8 +243,8 @@ const AdminPanel = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredCompanies.map((c, idx) => (
-                    <tr key={idx} className="hover:bg-indigo-50/20 transition-all group">
+                  {filteredCompanies.map((c) => (
+                    <tr key={c.username} className="hover:bg-indigo-50/20 transition-all group">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black group-hover:scale-110 transition-all ${c.isSubmitted ? 'bg-indigo-900 text-white shadow-lg' : 'bg-gray-100 text-gray-400'}`}>
