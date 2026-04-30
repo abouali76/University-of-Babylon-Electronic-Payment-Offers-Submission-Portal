@@ -317,6 +317,7 @@ const AdminPanel = () => {
                   <tr>
                     <th className="px-8 py-5">هوية الشركة</th>
                     <th className="px-8 py-5">الحالة</th>
+                    <th className="px-8 py-5 text-center">المرفقات</th>
                     <th className="px-8 py-5">تاريخ التحديث</th>
                     <th className="px-8 py-5 text-center">تقييم اللجنة</th>
                     <th className="px-8 py-5 text-center">الإجراءات</th>

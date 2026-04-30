@@ -72,15 +72,13 @@ const Dashboard = () => {
   });
 
   const mapToDb = (data) => {
-    // These fields differ from the CamelCase used in the UI
     const specialMappings = {
       documentUrl: 'document_url',
-      // Add any other specific mappings if the DB column differs from UI key
     };
     
     const result = {};
     for (const key in data) {
-      const dbKey = specialMappings[key] || key;
+      const dbKey = specialMappings[key] || key.toLowerCase();
       result[dbKey] = data[key];
     }
     return result;
@@ -155,14 +153,16 @@ const Dashboard = () => {
     }
   };
 
-  const requiredFieldsByStep = {
+   const requiredFieldsByStep = {
     1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'marketExperience', 'govInstitutionsCount', 'paidCapital', 'officialAddress'],
     2: ['q2_1_settlement', 'q2_2_commissions', 'q2_3_intermediary', 'q2_4_delayPenalty', 'q2_5_atmCommitment', 'q2_6_studentCards', 'q2_7_chargingCenters', 'q2_8_posCommitment'],
     3: ['q3a_1_integratedSystem', 'q3a_2_techSpecs', 'q3a_3_appSupport', 'q3a_4_webIntegration', 'q3a_5_reporting', 'q3a_6_training'],
     4: ['q3b_1_certificates', 'q3b_2_encryption', 'q3b_3_rto_bcp', 'q3b_4_backups', 'q3b_5_supportSla', 'q3b_6_penTest', 'q3b_7_monitoring', 'q3b_8_incident'],
-    5: ['q4_1_bankGuarantee', 'q4_2_penaltyClause', 'q4_3_dataOwnership', 'q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal'],
-    6: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_mobileApp', 'q5_6_foreignStudents', 'q5_7_complaints', 'q5_8_socialResp'],
-    7: ['signedBy', 'position']
+    5: ['q4_1_bankGuarantee', 'q4_2_penaltyClause', 'q4_3_dataOwnership'],
+    6: ['q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal'],
+    7: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_mobileApp', 'q5_6_foreignStudents', 'q5_7_complaints', 'q5_8_socialResp'],
+    8: ['documentUrl'],
+    9: ['signedBy', 'position']
   };
 
   const handleInputChange = (e) => {
@@ -386,11 +386,20 @@ const Dashboard = () => {
       case 5:
         return (
           <div className="space-y-6 animate-fade-in">
-            <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">رابعاً: الالتزامات القانونية والتعاقدية (9 أسئلة)</h3>
+            <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">رابعاً: أ- الضمانات وملكية البيانات (مهم جداً)</h3>
             <div className="space-y-6">
-              <QuestionField id="q4_1_bankGuarantee" label="1. هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟ ما قيمته المقترحة ومدته؟ (الضمانات غير المصرفية غير مقبولة)" value={formData.q4_1_bankGuarantee} onChange={handleInputChange} isError={errors.includes('q4_1_bankGuarantee')} />
-              <QuestionField id="q4_2_penaltyClause" label="2. هل تلتزمون بسرية البيانات وعدم مشاركتها مع أي جهة ثالثة؟ وهل توافقون على توقيع اتفاقية عدم إفصاح (NDA) رسمية؟" value={formData.q4_2_penaltyClause} onChange={handleInputChange} isError={errors.includes('q4_2_penaltyClause')} />
-              <QuestionField id="q4_3_dataOwnership" label="3. هل توافقون على أن ملكية البيانات تعود للجامعة حصراً، وأنه يحق لها استردادها كاملةً عند انتهاء العقد وفي أي وقت تحتاجه؟" value={formData.q4_3_dataOwnership} onChange={handleInputChange} isError={errors.includes('q4_3_dataOwnership')} />
+              <QuestionField id="q4_1_bankGuarantee" label="1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟ ما قيمته المقترحة ومدته؟ (الضمانات غير المصرفية غير مقبولة)" value={formData.q4_1_bankGuarantee} onChange={handleInputChange} isError={errors.includes('q4_1_bankGuarantee')} />
+              <QuestionField id="q4_2_penaltyClause" label="2. سرية البيانات: هل تلتزمون بسرية البيانات وعدم مشاركتها مع أي جهة ثالثة؟ وهل توافقون على توقيع اتفاقية عدم إفصاح (NDA) رسمية؟" value={formData.q4_2_penaltyClause} onChange={handleInputChange} isError={errors.includes('q4_2_penaltyClause')} />
+              <QuestionField id="q4_3_dataOwnership" label="3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً، وأنه يحق لها استردادها كاملةً عند انتهاء العقد وفي أي وقت تحتاجه؟" value={formData.q4_3_dataOwnership} onChange={handleInputChange} isError={errors.includes('q4_3_dataOwnership')} />
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6 animate-fade-in">
+            <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)</h3>
+            <div className="space-y-6">
               <QuestionField id="q4_4_exitClause" label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟ يرجى التوضيح: (عدد الدورات، عدد ساعات التدريب، هل هي حضورية أم إلكترونية؟)" value={formData.q4_4_exitClause} onChange={handleInputChange} isError={errors.includes('q4_4_exitClause')} />
               <QuestionField id="q4_5_liability" label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري، أو بإشعار مسبق مدته (30) يوماً في الحالات الأخرى؟" value={formData.q4_5_liability} onChange={handleInputChange} isError={errors.includes('q4_5_liability')} />
               <QuestionField id="q4_6_jurisdiction" label="6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل للفصل في أي نزاع؟" value={formData.q4_6_jurisdiction} onChange={handleInputChange} isError={errors.includes('q4_6_jurisdiction')} />
@@ -401,7 +410,7 @@ const Dashboard = () => {
           </div>
         );
 
-      case 6:
+      case 7:
         return (
           <div className="space-y-6 animate-fade-in">
             <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4 mb-6">خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)</h3>
@@ -418,45 +427,73 @@ const Dashboard = () => {
           </div>
         );
 
-
-      case 7:
+      case 8:
         return (
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-blue-900 border-r-4 border-blue-900 pr-4">سادساً: المرفقات والملاحظات</h3>
               
-              <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-blue-200 text-center">
-                <h4 className="font-bold text-blue-900 mb-2">إرفاق المستندات المطلوبة (اختياري / إن وجدت)</h4>
-                <p className="text-sm text-gray-500 mb-4">يمكنك رفع ملف PDF واحد يحتوي على إجازة البنك، المخططات التقنية، أو أي مرفقات أخرى (الحد الأقصى 10MB).</p>
-                {formData.documentUrl ? (
-                  <div className="flex items-center justify-center gap-3 bg-green-50 text-green-700 p-4 rounded-xl font-bold">
-                    <CheckCircle2 className="w-5 h-5" />
-                    تم رفع المستند بنجاح
-                    <a href={formData.documentUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline text-sm mr-4">عرض الملف</a>
-                    <button type="button" onClick={() => setFormData(prev => ({...prev, documentUrl: ''}))} className="text-red-500 text-xs underline mr-2">حذف</button>
+              <div className={`bg-white p-10 rounded-[2.5rem] border-4 border-dashed transition-all ${errors.includes('documentUrl') ? 'border-red-300 bg-red-50' : 'border-blue-100'}`}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-6">
+                    <FileCheck className="w-10 h-10" />
                   </div>
-                ) : (
-                  <label className="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-6 py-3 rounded-xl font-bold transition-all inline-block">
-                    {isSubmitting ? 'جاري الرفع...' : 'اختر ملفاً لرفعه'}
-                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} disabled={isSubmitting} />
-                  </label>
-                )}
+                  <h4 className="text-xl font-black text-blue-950 mb-3">إرفاق المستندات والوثائق الرسمية</h4>
+                  <p className="text-sm text-gray-500 mb-8 max-w-md">يرجى رفع ملف PDF واحد يحتوي على (إجازة البنك المركزي، شهادات الأمن السيبراني، المخططات التقنية، وأي وثائق داعمة أخرى).</p>
+                  
+                  {formData.documentUrl ? (
+                    <div className="w-full bg-emerald-50 border-2 border-emerald-100 p-6 rounded-2xl flex flex-col items-center gap-4">
+                      <div className="flex items-center gap-3 text-emerald-700 font-black">
+                        <CheckCircle2 className="w-6 h-6" />
+                        تم رفع الملف بنجاح
+                      </div>
+                      <div className="flex gap-4">
+                        <a href={formData.documentUrl} target="_blank" rel="noreferrer" className="px-6 py-2 bg-white text-blue-600 rounded-xl font-black text-xs shadow-sm hover:shadow-md transition-all">فتح الملف</a>
+                        <button type="button" onClick={() => setFormData(prev => ({...prev, documentUrl: ''}))} className="px-6 py-2 bg-red-50 text-red-500 rounded-xl font-black text-xs hover:bg-red-100 transition-all">حذف وإعادة الرفع</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className={`group cursor-pointer flex flex-col items-center gap-4 px-12 py-8 rounded-[2rem] border-2 border-blue-50 hover:bg-blue-50 hover:border-blue-200 transition-all ${isSubmitting ? 'opacity-50 cursor-wait' : ''}`}>
+                      <div className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-blue-900/20 group-hover:scale-105 transition-transform">
+                        {isSubmitting ? 'جاري رفع الملف...' : 'اختر ملف PDF للرفع'}
+                      </div>
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">الحد الأقصى 10MB</span>
+                      <input type="file" className="hidden" accept=".pdf" onChange={handleFileUpload} disabled={isSubmitting} />
+                    </label>
+                  )}
+                  {errors.includes('documentUrl') && <p className="text-red-500 text-xs font-black mt-4">! يرجى إرفاق المستندات المطلوبة للمتابعة</p>}
+                </div>
               </div>
 
-              <textarea 
-                name="additionalNotes"
-                placeholder="مساحة كافية لإضافة أي تفاصيل لم تذكر في الأسئلة السابقة..."
-                className={`w-full h-40 p-6 rounded-2xl border-2 outline-none transition-all font-bold ${errors.includes('additionalNotes') ? 'bg-red-50 border-red-300 animate-shake' : 'bg-gray-50 border-transparent focus:bg-white focus:border-blue-200'}`}
-                value={formData.additionalNotes}
-                onChange={handleInputChange}
-              />
+              <div className="space-y-4">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest mr-2">ملاحظات إضافية (اختياري)</label>
+                <textarea 
+                  name="additionalNotes"
+                  placeholder="مساحة كافية لإضافة أي تفاصيل لم تذكر في الأسئلة السابقة..."
+                  className="w-full h-40 p-6 rounded-3xl bg-gray-50 border-2 border-transparent outline-none focus:bg-white focus:border-blue-200 focus:ring-4 focus:ring-blue-600/5 transition-all font-bold"
+                  value={formData.additionalNotes}
+                  onChange={handleInputChange}
+                />
+              </div>
             </div>
-            
-            <div className="bg-blue-50/50 p-8 rounded-3xl border border-blue-100">
-              <h3 className="text-xl font-bold text-blue-900 mb-6">سابعاً: المصادقة والتوقيع</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField label="اسم الموقع (المفوض)" name="signedBy" value={formData.signedBy} onChange={handleInputChange} isError={errors.includes('signedBy')} />
+          </div>
+        );
+
+      case 9:
+        return (
+          <div className="space-y-8 animate-fade-in">
+            <div className="bg-blue-900/5 p-10 rounded-[3rem] border border-blue-100 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-900/5 rounded-full -mr-16 -mt-16"></div>
+              <h3 className="text-2xl font-black text-blue-950 mb-8 flex items-center gap-4 relative z-10">
+                <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
+                سابعاً: المصادقة والتوقيع الرسمي
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                <InputField label="اسم الموقع (المفوض بالتوقيع)" name="signedBy" value={formData.signedBy} onChange={handleInputChange} isError={errors.includes('signedBy')} />
                 <InputField label="الصفة الوظيفية" name="position" value={formData.position} onChange={handleInputChange} isError={errors.includes('position')} />
+              </div>
+              <div className="mt-10 p-6 bg-white/60 rounded-2xl border border-blue-100 text-sm text-blue-800 font-bold leading-relaxed">
+                * أقر أنا الموقع أدناه بصحة جميع المعلومات الواردة في هذا العرض الفني والمالي، وأتحمل المسؤولية القانونية الكاملة عن أي بيانات غير دقيقة.
               </div>
             </div>
           </div>
@@ -535,12 +572,12 @@ const Dashboard = () => {
                   <p className="text-blue-200 text-xs font-bold mt-1">يرجى إكمال كافة الحقول بدقة لضمان قبول العرض</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-4xl font-black text-white/20">{currentStep}/7</span>
+                  <span className="text-4xl font-black text-white/20">{currentStep}/9</span>
                 </div>
               </div>
               
               <div className="flex gap-2">
-                {[1, 2, 3, 4, 5, 6, 7].map((step) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((step) => (
                   <div 
                     key={step} 
                     className={`h-1.5 flex-grow rounded-full transition-all duration-500 ${step <= currentStep ? 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'bg-white/20'}`}
@@ -584,7 +621,7 @@ const Dashboard = () => {
                     )}
                   </div>
                   
-                  {isSubmitted && currentStep === 7 ? (
+                  {isSubmitted && currentStep === 9 ? (
                     <button 
                       type="button"
                       onClick={() => setShowSuccess(true)}
@@ -596,7 +633,7 @@ const Dashboard = () => {
                   ) : (
                     <button 
                       type={isSubmitted ? "button" : "submit"}
-                      onClick={isSubmitted ? () => currentStep < 7 && setCurrentStep(currentStep + 1) : undefined}
+                      onClick={isSubmitted ? () => currentStep < 9 && setCurrentStep(currentStep + 1) : undefined}
                       disabled={isSubmitting}
                       className="flex-grow md:flex-grow-0 px-12 py-4 bg-blue-900 text-white rounded-2xl font-black hover:bg-blue-800 shadow-xl shadow-blue-900/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                     >
