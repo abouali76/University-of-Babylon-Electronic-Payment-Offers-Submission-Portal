@@ -132,7 +132,8 @@ const Dashboard = () => {
 
   const handlePdfExport = async () => {
     setIsSubmitting(true);
-    await exportToPdf('print-area', `UOB_Offer_${user?.username}.pdf`);
+    const safeCompanyName = formData.companyName ? formData.companyName.replace(/[^a-zA-Z0-9\u0600-\u06FF\s]/g, '_') : 'Company';
+    await exportToPdf('print-area', `UOB_Offer_${safeCompanyName}.pdf`);
     setIsSubmitting(false);
   };
 
