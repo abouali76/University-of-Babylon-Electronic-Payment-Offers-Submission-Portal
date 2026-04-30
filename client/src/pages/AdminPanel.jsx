@@ -160,19 +160,6 @@ const AdminPanel = () => {
               إضافة حساب شركة
             </button>
 
-            <button 
-              onClick={() => {
-                if(window.confirm('سيتم حذف كافة البيانات المسجلة محلياً. هل أنت متأكد؟')) {
-                  localStorage.clear();
-                  window.location.reload();
-                }
-              }}
-              className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-sm"
-              title="تصفير النظام بالكامل"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
-
             <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm group" title="تسجيل الخروج">
               <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             </button>
@@ -314,19 +301,21 @@ const AdminPanel = () => {
                           {c.isSubmitted && (
                             <button 
                               onClick={() => handleDeleteSubmission(c.username)}
-                              className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-sm"
+                              className="px-4 py-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-sm flex items-center gap-2 text-[10px] font-black"
                               title="حذف العرض فقط"
                             >
                               <FileX className="w-4 h-4" />
+                              إعادة تصفير التقديم
                             </button>
                           )}
                           
                           <button 
                             onClick={() => handleDeleteCompany(c.username)}
-                            className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                            className="px-4 py-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center gap-2 text-[10px] font-black"
                             title="حذف الحساب بالكامل"
                           >
                             <Trash2 className="w-4 h-4" />
+                            حذف الشركة
                           </button>
                         </div>
                       </td>
