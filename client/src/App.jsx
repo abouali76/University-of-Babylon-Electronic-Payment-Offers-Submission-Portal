@@ -5,16 +5,14 @@ import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 
 function App() {
-  const [user, setUser] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem('currentUser'));
-    setUser(savedUser);
-    setLoading(false);
-  }, []);
-
-  if (loading) return null;
+  // Read synchronously to prevent flicker - localStorage is synchronous
+  const [user] = React.useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser'));
+    } catch {
+      return null;
+    }
+  });
 
   return (
     <Router>
