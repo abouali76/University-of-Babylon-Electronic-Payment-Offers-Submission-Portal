@@ -188,14 +188,11 @@ const AdminPanel = () => {
                e.preventDefault();
                const fd = new FormData(e.target);
                handleAddUser({
-                 preventDefault: () => {},
-                 target: {
-                   username: { value: fd.get('username') },
-                   password: { value: fd.get('password') },
-                   displayName: { value: fd.get('displayName') },
-                   reset: () => e.target.reset()
-                 }
+                 username: fd.get('username'),
+                 password: fd.get('password'),
+                 displayName: fd.get('displayName')
                });
+               e.target.reset();
              }} className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mr-1">اسم الشركة (الرسمي)</label>
