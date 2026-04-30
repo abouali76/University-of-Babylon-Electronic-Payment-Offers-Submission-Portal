@@ -177,20 +177,20 @@ const AdminPanel = () => {
 
   const handlePdfExport = async () => {
     if (!selectedSubmission) return;
-    setIsExporting(true);
-    await exportToPdf('print-area', `UOB_Official_${selectedSubmission.companyName}.pdf`);
-    setIsExporting(false);
+    window.print();
   };
 
   if (loading) return null;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      {/* Hidden Print Area */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+      {/* Print Area - Only visible during print */}
+      <div className="hidden print:block w-full bg-white">
         <PrintTemplate data={selectedSubmission} />
       </div>
 
+      {/* Screen Area - Hidden during print */}
+      <div className="print:hidden">
       <header className="bg-white/70 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">

@@ -131,10 +131,7 @@ const Dashboard = () => {
   };
 
   const handlePdfExport = async () => {
-    setIsSubmitting(true);
-    const safeCompanyName = formData.companyName ? formData.companyName.replace(/[^a-zA-Z0-9\u0600-\u06FF\s]/g, '_') : 'Company';
-    await exportToPdf('print-area', `UOB_Offer_${safeCompanyName}.pdf`);
-    setIsSubmitting(false);
+    window.print();
   };
 
   const saveDraft = async () => {
@@ -325,12 +322,14 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Hidden Print Area */}
-      <div id="print-area" style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+      {/* Print Area - Only visible during print */}
+      <div className="hidden print:block w-full bg-white">
         <PrintTemplate data={{ ...formData, username: user?.username }} />
       </div>
 
-      <header className="bg-white/70 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
+      {/* Screen Area - Hidden during print */}
+      <div className="print:hidden">
+        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/10 border border-gray-50">
@@ -464,6 +463,7 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 };
