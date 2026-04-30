@@ -50,6 +50,35 @@ const Dashboard = () => {
     position: ''
   });
 
+  const mapToDb = (data) => {
+    const result = {};
+    for (const key in data) {
+      result[key.toLowerCase()] = data[key];
+    }
+    return result;
+  };
+
+  const mapFromDb = (data) => {
+    const map = {
+      companyname: 'companyName',
+      submissiondate: 'submissionDate',
+      representativename: 'representativeName',
+      centralbanklicense: 'centralBankLicense',
+      marketexperience: 'marketExperience',
+      govinstitutionscount: 'govInstitutionsCount',
+      paidcapital: 'paidCapital',
+      officialaddress: 'officialAddress',
+      additionalnotes: 'additionalNotes',
+      signedby: 'signedBy',
+      lastupdated: 'lastUpdated'
+    };
+    const result = {};
+    for (const key in data) {
+      result[map[key] || key] = data[key];
+    }
+    return result;
+  };
+
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser || currentUser.role !== 'company') {
@@ -69,8 +98,9 @@ const Dashboard = () => {
         .single();
         
       if (data) {
-        setFormData(data);
-        if (data.status === 'final') {
+        const mappedData = mapFromDb(data);
+        setFormData(mappedData);
+        if (mappedData.status === 'final') {
           setIsSubmitted(true);
           setShowSuccess(true);
         }
@@ -110,12 +140,12 @@ const Dashboard = () => {
     try {
       const { error } = await supabase
         .from('submissions')
-        .upsert([{ 
+        .upsert([mapToDb({ 
           ...formData, 
           username: user.username, 
           status: 'draft',
           lastUpdated: new Date().toISOString()
-        }]);
+        })]);
         
       if (!error) {
         setIsSaved(true);
@@ -157,13 +187,13 @@ const Dashboard = () => {
         try {
           const { error } = await supabase
             .from('submissions')
-            .upsert([{ 
+            .upsert([mapToDb({ 
               ...formData, 
               username: user.username, 
               status: 'final',
               lastUpdated: new Date().toISOString(),
               evaluation_score: formData.evaluation_score || 0
-            }]);
+            })]);
             
           if (!error) {
             setIsSubmitting(false);

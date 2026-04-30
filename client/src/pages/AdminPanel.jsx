@@ -21,6 +21,27 @@ const AdminPanel = () => {
     fetchData();
   }, []);
 
+  const mapFromDb = (data) => {
+    const map = {
+      companyname: 'companyName',
+      submissiondate: 'submissionDate',
+      representativename: 'representativeName',
+      centralbanklicense: 'centralBankLicense',
+      marketexperience: 'marketExperience',
+      govinstitutionscount: 'govInstitutionsCount',
+      paidcapital: 'paidCapital',
+      officialaddress: 'officialAddress',
+      additionalnotes: 'additionalNotes',
+      signedby: 'signedBy',
+      lastupdated: 'lastUpdated'
+    };
+    const result = {};
+    for (const key in data) {
+      result[map[key] || key] = data[key];
+    }
+    return result;
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -28,7 +49,7 @@ const AdminPanel = () => {
       const { data: subsData } = await supabase.from('submissions').select('*');
       
       setDynamicUsers(usersData || []);
-      setSubmissions(subsData || []);
+      setSubmissions(subsData ? subsData.map(mapFromDb) : []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
