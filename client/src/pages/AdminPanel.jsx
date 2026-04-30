@@ -43,10 +43,25 @@ const AdminPanel = () => {
       q2_7_chargingcenters: 'q2_7_chargingCenters',
       q2_8_poscommitment: 'q2_8_posCommitment',
       q3a_1_integratedsystem: 'q3a_1_integratedSystem',
+      q3a_2_techspecs: 'q3a_2_techSpecs',
+      q3a_3_appsupport: 'q3a_3_appSupport',
       q3a_4_webintegration: 'q3a_4_webIntegration',
+      q3a_5_reporting: 'q3a_5_reporting',
+      q3a_6_training: 'q3a_6_training',
+      q3b_1_certificates: 'q3b_1_certificates',
+      q3b_2_encryption: 'q3b_2_encryption',
       q3b_5_supportsla: 'q3b_5_supportSla',
+      q3b_6_pentest: 'q3b_6_penTest',
+      q4_1_bankguarantee: 'q4_1_bankGuarantee',
+      q4_2_penaltyclause: 'q4_2_penaltyClause',
+      q4_3_dataownership: 'q4_3_dataOwnership',
+      q4_4_exitclause: 'q4_4_exitClause',
+      q4_7_auditright: 'q4_7_auditRight',
       q4_8_contractduration: 'q4_8_contractDuration',
-      q4_2_penaltyclause: 'q4_2_penaltyClause'
+      q5_1_extrafeatures: 'q5_1_extraFeatures',
+      q5_4_stafftraining: 'q5_4_staffTraining',
+      q5_5_mobileapp: 'q5_5_mobileApp',
+      q5_6_foreignstudents: 'q5_6_foreignStudents'
     };
 
     const result = {};
