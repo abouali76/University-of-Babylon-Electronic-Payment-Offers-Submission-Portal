@@ -16,32 +16,23 @@ const RankingTable = ({ submissions: initialSubmissions }) => {
     }
   }, [initialSubmissions]);
 
-  const mapFromDb = (data) => {
-    if (!data) return {};
-    const toCamelMap = {
-      companyname: 'companyName',
-      marketexperience: 'marketExperience'
-    };
-    const result = {};
-    for (const key in data) {
-      const uiKey = toCamelMap[key.toLowerCase()] || key;
-      result[uiKey] = data[key];
-    }
-    return result;
-  };
-
   const fetchPublicSubmissions = async () => {
     try {
       const { data, error } = await supabase
         .from('submissions')
-        .select('*')
-        .eq('status', 'final');
-        
-      if (data) {
-        const mappedData = data.map(s => mapFromDb(s));
-        const sorted = mappedData.sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
-        setSubmissions(sorted);
-      }
+        .select('evaluation_score, username, data')
+        .eq('status', 'final')
+        .order('evaluation_score', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped = (data || []).map((r) => ({
+        ...(r.data || {}),
+        username: r.username,
+        evaluation_score: r.evaluation_score
+      }));
+
+      setSubmissions(mapped);
     } catch (err) {
       console.error('Error fetching rankings:', err);
     }

@@ -6,15 +6,16 @@ const db = require('../config/db');
 
 // Register
 router.post('/register', async (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password, name, role } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         const result = await db.run_async(
-            'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-            [username, hashedPassword, role || 'company']
+            'INSERT INTO users (username, password, name, role) VALUES (?, ?, ?, ?)',
+            [username, hashedPassword, name || username, role || 'company']
         );
         res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
     } catch (error) {
+        console.error('Registration error:', error);
         res.status(500).json({ error: error.message });
     }
 });

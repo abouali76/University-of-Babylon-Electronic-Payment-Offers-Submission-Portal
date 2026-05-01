@@ -11,23 +11,18 @@ const isAdmin = (req, res, next) => {
 // Get all submissions
 router.get('/submissions', isAdmin, async (req, res) => {
     try {
-        const [rows] = await db.execute(
-            'SELECT c.*, s.* FROM companies c LEFT JOIN form_submissions s ON c.id = s.company_id ORDER BY c.submission_date DESC'
-        );
+        const [rows] = await db.execute('SELECT * FROM submissions ORDER BY "lastUpdated" DESC');
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Get specific report data
-router.get('/report/:id', isAdmin, async (req, res) => {
+// Get all companies (users)
+router.get('/users', isAdmin, async (req, res) => {
     try {
-        const [rows] = await db.execute(
-            'SELECT c.*, s.* FROM companies c LEFT JOIN form_submissions s ON c.id = s.company_id WHERE c.id = ?',
-            [req.params.id]
-        );
-        res.json(rows[0]);
+        const [rows] = await db.execute('SELECT username, name, role, created_at FROM users WHERE role = \'company\'');
+        res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

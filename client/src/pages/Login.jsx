@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { LogIn, User, Lock, Loader2, ShieldCheck, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
-import RankingTable from '../components/RankingTable';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,43 +18,58 @@ const Login = () => {
     }
   }, [navigate]);
 
+  const usernameToEmail = (u) => `${String(u || '').trim().toLowerCase()}@uob.local`;
+  const normalizePassword = (p) => {
+    const raw = String(p || '');
+    return raw.length >= 6 ? raw : raw.padEnd(6, '0');
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const { data, error: supabaseError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .single();
-
-      if (data) {
-        const userData = { 
-          username: data.username, 
-          role: data.role, 
-          name: data.name || data.username 
+      // Requested emergency admin fallback login.
+      if (String(username).trim() === 'admin' && password === 'admin123') {
+        const userData = {
+          username: 'admin',
+          role: 'admin',
+          name: 'Admin',
+          localOnly: true
         };
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        navigate(userData.role === 'admin' ? '/admin' : '/dashboard');
-        window.location.reload();
-        return;
-      }
-
-      if (username === 'admin' && password === 'admin123') {
-        const userData = { username: 'admin', role: 'admin', name: 'مدير لجنة معايير التعاقد' };
         localStorage.setItem('currentUser', JSON.stringify(userData));
         navigate('/admin');
         window.location.reload();
         return;
       }
 
-      setError('خطأ في اسم المستخدم أو كلمة المرور. يرجى التواصل مع إدارة الجامعة.');
+      const email = usernameToEmail(username);
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password: normalizePassword(password)
+      });
+
+      if (authError) throw authError;
+
+      const role = data?.user?.app_metadata?.role || data?.user?.user_metadata?.role || 'company';
+      const displayName =
+        data?.user?.user_metadata?.display_name ||
+        data?.user?.user_metadata?.name ||
+        username;
+
+      const userData = {
+        username: String(username || '').trim(),
+        role,
+        name: displayName
+      };
+
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      navigate(role === 'admin' ? '/admin' : '/dashboard');
+      window.location.reload();
     } catch (err) {
       console.error('Login error:', err);
-      setError('حدث خطأ أثناء الاتصال بقاعدة البيانات.');
+      setError('خطأ في اسم المستخدم أو كلمة المرور، أو لم يتم تفعيل الحساب بعد.');
     } finally {
       setLoading(false);
     }

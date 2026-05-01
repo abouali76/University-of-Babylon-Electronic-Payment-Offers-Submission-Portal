@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: uob_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: uob_admin
+      POSTGRES_PASSWORD: uob_password123
+      POSTGRES_DB: uob_payment_portal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./server
+    container_name: uob_backend
+    restart: always
+    environment:
+      DATABASE_URL: postgres://uob_admin:uob_password123@db:5432/uob_payment_portal
+      JWT_SECRET: uob_super_secret_key_2026
+      PORT: 5000
+    volumes:
+      - ./server/uploads:/app/uploads
+    depends_on:
+      - db
+
+  frontend:
+    build: 
+      context: ./client
+      args:
+        VITE_API_URL: https://109-123-248-151.sslip.io/api
+    container_name: uob_frontend
+    restart: always
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:latest
+    container_name: uob_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

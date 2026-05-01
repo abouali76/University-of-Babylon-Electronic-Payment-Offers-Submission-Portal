@@ -86,46 +86,85 @@ const PrintTemplate = ({ data }) => {
       </section>
 
       <section style={{ marginBottom: '15px' }}>
-        <div style={styles.sectionTitle}>ثانياً: الالتزامات التشغيلية والمالية</div>
+        <div style={styles.sectionTitle}>ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. آلية التسوية المالية" value={data.q2_1_settlement} styles={styles} />
-          <QuestionBox label="2. العمولات والخصومات" value={data.q2_2_commissions} styles={styles} />
-          <QuestionBox label="3. البنك الوسيط" value={data.q2_3_intermediary} styles={styles} />
-          <QuestionBox label="4. غرامات التأخير" value={data.q2_4_delayPenalty} styles={styles} />
-          <QuestionBox label="5. الالتزام بأجهزة ATM" value={data.q2_5_atmCommitment} styles={styles} />
-          <QuestionBox label="6. بطاقات الطلبة" value={data.q2_6_studentCards} styles={styles} />
-          <QuestionBox label="7. مراكز التعبئة" value={data.q2_7_chargingCenters} styles={styles} />
-          <QuestionBox label="8. صيانة PoS" value={data.q2_8_posCommitment} styles={styles} />
+          <QuestionBox label="1. آلية التسوية المالية (12 ساعة)" value={data.q2_1_settlement} styles={styles} />
+          <QuestionBox label="2. العمولات والخصومات المقترحة" value={data.q2_2_commissions} styles={styles} />
+          <QuestionBox label="3. الوسيط المالي / البنك الوسيط" value={data.q2_3_intermediary} styles={styles} />
+          <QuestionBox label="4. قيمة غرامات التأخير" value={data.q2_4_delayPenalty} styles={styles} />
+          <QuestionBox label="5. الالتزام بأجهزة ATM داخل الجامعة" value={data.q2_5_atmCommitment} styles={styles} />
+          <QuestionBox label="6. تفاصيل إصدار بطاقات الطلبة" value={data.q2_6_studentCards} styles={styles} />
+          <QuestionBox label="7. مراكز التعبئة وساعات العمل" value={data.q2_7_chargingCenters} styles={styles} />
+          <QuestionBox label="8. مستلزمات PoS المجانية والصيانة" value={data.q2_8_posCommitment} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
-        <div style={styles.sectionTitle}>ثالثاً: التقنية والأمن السيبراني</div>
+        <div style={styles.sectionTitle}>ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. تقارير Dashboard" value={data.q3a_1_integratedSystem} styles={styles} />
-          <QuestionBox label="2. الربط عبر API" value={data.q3a_4_webIntegration} styles={styles} />
-          <QuestionBox label="3. الشهادات الأمنية" value={data.q3b_1_certificates} styles={styles} />
-          <QuestionBox label="4. خطة الاستمرارية" value={data.q3b_3_rto_bcp} styles={styles} />
-          <QuestionBox label="5. النسخ الاحتياطي" value={data.q3b_4_backups} styles={styles} />
-          <QuestionBox label="6. الدعم الفني" value={data.q3b_5_supportSla} styles={styles} />
+          <QuestionBox label="1. النظام الإلكتروني والتقارير" value={data.q3a_1_integratedSystem} styles={styles} />
+          <QuestionBox label="2. بطاقات خاصة للوحدات الإدارية" value={data.q3a_2_techSpecs} styles={styles} />
+          <QuestionBox label="3. كشف حساب لحظي وتقارير دورية" value={data.q3a_3_appSupport} styles={styles} />
+          <QuestionBox label="4. التكامل مع موقع الجامعة" value={data.q3a_4_webIntegration} styles={styles} />
+          <QuestionBox label="5. خدمة التحويلات خارج العراق" value={data.q3a_5_reporting} styles={styles} />
+          <QuestionBox label="6. توفر رقم IBAN دولي" value={data.q3a_6_training} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
-        <div style={styles.sectionTitle}>رابعاً: الالتزامات القانونية</div>
+        <div style={styles.sectionTitle}>ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. خطاب الضمان" value={data.q4_1_bankGuarantee} styles={styles} />
-          <QuestionBox label="2. ملكية البيانات" value={data.q4_3_dataOwnership} styles={styles} />
-          <QuestionBox label="3. الاختصاص القضائي" value={data.q4_6_jurisdiction} styles={styles} />
-          <QuestionBox label="4. مدة العقد" value={data.q4_8_contractDuration} styles={styles} />
+          <QuestionBox label="1. شهادات الأمن (ISO, PCI-DSS)" value={data.q3b_1_certificates} styles={styles} />
+          <QuestionBox label="2. بروتوكولات التشفير المستخدمة" value={data.q3b_2_encryption} styles={styles} />
+          <QuestionBox label="3. خطة الاستمرارية (RTO / BCP)" value={data.q3b_3_rto_bcp} styles={styles} />
+          <QuestionBox label="4. سياسة النسخ الاحتياطي" value={data.q3b_4_backups} styles={styles} />
+          <QuestionBox label="5. الدعم الفني (24/7 SLA)" value={data.q3b_5_supportSla} styles={styles} />
+          <QuestionBox label="6. اختبارات الاختراق الدورية" value={data.q3b_6_penTest} styles={styles} />
+          <QuestionBox label="7. سياسة الاحتفاظ بالبيانات" value={data.q3b_7_monitoring} styles={styles} />
+          <QuestionBox label="8. طرائق الاتصال والبدائل" value={data.q3b_8_incident} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
-        <div style={styles.sectionTitle}>خامساً: الخدمات والملاحظات</div>
+        <div style={styles.sectionTitle}>رابعاً: أ- الضمانات وملكية البيانات</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="الميزات التنافسية" value={data.q5_1_extraFeatures} styles={styles} />
-          <QuestionBox label="ملاحظات الشركة" value={data.additionalNotes} styles={styles} />
+          <QuestionBox label="1. خطاب الضمان المصرفي" value={data.q4_1_bankGuarantee} styles={styles} />
+          <QuestionBox label="2. سرية البيانات (NDA)" value={data.q4_2_penaltyClause} styles={styles} />
+          <QuestionBox label="3. ملكية البيانات واستردادها" value={data.q4_3_dataOwnership} styles={styles} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: '15px' }}>
+        <div style={styles.sectionTitle}>رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)</div>
+        <div style={{ fontSize: '10px' }}>
+          <QuestionBox label="4. البرامج التدريبية المجانية" value={data.q4_4_exitClause} styles={styles} />
+          <QuestionBox label="5. شروط فسخ العقد" value={data.q4_5_liability} styles={styles} />
+          <QuestionBox label="6. القانون والاختصاص القضائي" value={data.q4_6_jurisdiction} styles={styles} />
+          <QuestionBox label="7. التحكيم التجاري العراقي" value={data.q4_7_auditRight} styles={styles} />
+          <QuestionBox label="8. مدة العقد وشروط التجديد" value={data.q4_8_contractDuration} styles={styles} />
+          <QuestionBox label="9. معالجة شكاوى الطلبة" value={data.q4_9_renewal} styles={styles} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: '15px' }}>
+        <div style={styles.sectionTitle}>خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)</div>
+        <div style={{ fontSize: '10px' }}>
+          <QuestionBox label="1. تطبيق الهاتف (iOS/Android)" value={data.q5_1_extraFeatures} styles={styles} />
+          <QuestionBox label="2. خدمات مصرفية إضافية" value={data.q5_2_innovation} styles={styles} />
+          <QuestionBox label="3. الطاقة الاستيعابية للنظام" value={data.q5_3_scholarships} styles={styles} />
+          <QuestionBox label="4. دعم الفعاليات والمؤتمرات" value={data.q5_4_staffTraining} styles={styles} />
+          <QuestionBox label="5. تحديث الأجهزة والأنظمة" value={data.q5_5_mobileApp} styles={styles} />
+          <QuestionBox label="6. تسديد الأجور بالدولار للخارج" value={data.q5_6_foreignStudents} styles={styles} />
+          <QuestionBox label="7. ميزات إضافية لجامعة بابل" value={data.q5_7_complaints} styles={styles} />
+          <QuestionBox label="8. المؤسسات الحكومية المخدَّمة" value={data.q5_8_socialResp} styles={styles} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: '15px' }}>
+        <div style={styles.sectionTitle}>سادساً: الملاحظات والوثائق</div>
+        <div style={{ fontSize: '10px' }}>
+          <QuestionBox label="المستندات المرفقة" value={data.documentUrl ? "تم إرفاق الملف رسمياً عبر البوابة الإلكترونية" : "لم يتم إرفاق ملفات."} styles={styles} />
+          <QuestionBox label="ملاحظات إضافية من الشركة" value={data.additionalNotes} styles={styles} />
         </div>
       </section>
 

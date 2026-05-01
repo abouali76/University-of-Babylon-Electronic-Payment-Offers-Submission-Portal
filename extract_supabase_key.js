@@ -3,41 +3,42 @@ const fs = require('fs');
 const path = require('path');
 
 async function extractKey() {
-  let browser;
   try {
-    console.log('Connecting to browser...');
     const res = await fetch('http://127.0.0.1:9222/json/version');
     const version = await res.json();
-    
-    browser = await puppeteer.connect({
-      browserWSEndpoint: version.webSocketDebuggerUrl,
+    const browserWSEndpoint = version.webSocketDebuggerUrl;
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint,
       defaultViewport: null
     });
 
-    console.log('Opening new tab...');
     const page = await browser.newPage();
-    
-    const projectUrl = 'https://supabase.com/dashboard/project/elnixrgjmmxosshtuqha/settings/api';
-    console.log('Navigating to', projectUrl);
-    await page.goto(projectUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-    
-    // Wait for the API keys section to load
+    await page.goto('https://supabase.com/dashboard/project/elnixrgjmmxosshtuqha/settings/api', { waitUntil: 'networkidle2' });
     await page.waitForSelector('input[value^="eyJ"]', { timeout: 15000 });
     
-    // Find the anon key
-    // In Supabase dashboard, the anon key is usually the first JWT-looking input or has 'anon' label nearby.
+    // Find the keys
     const keys = await page.evaluate(() => {
       const inputs = Array.from(document.querySelectorAll('input[type="text"], input[value^="eyJ"]'));
-      const anonInput = inputs.find(el => el.value && el.value.startsWith('eyJ') && el.closest('.border') && el.closest('.border').textContent.includes('anon'));
       
-      // If we can't find it strictly by 'anon', just grab the first one that looks like a JWT
-      if (anonInput) return anonInput.value;
-      const anyJwt = inputs.find(el => el.value && el.value.startsWith('eyJ'));
-      return anyJwt ? anyJwt.value : null;
+      const anonInput = inputs.find(el => {
+        const parent = el.closest('.border') || el.parentElement;
+        return el.value && el.value.startsWith('eyJ') && parent && parent.textContent.toLowerCase().includes('anon');
+      });
+      
+      const serviceInput = inputs.find(el => {
+        const parent = el.closest('.border') || el.parentElement;
+        return el.value && el.value.startsWith('eyJ') && parent && parent.textContent.toLowerCase().includes('service_role');
+      });
+      
+      return {
+        anon: anonInput ? anonInput.value : null,
+        service: serviceInput ? serviceInput.value : null
+      };
     });
 
-    if (keys) {
-      console.log('Successfully found the Anon Key!');
+    if (keys.anon || keys.service) {
+      console.log('Successfully found keys:', { anon: !!keys.anon, service: !!keys.service });
       
       const envPath = path.join(__dirname, 'client', '.env');
       let envContent = '';
@@ -45,19 +46,36 @@ async function extractKey() {
         envContent = fs.readFileSync(envPath, 'utf8');
       }
       
-      envContent = envContent.replace(/VITE_SUPABASE_ANON_KEY=.*/g, `VITE_SUPABASE_ANON_KEY=${keys}`);
+      if (keys.anon) {
+        if (envContent.includes('VITE_SUPABASE_ANON_KEY=')) {
+          envContent = envContent.replace(/VITE_SUPABASE_ANON_KEY=.*/g, `VITE_SUPABASE_ANON_KEY=${keys.anon}`);
+        } else {
+          envContent += `\nVITE_SUPABASE_ANON_KEY=${keys.anon}`;
+        }
+      }
+      
+      if (keys.service) {
+        console.log('SERVICE_ROLE_KEY found. Need this for Edge Function secrets.');
+        const rootEnvPath = path.join(__dirname, '.env');
+        let rootEnv = fs.existsSync(rootEnvPath) ? fs.readFileSync(rootEnvPath, 'utf8') : '';
+        if (rootEnv.includes('SUPABASE_SERVICE_ROLE_KEY=')) {
+          rootEnv = rootEnv.replace(/SUPABASE_SERVICE_ROLE_KEY=.*/g, `SUPABASE_SERVICE_ROLE_KEY=${keys.service}`);
+        } else {
+          rootEnv += `\nSUPABASE_SERVICE_ROLE_KEY=${keys.service}`;
+        }
+        fs.writeFileSync(rootEnvPath, rootEnv);
+      }
+      
       fs.writeFileSync(envPath, envContent);
-      console.log('.env updated successfully.');
+      console.log('Environment files updated successfully.');
     } else {
-      console.log('Could not find the API key on the page.');
+      console.log('Could not find the API keys on the page.');
     }
     
     await page.close();
+    browser.disconnect();
   } catch (e) {
     console.error('Error:', e);
-  } finally {
-    if (browser) browser.disconnect();
   }
 }
-
 extractKey();
