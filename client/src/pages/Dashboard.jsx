@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, ChevronLeft, Save, Send, LogOut, 
   CheckCircle2, AlertCircle, Building2, User, 
-  Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight
+  Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X
 } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     submissionDate: new Date().toISOString().split('T')[0],
@@ -179,20 +180,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-    if (isSubmitted) return;
-
-    if (!formData.signedBy || !formData.position) {
-      alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
-      setCurrentStep(9);
-      return;
-    }
-
-    const confirm = window.confirm('هل أنت متأكد من إرسال العرض نهائياً؟ لن تتمكن من التعديل بعد هذه الخطوة.');
-    if (!confirm) return;
-
+  const processFinalSubmit = async () => {
     setIsSubmitting(true);
+    setShowConfirmModal(false);
     try {
       const payload = {
         user_id: user.userId || user.id,
@@ -210,13 +200,25 @@ const Dashboard = () => {
       if (error) throw error;
       setIsSubmitted(true);
       setShowSuccess(true);
-      alert('تم إرسال العرض بنجاح. شكراً لكم!');
     } catch (err) {
       console.error('Submit error:', err);
       alert('حدث خطأ أثناء الإرسال.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (isSubmitted) return;
+
+    if (!formData.signedBy || !formData.position) {
+      alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
+      setCurrentStep(9);
+      return;
+    }
+
+    setShowConfirmModal(true);
   };
 
   const logout = () => {
@@ -361,7 +363,7 @@ const Dashboard = () => {
               <textarea 
                 name="additionalNotes"
                 placeholder="اكتب ملاحظاتك هنا..."
-                className="w-full h-48 p-8 rounded-[2rem] bg-white border-2 border-gray-50 focus:border-blue-900 outline-none font-bold transition-all shadow-sm"
+                className="w-full h-48 p-8 rounded-[2rem] bg-white border-2 border-gray-100 focus:border-blue-900 outline-none font-bold transition-all shadow-sm"
                 value={formData.additionalNotes}
                 onChange={handleInputChange}
                 disabled={isSubmitted}
@@ -487,6 +489,22 @@ const Dashboard = () => {
           )}
         </main>
       </div>
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-blue-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-scale-in text-center">
+            <div className="w-20 h-20 bg-blue-50 text-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
+               <AlertCircle className="w-10 h-10" />
+            </div>
+            <h3 className="text-xl font-black text-blue-950 mb-4">تأكيد الإرسال النهائي</h3>
+            <p className="text-gray-500 font-bold mb-10 leading-relaxed text-sm">هل أنت متأكد من إرسال العرض نهائياً؟ لن تتمكن من التعديل على البيانات بعد هذه الخطوة.</p>
+            <div className="flex gap-4">
+              <button onClick={processFinalSubmit} className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-black hover:bg-blue-800 transition-all shadow-lg shadow-blue-100">نعم، إرسال</button>
+              <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">تراجع</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
