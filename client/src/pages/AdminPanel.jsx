@@ -314,8 +314,9 @@ const AdminPanel = () => {
                         </td>
                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center gap-2">
-                            <button onClick={() => openDetails(c)} className="bg-indigo-950 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-indigo-900 transition-all shadow-md shadow-indigo-100">مراجعة</button>
-                            <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, title: 'حذف الشركة نهائياً؟' })} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => openDetails(c)} className="bg-indigo-950 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-indigo-900 transition-all">مراجعة</button>
+                            <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
+                            <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
