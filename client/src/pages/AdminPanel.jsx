@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -100,24 +100,6 @@ const AdminPanel = () => {
 
   const [confirmModal, setConfirmModal] = useState({ show: false, type: '', username: '', title: '' });
 
-  const handleDeleteSubmission = (username) => {
-    setConfirmModal({
-      show: true,
-      type: 'reset',
-      username,
-      title: 'هل تريد تصفير العرض لهذه الشركة؟ سيتم حذف المسودة والتقديم الحالي.'
-    });
-  };
-
-  const handleDeleteCompany = (username) => {
-    setConfirmModal({
-      show: true,
-      type: 'delete',
-      username,
-      title: 'حذف حساب الشركة نهائياً؟ سيتم مسح كافة البيانات المرتبطة بها.'
-    });
-  };
-
   const executeDelete = async () => {
     const { type, username } = confirmModal;
     try {
@@ -135,6 +117,13 @@ const AdminPanel = () => {
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
         alert('تم حذف الشركة بنجاح.');
+      } else if (type === 'finalize') {
+        const { error } = await supabase
+          .from('submissions')
+          .update({ status: 'final', last_updated: new Date().toISOString() })
+          .eq('username', username);
+        if (error) throw error;
+        alert('تم تثبيت العرض كطلب نهائي بنجاح.');
       }
       await fetchData();
     } catch (err) {
@@ -163,8 +152,8 @@ const AdminPanel = () => {
     window.location.reload();
   };
 
-  const allCompanies = dynamicUsers.map(user => {
-    const submission = submissions.find(s => s.username === user.username) || {};
+  const allCompanies = dynamicUsers.map(u => {
+    const submission = submissions.find(s => s.username === u.username) || {};
     return {
       ...(submission || {}),
       ...(submission.data || {}),
@@ -172,8 +161,8 @@ const AdminPanel = () => {
       status: submission.status,
       lastUpdated: submission.last_updated || submission.lastupdated,
       documentUrl: submission.document_path || submission.document_url,
-      username: user.username,
-      companyName: (submission.data && submission.data.companyName) || submission.companyName || user.name || user.username,
+      username: u.username,
+      companyName: (submission.data && submission.data.companyName) || submission.companyName || u.name || u.username,
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
       isSubmitted: submission.status === 'final' || !!(submission.last_updated || submission.lastupdated)
@@ -291,6 +280,7 @@ const AdminPanel = () => {
                       <th className="px-8 py-5 w-16">#</th>
                       <th className="px-8 py-5">الشركة والممثل</th>
                       <th className="px-8 py-5">الحالة</th>
+                      <th className="px-8 py-5 text-center">المرفقات</th>
                       <th className="px-8 py-5 text-center">التقييم</th>
                       <th className="px-8 py-5 text-center">الإجراءات</th>
                     </tr>
@@ -308,7 +298,16 @@ const AdminPanel = () => {
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
                         </td>
                         <td className="px-8 py-6">
-                           {c.isSubmitted ? <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black">تم التقديم</span> : <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">بانتظار التقديم</span>}
+                           {c.isSubmitted ? 
+                             <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span> : 
+                             <div className="flex items-center gap-2">
+                               <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
+                               <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
+                             </div>
+                           }
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
                         </td>
                         <td className="px-8 py-6 text-center">
                           <input type="number" min="0" max="10" disabled={!c.isSubmitted} value={c.evaluation_score || 0} onChange={(e) => handleUpdateScore(c.username, parseInt(e.target.value))} className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" />
@@ -316,6 +315,7 @@ const AdminPanel = () => {
                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center gap-2">
                             <button onClick={() => openDetails(c)} className="bg-indigo-950 text-white px-5 py-2.5 rounded-xl text-[10px] font-black hover:bg-indigo-900 transition-all shadow-md shadow-indigo-100">مراجعة</button>
+                            <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, title: 'حذف الشركة نهائياً؟' })} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -339,14 +339,14 @@ const AdminPanel = () => {
                   <CompareColumn title="المعايير والأسئلة" isHeader fields={[
                     { label: 'رأس المال المودع' },
                     { label: 'سنوات الخبرة' },
-                    { label: 'المؤسسات المخدَّمة' },
+                    { label: 'المؤسسات الحكومية' },
                     { label: 'آلية التسوية المالية' },
                     { label: 'العمولات المقترحة' },
-                    { label: 'شمولية النظام الإلكتروني' },
-                    { label: 'شهادات الأمن السيبراني' },
-                    { label: 'خطاب الضمان المصرفي' },
-                    { label: 'تطبيق الهاتف الذكي' },
-                    { label: 'التقييم النهائي' }
+                    { label: 'النظام الإلكتروني' },
+                    { label: 'شهادات الأمن' },
+                    { label: 'خطاب الضمان' },
+                    { label: 'تطبيق الهاتف' },
+                    { label: 'التقييم' }
                   ]} />
 
                   {selectedForCompare.map(username => {
@@ -374,7 +374,7 @@ const AdminPanel = () => {
           {view === 'details' && selectedSubmission && (
             <div className="space-y-8 animate-fade-in pb-20">
               <div className="flex justify-between items-center">
-                <button onClick={() => setView('list')} className="flex items-center gap-2 text-indigo-600 font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all"><ArrowRight /> العودة</button>
+                <button onClick={() => setView('list')} className="flex items-center gap-2 text-indigo-600 font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all"><ArrowRight /> العودة للشركات</button>
                 <button onClick={handlePdfExport} className="bg-indigo-950 text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2 hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-100"><Download className="w-5 h-5" /> تصدير PDF</button>
               </div>
               
@@ -455,7 +455,7 @@ const AdminPanel = () => {
                   <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)" data={selectedSubmission} fields={[
                     { key: 'q4_4_exitClause', label: '4. برامج التدريب المجانية' },
                     { key: 'q4_5_liability', label: '5. شروط وأحكام فسخ العقد' },
-                    { key: 'q4_6_jurisdiction', label: '6. القانون والاختصاص القضائي' },
+                    { key: 'q4_6_jurisdiction', label: '6. القانون والاخُتصاص القضائي' },
                     { key: 'q4_7_auditRight', label: '7. الخضوع للتحكيم التجاري' },
                     { key: 'q4_8_contractDuration', label: '8. مدة العقد المقترحة' },
                     { key: 'q4_9_renewal', label: '9. معالجة شكاوى الطلبة' },
@@ -492,9 +492,9 @@ const AdminPanel = () => {
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
           <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-scale-in">
-            <h3 className="text-xl font-black text-center mb-6 text-indigo-950">{confirmModal.title}</h3>
+            <h3 className="text-xl font-black text-center mb-6 text-indigo-950 leading-relaxed">{confirmModal.title}</h3>
             <div className="flex gap-4">
-              <button onClick={executeDelete} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-lg shadow-red-100">تأكيد</button>
+              <button onClick={executeDelete} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">تأكيد</button>
               <button onClick={() => setConfirmModal({ show: false })} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">تراجع</button>
             </div>
           </div>
