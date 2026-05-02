@@ -1,0 +1,11 @@
+109-123-248-151.sslip.io {
+    # Proxy API requests to backend
+    handle /api/* {
+        reverse_proxy backend:5000
+    }
+
+    # Proxy everything else to frontend
+    handle {
+        reverse_proxy frontend:80
+    }
+}

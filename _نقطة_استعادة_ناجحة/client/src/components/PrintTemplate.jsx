@@ -75,7 +75,7 @@ const PrintTemplate = ({ data }) => {
           <h1 style={{ fontSize: '22px', fontWeight: '900', color: '#1e1b4b', margin: 0 }}>جامعة بابل</h1>
           <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0 0 0' }}>لجنة معايير التعاقد مع شركات الدفع الالكتروني</p>
         </div>
-        <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
+        <img src="./logo.jpg" alt="Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
         <div style={{ textAlign: 'left', fontSize: '9px', fontWeight: 'bold', color: '#64748b' }}>
           <p style={{ margin: 0 }}>التاريخ: {new Date().toLocaleDateString('ar-IQ')}</p>
           <p style={{ margin: 0 }}>الرقم المرجعي: UOB-{String(data.username || '').toUpperCase()}</p>
