@@ -377,7 +377,7 @@ const Dashboard = () => {
       case 9:
         return (
           <div className="space-y-6 animate-fade-in">
-            <h3 className="text-xl font-bold border-r-4 pr-4 mb-6 section-card p-4 rounded-xl shadow-sm" style={{ color: 'var(--theme-color)' }}>سابعاً: التوقيع والمصادقة</h3>
+            <h3 className="text-xl font-bold border-r-4 pr-4 mb-6 section-card p-4 rounded-xl shadow-sm" style={{ color: 'var(--theme-color)' }}>تاسعاً: التوقيع والمصادقة</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputField label="اسم المفوض بالتوقيع" name="signedBy" value={formData.signedBy} onChange={handleInputChange} />
               <InputField label="الصفة الوظيفية" name="position" value={formData.position} onChange={handleInputChange} />
