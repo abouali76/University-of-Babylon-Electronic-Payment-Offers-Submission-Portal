@@ -14,7 +14,6 @@ const Dashboard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [errors, setErrors] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -403,7 +402,7 @@ const Dashboard = () => {
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src="./logo.jpg" alt="Logo" className="w-12 h-12 object-contain" />
+            <img src="/logo.jpg" alt="Logo" className="w-12 h-12 object-contain" />
             <div>
               <h1 className="font-black text-blue-950 text-lg leading-tight">بوابة التقديم الإلكتروني</h1>
               <p className="text-[10px] font-bold text-gray-400">جامعة بابل - لجنة الدفع الإلكتروني</p>
