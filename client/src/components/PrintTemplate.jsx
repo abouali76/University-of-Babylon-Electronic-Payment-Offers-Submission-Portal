@@ -3,6 +3,23 @@ import React from 'react';
 const PrintTemplate = ({ data }) => {
   if (!data) return null;
 
+  // Robust value lookup (same logic as AdminPanel)
+  const getVal = (key, aliases = []) => {
+    if (data[key]) return data[key];
+    if (aliases) {
+      for (const alias of aliases) {
+        if (data[alias]) return data[alias];
+      }
+    }
+    const lowerKey = key.toLowerCase();
+    if (data[lowerKey]) return data[lowerKey];
+    const noPrefix = key.replace(/^q\d[a-z]?_\d_/, '');
+    if (data[noPrefix]) return data[noPrefix];
+    const noPrefixLower = noPrefix.toLowerCase();
+    if (data[noPrefixLower]) return data[noPrefixLower];
+    return '';
+  };
+
   const styles = {
     container: {
       width: '210mm',
@@ -61,7 +78,7 @@ const PrintTemplate = ({ data }) => {
         <img src="./logo.jpg" alt="Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
         <div style={{ textAlign: 'left', fontSize: '9px', fontWeight: 'bold', color: '#64748b' }}>
           <p style={{ margin: 0 }}>التاريخ: {new Date().toLocaleDateString('ar-IQ')}</p>
-          <p style={{ margin: 0 }}>الرقم المرجعي: UOB-{data.username?.toUpperCase()}</p>
+          <p style={{ margin: 0 }}>الرقم المرجعي: UOB-{String(data.username || '').toUpperCase()}</p>
         </div>
       </div>
 
@@ -72,99 +89,99 @@ const PrintTemplate = ({ data }) => {
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>أولاً: معلومات الشركة العامة</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 30px' }}>
-          <InfoRow label="اسم الشركة" value={data.companyName} styles={styles} />
-          <InfoRow label="تاريخ التقديم" value={data.submissionDate} styles={styles} />
-          <InfoRow label="الممثل الرسمي" value={data.representativeName} styles={styles} />
-          <InfoRow label="رقم الهاتف" value={data.phone} styles={styles} />
-          <InfoRow label="البريد الإلكتروني" value={data.email} styles={styles} />
-          <InfoRow label="إجازة البنك المركزي" value={data.centralBankLicense} styles={styles} />
-          <InfoRow label="سنوات الخبرة" value={data.marketExperience} styles={styles} />
-          <InfoRow label="المؤسسات الحكومية" value={data.govInstitutionsCount} styles={styles} />
-          <InfoRow label="الملاءة المالية" value={data.paidCapital} styles={styles} />
-          <InfoRow label="العنوان الرسمي" value={data.officialAddress} styles={styles} />
+          <InfoRow label="اسم الشركة" value={getVal('companyName', ['companyname'])} styles={styles} />
+          <InfoRow label="تاريخ التقديم" value={getVal('submissionDate', ['submissiondate'])} styles={styles} />
+          <InfoRow label="الممثل الرسمي" value={getVal('representativeName', ['representativename'])} styles={styles} />
+          <InfoRow label="رقم الهاتف" value={getVal('phone')} styles={styles} />
+          <InfoRow label="البريد الإلكتروني" value={getVal('email')} styles={styles} />
+          <InfoRow label="إجازة البنك المركزي" value={getVal('centralBankLicense', ['centralbanklicense'])} styles={styles} />
+          <InfoRow label="سنوات الخبرة" value={getVal('marketExperience', ['marketexperience'])} styles={styles} />
+          <InfoRow label="المؤسسات الحكومية" value={getVal('govInstitutionsCount', ['govinstitutionscount'])} styles={styles} />
+          <InfoRow label="الملاءة المالية" value={getVal('paidCapital', ['paidcapital'])} styles={styles} />
+          <InfoRow label="العنوان الرسمي" value={getVal('officialAddress', ['officialaddress'])} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. آلية التسوية المالية (12 ساعة)" value={data.q2_1_settlement} styles={styles} />
-          <QuestionBox label="2. العمولات والخصومات المقترحة" value={data.q2_2_commissions} styles={styles} />
-          <QuestionBox label="3. الوسيط المالي / البنك الوسيط" value={data.q2_3_intermediary} styles={styles} />
-          <QuestionBox label="4. قيمة غرامات التأخير" value={data.q2_4_delayPenalty} styles={styles} />
-          <QuestionBox label="5. الالتزام بأجهزة ATM داخل الجامعة" value={data.q2_5_atmCommitment} styles={styles} />
-          <QuestionBox label="6. تفاصيل إصدار بطاقات الطلبة" value={data.q2_6_studentCards} styles={styles} />
-          <QuestionBox label="7. مراكز التعبئة وساعات العمل" value={data.q2_7_chargingCenters} styles={styles} />
-          <QuestionBox label="8. مستلزمات PoS المجانية والصيانة" value={data.q2_8_posCommitment} styles={styles} />
+          <QuestionBox label="1. آلية التسوية المالية (12 ساعة)" value={getVal('q2_1_settlement')} styles={styles} />
+          <QuestionBox label="2. العمولات والخصومات المقترحة" value={getVal('q2_2_commissions')} styles={styles} />
+          <QuestionBox label="3. الوسيط المالي / البنك الوسيط" value={getVal('q2_3_intermediary')} styles={styles} />
+          <QuestionBox label="4. قيمة غرامات التأخير" value={getVal('q2_4_delayPenalty')} styles={styles} />
+          <QuestionBox label="5. الالتزام بأجهزة ATM داخل الجامعة" value={getVal('q2_5_atmCommitment')} styles={styles} />
+          <QuestionBox label="6. تفاصيل إصدار بطاقات الطلبة" value={getVal('q2_6_studentCards')} styles={styles} />
+          <QuestionBox label="7. مراكز التعبئة وساعات العمل" value={getVal('q2_7_chargingCenters')} styles={styles} />
+          <QuestionBox label="8. مستلزمات PoS المجانية والصيانة" value={getVal('q2_8_posCommitment')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. النظام الإلكتروني والتقارير" value={data.q3a_1_integratedSystem} styles={styles} />
-          <QuestionBox label="2. بطاقات خاصة للوحدات الإدارية" value={data.q3a_2_techSpecs} styles={styles} />
-          <QuestionBox label="3. كشف حساب لحظي وتقارير دورية" value={data.q3a_3_appSupport} styles={styles} />
-          <QuestionBox label="4. التكامل مع موقع الجامعة" value={data.q3a_4_webIntegration} styles={styles} />
-          <QuestionBox label="5. خدمة التحويلات خارج العراق" value={data.q3a_5_reporting} styles={styles} />
-          <QuestionBox label="6. توفر رقم IBAN دولي" value={data.q3a_6_training} styles={styles} />
+          <QuestionBox label="1. النظام الإلكتروني والتقارير" value={getVal('q3a_1_integratedSystem')} styles={styles} />
+          <QuestionBox label="2. بطاقات خاصة للوحدات الإدارية" value={getVal('q3a_2_techSpecs')} styles={styles} />
+          <QuestionBox label="3. كشف حساب لحظي وتقارير دورية" value={getVal('q3a_3_appSupport')} styles={styles} />
+          <QuestionBox label="4. التكامل مع موقع الجامعة" value={getVal('q3a_4_webIntegration')} styles={styles} />
+          <QuestionBox label="5. خدمة التحويلات خارج العراق" value={getVal('q3a_5_reporting')} styles={styles} />
+          <QuestionBox label="6. توفر رقم IBAN دولي" value={getVal('q3a_6_training')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. شهادات الأمن (ISO, PCI-DSS)" value={data.q3b_1_certificates} styles={styles} />
-          <QuestionBox label="2. بروتوكولات التشفير المستخدمة" value={data.q3b_2_encryption} styles={styles} />
-          <QuestionBox label="3. خطة الاستمرارية (RTO / BCP)" value={data.q3b_3_rto_bcp} styles={styles} />
-          <QuestionBox label="4. سياسة النسخ الاحتياطي" value={data.q3b_4_backups} styles={styles} />
-          <QuestionBox label="5. الدعم الفني (24/7 SLA)" value={data.q3b_5_supportSla} styles={styles} />
-          <QuestionBox label="6. اختبارات الاختراق الدورية" value={data.q3b_6_penTest} styles={styles} />
-          <QuestionBox label="7. سياسة الاحتفاظ بالبيانات" value={data.q3b_7_monitoring} styles={styles} />
-          <QuestionBox label="8. طرائق الاتصال والبدائل" value={data.q3b_8_incident} styles={styles} />
+          <QuestionBox label="1. شهادات الأمن (ISO, PCI-DSS)" value={getVal('q3b_1_certificates')} styles={styles} />
+          <QuestionBox label="2. بروتوكولات التشفير المستخدمة" value={getVal('q3b_2_encryption')} styles={styles} />
+          <QuestionBox label="3. خطة الاستمرارية (RTO / BCP)" value={getVal('q3b_3_rto_bcp')} styles={styles} />
+          <QuestionBox label="4. سياسة النسخ الاحتياطي" value={getVal('q3b_4_backups')} styles={styles} />
+          <QuestionBox label="5. الدعم الفني (24/7 SLA)" value={getVal('q3b_5_supportSla')} styles={styles} />
+          <QuestionBox label="6. اختبارات الاختراق الدورية" value={getVal('q3b_6_penTest')} styles={styles} />
+          <QuestionBox label="7. سياسة الاحتفاظ بالبيانات" value={getVal('q3b_7_monitoring')} styles={styles} />
+          <QuestionBox label="8. طرائق الاتصال والبدائل" value={getVal('q3b_8_incident')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>رابعاً: أ- الضمانات وملكية البيانات</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. خطاب الضمان المصرفي" value={data.q4_1_bankGuarantee} styles={styles} />
-          <QuestionBox label="2. سرية البيانات (NDA)" value={data.q4_2_penaltyClause} styles={styles} />
-          <QuestionBox label="3. ملكية البيانات واستردادها" value={data.q4_3_dataOwnership} styles={styles} />
+          <QuestionBox label="1. خطاب الضمان المصرفي" value={getVal('q4_1_bankGuarantee')} styles={styles} />
+          <QuestionBox label="2. سرية البيانات (NDA)" value={getVal('q4_2_penaltyClause')} styles={styles} />
+          <QuestionBox label="3. ملكية البيانات واستردادها" value={getVal('q4_3_dataOwnership')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="4. البرامج التدريبية المجانية" value={data.q4_4_exitClause} styles={styles} />
-          <QuestionBox label="5. شروط فسخ العقد" value={data.q4_5_liability} styles={styles} />
-          <QuestionBox label="6. القانون والاختصاص القضائي" value={data.q4_6_jurisdiction} styles={styles} />
-          <QuestionBox label="7. التحكيم التجاري العراقي" value={data.q4_7_auditRight} styles={styles} />
-          <QuestionBox label="8. مدة العقد وشروط التجديد" value={data.q4_8_contractDuration} styles={styles} />
-          <QuestionBox label="9. معالجة شكاوى الطلبة" value={data.q4_9_renewal} styles={styles} />
+          <QuestionBox label="4. البرامج التدريبية المجانية" value={getVal('q4_4_exitClause')} styles={styles} />
+          <QuestionBox label="5. شروط فسخ العقد" value={getVal('q4_5_liability')} styles={styles} />
+          <QuestionBox label="6. القانون والاختصاص القضائي" value={getVal('q4_6_jurisdiction')} styles={styles} />
+          <QuestionBox label="7. التحكيم التجاري العراقي" value={getVal('q4_7_auditRight')} styles={styles} />
+          <QuestionBox label="8. مدة العقد وشروط التجديد" value={getVal('q4_8_contractDuration')} styles={styles} />
+          <QuestionBox label="9. معالجة شكاوى الطلبة" value={getVal('q4_9_renewal')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. تطبيق الهاتف (iOS/Android)" value={data.q5_1_extraFeatures} styles={styles} />
-          <QuestionBox label="2. خدمات مصرفية إضافية" value={data.q5_2_innovation} styles={styles} />
-          <QuestionBox label="3. الطاقة الاستيعابية للنظام" value={data.q5_3_scholarships} styles={styles} />
-          <QuestionBox label="4. دعم الفعاليات والمؤتمرات" value={data.q5_4_staffTraining} styles={styles} />
-          <QuestionBox label="5. تحديث الأجهزة والأنظمة" value={data.q5_5_mobileApp} styles={styles} />
-          <QuestionBox label="6. تسديد الأجور بالدولار للخارج" value={data.q5_6_foreignStudents} styles={styles} />
-          <QuestionBox label="7. ميزات إضافية لجامعة بابل" value={data.q5_7_complaints} styles={styles} />
-          <QuestionBox label="8. المؤسسات الحكومية المخدَّمة" value={data.q5_8_socialResp} styles={styles} />
+          <QuestionBox label="1. تطبيق الهاتف (iOS/Android)" value={getVal('q5_1_extraFeatures')} styles={styles} />
+          <QuestionBox label="2. خدمات مصرفية إضافية" value={getVal('q5_2_innovation')} styles={styles} />
+          <QuestionBox label="3. الطاقة الاستيعابية للنظام" value={getVal('q5_3_scholarships')} styles={styles} />
+          <QuestionBox label="4. دعم الفعاليات والمؤتمرات" value={getVal('q5_4_staffTraining')} styles={styles} />
+          <QuestionBox label="5. تحديث الأجهزة والأنظمة" value={getVal('q5_5_posUpdates', ['q5_5_mobileApp', 'mobileApp', 'posUpdates'])} styles={styles} />
+          <QuestionBox label="6. تسديد الأجور بالدولار للخارج" value={getVal('q5_6_foreignPayments', ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'])} styles={styles} />
+          <QuestionBox label="7. ميزات إضافية لجامعة بابل" value={getVal('q5_7_complaints')} styles={styles} />
+          <QuestionBox label="8. المؤسسات الحكومية المخدَّمة" value={getVal('q5_8_socialResp', ['socialResp'])} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>سادساً: الملاحظات والوثائق</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="المستندات المرفقة" value={data.documentUrl ? "تم إرفاق الملف رسمياً عبر البوابة الإلكترونية" : "لم يتم إرفاق ملفات."} styles={styles} />
-          <QuestionBox label="ملاحظات إضافية من الشركة" value={data.additionalNotes} styles={styles} />
+          <QuestionBox label="المستندات المرفقة" value={getVal('documentUrl', ['document_url', 'document_path']) ? "تم إرفاق الملف رسمياً عبر البوابة الإلكترونية" : "لم يتم إرفاق ملفات."} styles={styles} />
+          <QuestionBox label="ملاحظات إضافية من الشركة" value={getVal('additionalNotes', ['additionalnotes'])} styles={styles} />
         </div>
       </section>
 
@@ -172,8 +189,8 @@ const PrintTemplate = ({ data }) => {
         <div>
           <p style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '35px' }}>ختم وتوقيع الشركة</p>
           <div style={{ borderTop: '1px solid #000', paddingTop: '5px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 'bold' }}>{data.signedBy || '........................'}</p>
-            <p style={{ fontSize: '9px', color: '#64748b' }}>{data.position}</p>
+            <p style={{ fontSize: '11px', fontWeight: 'bold' }}>{getVal('signedBy', ['signedby']) || '........................'}</p>
+            <p style={{ fontSize: '9px', color: '#64748b' }}>{getVal('position')}</p>
           </div>
         </div>
         <div>

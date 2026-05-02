@@ -42,7 +42,6 @@ const AdminPanel = () => {
       let usersData = [];
       let subsData = [];
 
-      // Use 'users' table instead of 'profiles'
       const usersResult = await supabase
         .from('users')
         .select('id, username, name, role, created_at')
@@ -165,7 +164,6 @@ const AdminPanel = () => {
 
   const allCompanies = dynamicUsers.map(user => {
     const submission = submissions.find(s => s.username === user.username) || {};
-    // Robust data merging: handle both JSON column and flat columns
     const mergedData = {
       ...(submission || {}),
       ...(submission.data || {}),
@@ -312,6 +310,9 @@ const AdminPanel = () => {
                     { key: 'representativeName', label: 'الممثل الرسمي', aliases: ['representativename'] },
                     { key: 'phone', label: 'رقم الهاتف' },
                     { key: 'email', label: 'البريد الإلكتروني' },
+                    { key: 'centralBankLicense', label: 'إجازة البنك المركزي', aliases: ['centralbanklicense'] },
+                    { key: 'marketExperience', label: 'سنوات الخبرة', aliases: ['marketexperience'] },
+                    { key: 'govInstitutionsCount', label: 'المؤسسات الحكومية', aliases: ['govinstitutionscount'] },
                     { key: 'paidCapital', label: 'رأس المال', aliases: ['paidcapital'] },
                     { key: 'officialAddress', label: 'العنوان', aliases: ['officialaddress'] },
                   ]} />
@@ -372,6 +373,17 @@ const AdminPanel = () => {
                     { key: 'q5_7_complaints', label: '7. ميزات إضافية' },
                     { key: 'q5_8_socialResp', label: '8. المؤسسات المخدَّمة', aliases: ['socialResp'] },
                   ]} />
+
+                  <DetailSection title="سادساً: المرفقات والملاحظات" data={selectedSubmission} fields={[
+                    { key: 'additionalNotes', label: 'ملاحظات إضافية من الشركة', aliases: ['additionalnotes'] },
+                    { key: 'documentUrl', label: 'المستند المرفوع (رابط)', aliases: ['document_url', 'document_path'] },
+                  ]} />
+
+                  <DetailSection title="سابعاً: التوقيع والمصادقة" data={selectedSubmission} fields={[
+                    { key: 'signedBy', label: 'اسم المفوض بالتوقيع', aliases: ['signedby'] },
+                    { key: 'position', label: 'الصفة الوظيفية' },
+                    { key: 'lastUpdated', label: 'تاريخ الإرسال النهائي', aliases: ['last_updated', 'lastupdated'] },
+                  ]} />
                 </div>
               </div>
             </div>
@@ -396,26 +408,18 @@ const AdminPanel = () => {
 
 const DetailSection = ({ title, data, fields }) => {
   const getVal = (f) => {
-    // 1. Try exact key
     if (data[f.key]) return data[f.key];
-    
-    // 2. Try aliases
     if (f.aliases) {
       for (const alias of f.aliases) {
         if (data[alias]) return data[alias];
       }
     }
-    
-    // 3. Try lowercase variant
     const lowerKey = f.key.toLowerCase();
     if (data[lowerKey]) return data[lowerKey];
-    
-    // 4. Try without qX_ prefix
     const noPrefix = f.key.replace(/^q\d[a-z]?_\d_/, '');
     if (data[noPrefix]) return data[noPrefix];
     const noPrefixLower = noPrefix.toLowerCase();
     if (data[noPrefixLower]) return data[noPrefixLower];
-
     return '---';
   };
 
