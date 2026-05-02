@@ -42,9 +42,10 @@ const AdminPanel = () => {
       let usersData = [];
       let subsData = [];
 
+      // Use 'users' table instead of 'profiles'
       const usersResult = await supabase
-        .from('profiles')
-        .select('user_id, username, display_name, role, created_at')
+        .from('users')
+        .select('id, username, name, role, created_at')
         .eq('role', 'company')
         .order('created_at', { ascending: false });
       
@@ -54,7 +55,7 @@ const AdminPanel = () => {
 
       const subsResult = await supabase
         .from('submissions')
-        .select('user_id, username, status, evaluation_score, last_updated, document_path, data')
+        .select('*')
         .order('last_updated', { ascending: false });
       
       if (!subsResult.error) {
@@ -164,16 +165,19 @@ const AdminPanel = () => {
 
   const allCompanies = dynamicUsers.map(user => {
     const submission = submissions.find(s => s.username === user.username) || {};
-    return {
+    // Robust data merging: handle both JSON column and flat columns
+    const mergedData = {
+      ...(submission || {}),
       ...(submission.data || {}),
       evaluation_score: submission.evaluation_score,
       status: submission.status,
-      lastUpdated: submission.last_updated,
-      documentUrl: submission.document_path,
+      lastUpdated: submission.last_updated || submission.lastupdated,
+      documentUrl: submission.document_path || submission.document_url,
       username: user.username,
-      companyName: (submission.data && submission.data.companyName) || user.display_name || user.username,
-      isSubmitted: submission.status === 'final' || !!submission.last_updated
+      companyName: (submission.data && submission.data.companyName) || submission.companyName || user.name || user.username,
+      isSubmitted: submission.status === 'final' || !!(submission.last_updated || submission.lastupdated)
     };
+    return mergedData;
   });
 
   const filteredCompanies = allCompanies.filter(c => 
@@ -304,12 +308,12 @@ const AdminPanel = () => {
                 
                 <div className="p-12 space-y-12">
                   <DetailSection title="أولاً: المعلومات العامة والخبرات" data={selectedSubmission} fields={[
-                    { key: 'submissionDate', label: 'تاريخ التقديم' },
-                    { key: 'representativeName', label: 'الممثل الرسمي' },
+                    { key: 'submissionDate', label: 'تاريخ التقديم', aliases: ['submissiondate'] },
+                    { key: 'representativeName', label: 'الممثل الرسمي', aliases: ['representativename'] },
                     { key: 'phone', label: 'رقم الهاتف' },
                     { key: 'email', label: 'البريد الإلكتروني' },
-                    { key: 'paidCapital', label: 'رأس المال' },
-                    { key: 'officialAddress', label: 'العنوان' },
+                    { key: 'paidCapital', label: 'رأس المال', aliases: ['paidcapital'] },
+                    { key: 'officialAddress', label: 'العنوان', aliases: ['officialaddress'] },
                   ]} />
 
                   <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" data={selectedSubmission} fields={[
