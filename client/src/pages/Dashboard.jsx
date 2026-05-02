@@ -63,8 +63,8 @@ const Dashboard = () => {
     q5_2_innovation: '',
     q5_3_scholarships: '',
     q5_4_staffTraining: '',
-    q5_5_mobileApp: '',
-    q5_6_foreignStudents: '',
+    q5_5_posUpdates: '',
+    q5_6_foreignPayments: '',
     q5_7_complaints: '',
     q5_8_socialResp: '',
     additionalNotes: '',
@@ -342,8 +342,8 @@ const Dashboard = () => {
               <QuestionBox id="q5_2_innovation" label="2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟" value={formData.q5_2_innovation} onChange={handleInputChange} />
               <QuestionBox id="q5_3_scholarships" label="3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟" value={formData.q5_3_scholarships} onChange={handleInputChange} />
               <QuestionBox id="q5_4_staffTraining" label="4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟" value={formData.q5_4_staffTraining} onChange={handleInputChange} />
-              <QuestionBox id="q5_5_mobileApp" label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟" value={formData.q5_5_mobileApp} onChange={handleInputChange} />
-              <QuestionBox id="q5_6_foreignStudents" label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟" value={formData.q5_6_foreignStudents} onChange={handleInputChange} />
+              <QuestionBox id="q5_5_posUpdates" label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟" value={formData.q5_5_posUpdates} onChange={handleInputChange} />
+              <QuestionBox id="q5_6_foreignPayments" label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟" value={formData.q5_6_foreignPayments} onChange={handleInputChange} />
               <QuestionBox id="q5_7_complaints" label="7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟" value={formData.q5_7_complaints} onChange={handleInputChange} />
               <QuestionBox id="q5_8_socialResp" label="8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟" value={formData.q5_8_socialResp} onChange={handleInputChange} />
             </div>

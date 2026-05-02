@@ -363,10 +363,10 @@ const AdminPanel = () => {
                     { key: 'q5_2_innovation', label: '2. خدمات مصرفية إضافية' },
                     { key: 'q5_3_scholarships', label: '3. الطاقة الاستيعابية' },
                     { key: 'q5_4_staffTraining', label: '4. دعم الفعاليات' },
-                    { key: 'q5_5_mobileApp', label: '5. تحديث الأنظمة' },
-                    { key: 'q5_6_foreignStudents', label: '6. تسديد الأجور بالدولار' },
+                    { key: 'q5_5_posUpdates', label: '5. تحديث الأنظمة', aliases: ['q5_5_mobileApp', 'mobileApp', 'posUpdates'] },
+                    { key: 'q5_6_foreignPayments', label: '6. تسديد الأجور بالدولار', aliases: ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'] },
                     { key: 'q5_7_complaints', label: '7. ميزات إضافية' },
-                    { key: 'q5_8_socialResp', label: '8. المؤسسات المخدَّمة' },
+                    { key: 'q5_8_socialResp', label: '8. المؤسسات المخدَّمة', aliases: ['socialResp'] },
                   ]} />
                 </div>
               </div>
@@ -390,18 +390,44 @@ const AdminPanel = () => {
   );
 };
 
-const DetailSection = ({ title, data, fields }) => (
-  <div className="space-y-6">
-    <h3 className="text-2xl font-black text-indigo-950 border-r-4 border-indigo-600 pr-4">{title}</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {fields.map(f => (
-        <div key={f.key} className="bg-gray-50 p-6 rounded-2xl">
-          <label className="text-[10px] font-black text-gray-400 uppercase">{f.label}</label>
-          <p className="text-sm font-bold text-gray-700 mt-1 whitespace-pre-wrap">{data[f.key] || '---'}</p>
-        </div>
-      ))}
+const DetailSection = ({ title, data, fields }) => {
+  const getVal = (f) => {
+    // 1. Try exact key
+    if (data[f.key]) return data[f.key];
+    
+    // 2. Try aliases
+    if (f.aliases) {
+      for (const alias of f.aliases) {
+        if (data[alias]) return data[alias];
+      }
+    }
+    
+    // 3. Try lowercase variant
+    const lowerKey = f.key.toLowerCase();
+    if (data[lowerKey]) return data[lowerKey];
+    
+    // 4. Try without qX_ prefix
+    const noPrefix = f.key.replace(/^q\d[a-z]?_\d_/, '');
+    if (data[noPrefix]) return data[noPrefix];
+    const noPrefixLower = noPrefix.toLowerCase();
+    if (data[noPrefixLower]) return data[noPrefixLower];
+
+    return '---';
+  };
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-2xl font-black text-indigo-950 border-r-4 border-indigo-600 pr-4">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {fields.map(f => (
+          <div key={f.key} className="bg-gray-50 p-6 rounded-2xl">
+            <label className="text-[10px] font-black text-gray-400 uppercase">{f.label}</label>
+            <p className="text-sm font-bold text-gray-700 mt-1 whitespace-pre-wrap">{getVal(f)}</p>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default AdminPanel;
