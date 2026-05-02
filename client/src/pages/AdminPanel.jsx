@@ -239,6 +239,23 @@ const AdminPanel = () => {
         </header>
 
         <main className="max-w-7xl mx-auto px-6 mt-12">
+          {showAddUser && (
+            <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-indigo-100 mb-10 animate-slide-down">
+              <h3 className="text-lg font-black text-indigo-900 mb-6">إنشاء حساب شركة جديدة</h3>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                handleAddUser({ username: fd.get('username'), password: fd.get('password'), displayName: fd.get('displayName') });
+                e.target.reset();
+              }} className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <input name="displayName" placeholder="اسم الشركة" className="p-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold transition-all" required />
+                <input name="username" placeholder="يوزر الدخول" className="p-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold transition-all" required />
+                <input name="password" type="password" placeholder="كلمة المرور" className="p-4 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold transition-all" required />
+                <button type="submit" className="bg-indigo-950 text-white p-4 rounded-2xl font-black hover:bg-indigo-900 transition-all shadow-lg shadow-indigo-200">تفعيل الحساب</button>
+              </form>
+            </div>
+          )}
+
           {selectedForCompare.length > 0 && view === 'list' && (
             <div className="mb-8 flex items-center justify-between bg-indigo-950 p-6 rounded-[2rem] text-white animate-fade-in shadow-2xl shadow-indigo-200">
               <div className="flex items-center gap-4">
