@@ -42,7 +42,6 @@ const AdminPanel = () => {
       let usersData = [];
       let subsData = [];
 
-      // Always fetch from Supabase if possible
       const usersResult = await supabase
         .from('profiles')
         .select('user_id, username, display_name, role, created_at')
@@ -291,13 +290,13 @@ const AdminPanel = () => {
           )}
 
           {view === 'details' && selectedSubmission && (
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-8 animate-fade-in pb-20">
               <div className="flex justify-between items-center">
                 <button onClick={() => setView('list')} className="text-indigo-600 font-black">← العودة</button>
                 <button onClick={handlePdfExport} className="bg-indigo-900 text-white px-8 py-3 rounded-2xl font-black">تصدير PDF</button>
               </div>
               
-              <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden">
+              <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden border">
                 <div className="bg-indigo-950 p-12 text-white">
                   <h2 className="text-4xl font-black">{selectedSubmission.companyName}</h2>
                   <p className="text-indigo-300 font-bold mt-2">الممثل: {selectedSubmission.representativeName}</p>
@@ -313,18 +312,61 @@ const AdminPanel = () => {
                     { key: 'officialAddress', label: 'العنوان' },
                   ]} />
 
-                  <DetailSection title="ثانياً: الالتزامات التشغيلية" data={selectedSubmission} fields={[
+                  <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" data={selectedSubmission} fields={[
                     { key: 'q2_1_settlement', label: '1. آلية التسوية' },
                     { key: 'q2_2_commissions', label: '2. العمولات' },
+                    { key: 'q2_3_intermediary', label: '3. الوسيط المالي' },
+                    { key: 'q2_4_delayPenalty', label: '4. غرامات التأخير' },
                     { key: 'q2_5_atmCommitment', label: '5. أجهزة ATM' },
+                    { key: 'q2_6_studentCards', label: '6. بطاقات الطلبة' },
+                    { key: 'q2_7_chargingCenters', label: '7. مراكز التعبئة' },
                     { key: 'q2_8_posCommitment', label: '8. نقاط البيع PoS' },
                   ]} />
 
-                  <DetailSection title="خامساً: الخدمات الإضافية" data={selectedSubmission} fields={[
+                  <DetailSection title="ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q3a_1_integratedSystem', label: '1. النظام الإلكتروني' },
+                    { key: 'q3a_2_techSpecs', label: '2. بطاقات الوحدات الإدارية' },
+                    { key: 'q3a_3_appSupport', label: '3. كشف حساب لحظي' },
+                    { key: 'q3a_4_webIntegration', label: '4. التكامل مع الموقع' },
+                    { key: 'q3a_5_reporting', label: '5. التحويلات الخارجية' },
+                    { key: 'q3a_6_training', label: '6. رقم IBAN دولي' },
+                  ]} />
+
+                  <DetailSection title="ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q3b_1_certificates', label: '1. شهادات الأمن' },
+                    { key: 'q3b_2_encryption', label: '2. التشفير' },
+                    { key: 'q3b_3_rto_bcp', label: '3. خطة الاستمرارية' },
+                    { key: 'q3b_4_backups', label: '4. النسخ الاحتياطي' },
+                    { key: 'q3b_5_supportSla', label: '5. الدعم الفني' },
+                    { key: 'q3b_6_penTest', label: '6. اختبارات الاختراق' },
+                    { key: 'q3b_7_monitoring', label: '7. الاحتفاظ بالبيانات' },
+                    { key: 'q3b_8_incident', label: '8. طرائق الاتصال' },
+                  ]} />
+
+                  <DetailSection title="رابعاً: أ- الضمانات وملكية البيانات" data={selectedSubmission} fields={[
+                    { key: 'q4_1_bankGuarantee', label: '1. خطاب الضمان' },
+                    { key: 'q4_2_penaltyClause', label: '2. سرية البيانات' },
+                    { key: 'q4_3_dataOwnership', label: '3. ملكية البيانات' },
+                  ]} />
+
+                  <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q4_4_exitClause', label: '4. التدريب المجاني' },
+                    { key: 'q4_5_liability', label: '5. فسخ العقد' },
+                    { key: 'q4_6_jurisdiction', label: '6. القانون والاختصاص' },
+                    { key: 'q4_7_auditRight', label: '7. التحكيم التجاري' },
+                    { key: 'q4_8_contractDuration', label: '8. مدة العقد' },
+                    { key: 'q4_9_renewal', label: '9. شكاوى الطلبة' },
+                  ]} />
+
+                  <DetailSection title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" data={selectedSubmission} fields={[
                     { key: 'q5_1_extraFeatures', label: '1. تطبيق الهاتف' },
+                    { key: 'q5_2_innovation', label: '2. خدمات مصرفية إضافية' },
+                    { key: 'q5_3_scholarships', label: '3. الطاقة الاستيعابية' },
                     { key: 'q5_4_staffTraining', label: '4. دعم الفعاليات' },
                     { key: 'q5_5_mobileApp', label: '5. تحديث الأنظمة' },
-                    { key: 'q5_7_complaints', label: '7. ميزات إضافية لجامعة بابل' },
+                    { key: 'q5_6_foreignStudents', label: '6. تسديد الأجور بالدولار' },
+                    { key: 'q5_7_complaints', label: '7. ميزات إضافية' },
+                    { key: 'q5_8_socialResp', label: '8. المؤسسات المخدَّمة' },
                   ]} />
                 </div>
               </div>
