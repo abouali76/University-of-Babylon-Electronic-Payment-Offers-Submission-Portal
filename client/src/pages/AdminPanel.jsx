@@ -109,22 +109,24 @@ const AdminPanel = () => {
 
   const executeDelete = async () => {
     const { type, username } = confirmModal;
+    const targetUsername = (username || '').toLowerCase().trim();
     try {
       if (type === 'reset') {
         const { error } = await supabase
           .from('submissions')
           .delete()
-          .eq('username', username);
+          .eq('username', targetUsername);
         if (error) throw error;
         alert('تم تصفير العرض بنجاح.');
       } else if (type === 'delete') {
         const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
-          body: { action: 'delete', username }
+          body: { action: 'delete', username: targetUsername }
         });
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
         alert('تم حذف الشركة بنجاح.');
       } else if (type === 'finalize') {
+        const targetUsername = (username || '').toLowerCase().trim();
         const { error } = await supabase
           .from('submissions')
           .update({ 
@@ -132,14 +134,15 @@ const AdminPanel = () => {
             is_received: true, 
             last_updated: new Date().toISOString() 
           })
-          .eq('username', username);
+          .eq('username', targetUsername);
         if (error) throw error;
         alert('تم تثبيت العرض كطلب نهائي وتأييد الاستلام وقفل التعديل بنجاح.');
       } else if (type === 'confirm_receipt') {
+        const targetUsername = (username || '').toLowerCase().trim();
         const { error } = await supabase
           .from('submissions')
           .update({ is_received: true })
-          .eq('username', username);
+          .eq('username', targetUsername);
         if (error) throw error;
         alert('تم تأييد الاستلام وقفل التعديل للشركة.');
       }

@@ -106,7 +106,7 @@ const Dashboard = () => {
       const currentUser = { ...session.user, ...localUser };
       setUser(currentUser);
 
-      const username = currentUser.user_metadata?.username || localUser.username;
+      const username = (currentUser.user_metadata?.username || localUser.username || '').toLowerCase().trim();
       
       const { data: sub, error: subError } = await supabase
         .from('submissions')
@@ -179,7 +179,7 @@ const Dashboard = () => {
       const { data: existing } = await supabase
         .from('submissions')
         .select('id, is_received')
-        .eq('username', user.username)
+        .eq('username', (user.username || '').toLowerCase().trim())
         .maybeSingle();
       
       if (existing?.is_received) {
@@ -222,7 +222,7 @@ const Dashboard = () => {
       const { data: existing } = await supabase
         .from('submissions')
         .select('id, is_received')
-        .eq('username', user.username)
+        .eq('username', (user.username || '').toLowerCase().trim())
         .maybeSingle();
       
       if (existing?.is_received) {
