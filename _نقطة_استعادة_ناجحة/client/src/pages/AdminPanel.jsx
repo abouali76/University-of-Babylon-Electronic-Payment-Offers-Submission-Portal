@@ -3,6 +3,7 @@ import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarC
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
+import RankingTable from '../components/RankingTable';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const AdminPanel = () => {
   const [dynamicUsers, setDynamicUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [view, setView] = useState('list'); // 'list', 'details', 'compare'
+  const [view, setView] = useState('list'); // 'list', 'details', 'compare', 'results'
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
@@ -271,6 +272,7 @@ const AdminPanel = () => {
                 <RefreshCcw className="w-5 h-5" />
               </button>
               <button onClick={() => setView('list')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white' : 'text-gray-400'}`}>الشركات</button>
+              <button onClick={() => setView('results')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'results' ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'text-gray-400'}`}>نتائج التصنيف</button>
               <button onClick={() => setShowAddUser(!showAddUser)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-black border border-indigo-100">إضافة شركة</button>
               <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><LogOut className="w-5 h-5" /></button>
             </div>
@@ -425,6 +427,17 @@ const AdminPanel = () => {
                   })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {view === 'results' && (
+            <div className="animate-fade-in pb-20">
+              <div className="flex justify-between items-center bg-white p-8 rounded-[2rem] shadow-xl border border-white mb-10">
+                 <button onClick={() => setView('list')} className="flex items-center gap-2 text-indigo-600 font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all"><ArrowRight /> العودة للقائمة</button>
+                 <h2 className="text-2xl font-black text-indigo-950">ترتيب الشركات حسب التقييم النهائي</h2>
+                 <div className="w-32"></div>
+              </div>
+              <RankingTable submissions={allCompanies.filter(c => c.isSubmitted)} />
             </div>
           )}
 
