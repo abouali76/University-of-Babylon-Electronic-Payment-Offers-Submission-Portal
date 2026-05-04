@@ -105,28 +105,26 @@ const AdminPanel = () => {
     }
   };
 
-  const [confirmModal, setConfirmModal] = useState({ show: false, type: '', username: '', title: '' });
+  const [confirmModal, setConfirmModal] = useState({ show: false, type: '', username: '', userId: '', title: '' });
 
   const executeDelete = async () => {
-    const { type, username } = confirmModal;
-    const targetUsername = (username || '').toLowerCase().trim();
+    const { type, username, userId } = confirmModal;
     try {
       if (type === 'reset') {
         const { error } = await supabase
           .from('submissions')
           .delete()
-          .eq('username', targetUsername);
+          .eq('user_id', userId);
         if (error) throw error;
         alert('تم تصفير العرض بنجاح.');
       } else if (type === 'delete') {
         const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
-          body: { action: 'delete', username: targetUsername }
+          body: { action: 'delete', username }
         });
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
         alert('تم حذف الشركة بنجاح.');
       } else if (type === 'finalize') {
-        const targetUsername = (username || '').toLowerCase().trim();
         const { error } = await supabase
           .from('submissions')
           .update({ 
@@ -134,15 +132,14 @@ const AdminPanel = () => {
             is_received: true, 
             last_updated: new Date().toISOString() 
           })
-          .eq('username', targetUsername);
+          .eq('user_id', userId);
         if (error) throw error;
         alert('تم تثبيت العرض كطلب نهائي وتأييد الاستلام وقفل التعديل بنجاح.');
       } else if (type === 'confirm_receipt') {
-        const targetUsername = (username || '').toLowerCase().trim();
         const { error } = await supabase
           .from('submissions')
           .update({ is_received: true })
-          .eq('username', targetUsername);
+          .eq('user_id', userId);
         if (error) throw error;
         alert('تم تأييد الاستلام وقفل التعديل للشركة.');
       }
@@ -153,7 +150,7 @@ const AdminPanel = () => {
     setConfirmModal({ show: false, type: '', username: '', title: '' });
   };
 
-  const handleUpdateScore = async (username, newScore) => {
+  const handleUpdateScore = async (userId, newScore) => {
     if (newScore === undefined || newScore === null || newScore === '') {
       alert('يرجى إدخال درجة التقييم أولاً.');
       return;
@@ -166,23 +163,22 @@ const AdminPanel = () => {
         return;
       }
 
-      console.log(`Updating score for ${username} to ${scoreValue}`);
-      const { data, error, status } = await supabase
+      console.log(`Updating score for ID ${userId} to ${scoreValue}`);
+      const { data, error } = await supabase
         .from('submissions')
         .update({ evaluation_score: scoreValue })
-        .eq('username', username)
+        .eq('user_id', userId)
         .select();
 
       if (error) {
         console.error('Database Error:', error);
-        alert(`فشل التحديث: ${error.message} (كود: ${error.code}). تأكد من إضافة عمود evaluation_score في Supabase.`);
+        alert(`فشل التحديث: ${error.message}`);
         return;
       }
       
-      console.log('Update result:', { data, status });
       alert(`تم رصد درجة التقييم (${scoreValue}) للشركة بنجاح.`);
       await fetchData();
-      if (selectedSubmission && selectedSubmission.username === username) {
+      if (selectedSubmission && selectedSubmission.user_id === userId) {
         setSelectedSubmission(prev => ({ ...prev, evaluation_score: scoreValue }));
       }
     } catch (err) {
@@ -360,7 +356,7 @@ const AdminPanel = () => {
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
                         </td>
                         <td className="px-8 py-6 text-center">
-                          <input type="number" min="0" max="10" disabled={!c.isSubmitted} value={c.evaluation_score || 0} onChange={(e) => handleUpdateScore(c.username, parseInt(e.target.value))} className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" />
+                          <input type="number" min="0" max="10" disabled={!c.isSubmitted} value={c.evaluation_score || 0} onChange={(e) => handleUpdateScore(c.user_id, parseFloat(e.target.value))} className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" />
                         </td>
                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center gap-2">
@@ -502,9 +498,7 @@ const AdminPanel = () => {
                     <button 
                       onClick={() => {
                         const val = window.pendingScore || 0;
-                        if(confirm(`هل أنت متأكد من رصد الدرجة (${val}) لهذه الشركة؟`)) {
-                          handleUpdateScore(selectedSubmission.username, val);
-                        }
+                        handleUpdateScore(selectedSubmission.user_id, val);
                       }}
                       className="px-8 py-4 bg-indigo-950 text-white rounded-xl font-black hover:bg-indigo-900 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center gap-2"
                     >
@@ -593,6 +587,23 @@ const AdminPanel = () => {
                     { key: 'position', label: 'الصفة الوظيفية للمفوض' },
                     { key: 'lastUpdated', label: 'تاريخ الإرسال النهائي', aliases: ['last_updated', 'lastupdated'] },
                   ]} />
+                </div>
+
+                <div className="bg-white p-10 flex gap-4 border-t border-gray-100">
+                   <button 
+                     onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: selectedSubmission.username, userId: selectedSubmission.user_id, title: 'هل تريد تأييد استلام هذا العرض وقفل التعديل؟' })}
+                     className="flex-1 py-5 bg-emerald-600 text-white rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-3"
+                   >
+                     <CheckCircle2 className="w-6 h-6" />
+                     تأييد استلام العرض (قفل النهائي)
+                   </button>
+                   <button 
+                     onClick={() => setConfirmModal({ show: true, type: 'finalize', username: selectedSubmission.username, userId: selectedSubmission.user_id, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })}
+                     className="flex-1 py-5 bg-indigo-900 text-white rounded-2xl font-black hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"
+                   >
+                     <ShieldCheck className="w-6 h-6" />
+                     إرسال نهائي نيابة عن الشركة
+                   </button>
                 </div>
               </div>
             </div>

@@ -454,8 +454,24 @@ const AdminPanel = () => {
                       </div>
                     </div>
                     {/* Diagnostic Info for Debugging */}
-                    <div className="mt-6 p-4 bg-black/20 rounded-xl border border-white/10 font-mono text-[10px] text-indigo-200">
-                      DEBUG: is_received={String(selectedSubmission.is_received)} | score={selectedSubmission.evaluation_score} | username={selectedSubmission.username}
+                    <div className="mt-6 p-6 bg-black/40 rounded-[2rem] border border-white/10 font-mono text-[11px] text-indigo-200 leading-relaxed overflow-x-auto">
+                      <div className="font-black text-amber-400 mb-2 uppercase tracking-widest border-b border-white/10 pb-2">Diagnostic Data (Server View)</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div><span className="text-white/50">username:</span> {selectedSubmission.username}</div>
+                        <div><span className="text-white/50">status:</span> {selectedSubmission.status}</div>
+                        <div><span className="text-white/50">is_received:</span> <span className={selectedSubmission.is_received ? 'text-emerald-400' : 'text-red-400'}>{String(selectedSubmission.is_received)}</span></div>
+                        <div><span className="text-white/50">evaluation_score:</span> <span className="text-amber-400">{selectedSubmission.evaluation_score ?? 'N/A'}</span></div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-white/10">
+                        <div className="text-white/30 text-[9px] mb-1">Available Columns in DB:</div>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.keys(selectedSubmission).map(k => (
+                            <span key={k} className={`px-2 py-1 rounded-md text-[9px] ${['is_received', 'evaluation_score'].includes(k) ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-white/40 border border-white/5'}`}>
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
