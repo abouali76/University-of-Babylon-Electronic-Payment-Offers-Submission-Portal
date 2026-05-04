@@ -151,22 +151,32 @@ const AdminPanel = () => {
   };
 
   const handleUpdateScore = async (username, newScore) => {
+    if (newScore === undefined || newScore === null || newScore === '') {
+      alert('يرجى إدخال درجة التقييم أولاً.');
+      return;
+    }
+
     try {
+      const scoreValue = parseFloat(newScore);
+      if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 10) {
+        alert('يرجى إدخال درجة صحيحة بين 0 و 10.');
+        return;
+      }
+
       const { error } = await supabase
         .from('submissions')
-        .update({ evaluation_score: parseFloat(newScore) || 0 })
+        .update({ evaluation_score: scoreValue })
         .eq('username', username);
 
       if (error) throw error;
-      alert('تم تحديث التقييم بنجاح.');
+      alert(`تم رصد درجة التقييم (${scoreValue}) للشركة بنجاح.`);
       await fetchData();
-      // Update local state if in details view
       if (selectedSubmission && selectedSubmission.username === username) {
-        setSelectedSubmission(prev => ({ ...prev, evaluation_score: parseFloat(newScore) || 0 }));
+        setSelectedSubmission(prev => ({ ...prev, evaluation_score: scoreValue }));
       }
     } catch (err) {
       console.error('Error updating score:', err);
-      alert('فشل تحديث التقييم.');
+      alert('فشل تحديث التقييم. تأكد من وجود عمود evaluation_score في قاعدة البيانات.');
     }
   };
 
@@ -454,15 +464,20 @@ const AdminPanel = () => {
                       min="0" 
                       max="10" 
                       step="0.5"
-                      defaultValue={selectedSubmission.evaluation_score || 0}
-                      id="score-input"
+                      placeholder="0.0"
+                      onChange={(e) => window.pendingScore = e.target.value}
                       className="w-24 p-3 bg-gray-50 rounded-xl border-none text-center font-black text-2xl text-indigo-900 focus:ring-2 ring-amber-400 outline-none"
                     />
                     <button 
-                      onClick={() => handleUpdateScore(selectedSubmission.username, document.getElementById('score-input').value)}
-                      className="px-8 py-4 bg-amber-500 text-white rounded-xl font-black hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 active:scale-95"
+                      onClick={() => {
+                        const val = window.pendingScore || 0;
+                        if(confirm(`هل أنت متأكد من رصد الدرجة (${val}) لهذه الشركة؟`)) {
+                          handleUpdateScore(selectedSubmission.username, val);
+                        }
+                      }}
+                      className="px-8 py-4 bg-indigo-950 text-white rounded-xl font-black hover:bg-indigo-900 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center gap-2"
                     >
-                      حفظ التقييم
+                      تثبيت الدرجة الآن
                     </button>
                   </div>
                 </div>
