@@ -106,9 +106,15 @@ const AdminPanel = () => {
   };
 
   const [confirmModal, setConfirmModal] = useState({ show: false, type: '', username: '', userId: '', title: '' });
-
   const executeDelete = async () => {
     const { type, username, userId } = confirmModal;
+    console.log('Executing action:', { type, username, userId });
+    if (!userId && type !== 'delete') {
+      alert(`خطأ تقني: معرف المستخدم (userId) مفقود لنوع العملية ${type}`);
+      setConfirmModal({ show: false, type: '', username: '', userId: '', title: '' });
+      return;
+    }
+
     try {
       if (type === 'reset') {
         const { error } = await supabase
@@ -145,9 +151,10 @@ const AdminPanel = () => {
       }
       await fetchData();
     } catch (err) {
-      alert('فشل تنفيذ العملية.');
+      console.error('Operation failed:', err);
+      alert(`فشل تنفيذ العملية: ${err.message || 'خطأ غير معروف'}`);
     }
-    setConfirmModal({ show: false, type: '', username: '', title: '' });
+    setConfirmModal({ show: false, type: '', username: '', userId: '', title: '' });
   };
 
   const handleUpdateScore = async (userId, newScore) => {
@@ -197,8 +204,8 @@ const AdminPanel = () => {
   const allCompanies = dynamicUsers.map(u => {
     const submission = submissions.find(s => s.username === u.username) || {};
     return {
-      ...(submission || {}),
-      ...(submission.data || {}),
+      ...submission,
+      user_id: u.id, // Force using the ID from users table as the source of truth
       evaluation_score: submission.evaluation_score,
       status: submission.status,
       lastUpdated: submission.last_updated || submission.lastupdated,
@@ -348,7 +355,7 @@ const AdminPanel = () => {
                             ) : (
                               <div className="flex items-center gap-2">
                                 <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
+                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, userId: c.user_id, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
                               </div>
                             )}
                          </td>

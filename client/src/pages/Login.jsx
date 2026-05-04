@@ -63,7 +63,8 @@ const Login = () => {
       const userData = {
         username: String(username || '').trim(),
         role,
-        name: displayName
+        name: displayName,
+        userId: data.user.id // Add this critical ID for locking mechanism
       };
 
       localStorage.setItem('currentUser', JSON.stringify(userData));

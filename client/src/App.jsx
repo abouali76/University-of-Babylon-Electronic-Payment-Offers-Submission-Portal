@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
+import RankingTable from './components/RankingTable';
 
 function App() {
   // Read synchronously to prevent flicker - localStorage is synchronous
@@ -33,6 +34,7 @@ function App() {
               path="/admin" 
               element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/login" />} 
             />
+            <Route path="/results" element={<div className="py-20"><RankingTable /></div>} />
             <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'} />} />
           </Routes>
         </div>

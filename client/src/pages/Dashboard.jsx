@@ -128,13 +128,13 @@ const Dashboard = () => {
   const checkLockStatus = async () => {
     try {
       const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      const username = (localUser.username || '').toLowerCase().trim();
-      if (!username) return;
+      const userId = localUser.userId;
+      if (!userId) return;
 
       const { data, error } = await supabase
         .from('submissions')
         .select('is_received, status')
-        .eq('username', username)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
