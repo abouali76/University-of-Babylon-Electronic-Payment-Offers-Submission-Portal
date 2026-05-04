@@ -52,6 +52,13 @@ const Login = () => {
 
       if (authError) throw authError;
 
+      // Set session variable for RLS
+      await supabase.rpc('set_config', {
+        setting: 'app.current_user',
+        value: String(username).trim(),
+        is_local: false
+      });
+
       const role = data?.user?.app_metadata?.role || data?.user?.user_metadata?.role || 'company';
       const displayName =
         data?.user?.user_metadata?.display_name ||

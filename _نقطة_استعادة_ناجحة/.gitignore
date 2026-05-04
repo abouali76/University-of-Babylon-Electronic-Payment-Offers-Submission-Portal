@@ -6,7 +6,6 @@ dist/
 *.json
 *.html
 *.js
-!extract_supabase_key.js
 !vite.config.js
 !tailwind.config.js
 .early.coverage
@@ -19,4 +18,8 @@ page_dump2.html
 extract_anon.js
 extract_anon_v2.js
 extract_anon_v3.js
-prompt_key.js
+extract_supabase_key.js
+schema.sql
+supabase_schema.sql
+add_columns.sql
+prompt_key.js

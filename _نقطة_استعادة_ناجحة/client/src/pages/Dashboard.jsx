@@ -103,6 +103,16 @@ const Dashboard = () => {
       const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       setUser({ ...session.user, ...localUser });
 
+      // Set session variable for RLS
+      const username = session.user.user_metadata?.username || localUser.username;
+      if (username) {
+        await supabase.rpc('set_config', {
+          setting: 'app.current_user',
+          value: username,
+          is_local: false
+        });
+      }
+
       const { data: sub } = await supabase
         .from('submissions')
         .select('*')
@@ -404,10 +414,10 @@ const Dashboard = () => {
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src="/logo.jpg" alt="Logo" className="w-12 h-12 object-contain" />
+            <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-12 h-12 object-contain" />
             <div>
-              <h1 className="font-black text-blue-950 text-lg leading-tight">بوابة التقديم الإلكتروني</h1>
-              <p className="text-[10px] font-bold text-gray-400">جامعة بابل - لجنة الدفع الإلكتروني</p>
+              <h1 className="font-black text-blue-950 text-lg leading-tight">معايير التعاقد مع شركات الدفع الالكتروني</h1>
+              <p className="text-[10px] font-bold text-gray-400">جامعة بابل - لجنة معايير التعاقد</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

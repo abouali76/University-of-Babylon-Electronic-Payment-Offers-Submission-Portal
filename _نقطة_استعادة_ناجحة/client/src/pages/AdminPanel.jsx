@@ -40,6 +40,13 @@ const AdminPanel = () => {
         return;
       }
 
+      // Set session variable for RLS
+      await supabase.rpc('set_config', {
+        setting: 'app.current_user',
+        value: localUser.username,
+        is_local: false
+      });
+
       let usersData = [];
       let subsData = [];
 
@@ -208,10 +215,10 @@ const AdminPanel = () => {
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg border border-gray-50">
-                <img src="./logo.jpg" alt="Logo" className="w-full h-full object-contain" />
+                <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
-                <h1 className="text-xl font-black text-indigo-950 leading-tight">لوحة تحكم وادارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
+                <h1 className="text-xl font-black text-indigo-950 leading-tight">إدارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
                 <p className="text-[10px] font-bold text-gray-400">جامعة بابل - 2026/2027</p>
               </div>
             </div>
@@ -382,7 +389,7 @@ const AdminPanel = () => {
               <div className="bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border border-white">
                 <div className="bg-gradient-to-br from-indigo-950 to-slate-900 p-16 text-white relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none grayscale">
-                    <img src="./logo.jpg" alt="" className="w-full h-full object-cover" />
+                    <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="" className="w-full h-full object-cover" />
                   </div>
                   <div className="relative z-10">
                     <h2 className="text-5xl font-black leading-tight tracking-tight">{selectedSubmission.companyName}</h2>

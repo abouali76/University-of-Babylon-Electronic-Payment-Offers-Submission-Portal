@@ -52,6 +52,13 @@ const Login = () => {
 
       if (authError) throw authError;
 
+      // Set session variable for RLS
+      await supabase.rpc('set_config', {
+        setting: 'app.current_user',
+        value: String(username).trim(),
+        is_local: false
+      });
+
       const role = data?.user?.app_metadata?.role || data?.user?.user_metadata?.role || 'company';
       const displayName =
         data?.user?.user_metadata?.display_name ||
@@ -87,7 +94,7 @@ const Login = () => {
           <div className="bg-white/90 backdrop-blur-3xl p-10 md:p-12 rounded-[3.5rem] shadow-2xl shadow-indigo-900/10 border border-white">
             <div className="text-center mb-10">
               <div className="w-28 h-28 bg-white p-2 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-900/10 mx-auto mb-6 border border-gray-50">
-                <img src="./logo.jpg" alt="University Logo" className="w-full h-full object-contain" />
+                <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="University Logo" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-3xl font-black text-indigo-950 tracking-tight mb-1">جامعة بابل</h1>
               <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] leading-relaxed mb-1">
