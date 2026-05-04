@@ -174,7 +174,7 @@ const AdminPanel = () => {
       companyName: (submission.data && submission.data.companyName) || submission.companyName || u.name || u.username,
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
-      isSubmitted: submission.status === 'final' || !!(submission.last_updated || submission.lastupdated),
+      isSubmitted: submission.status === 'final',
       isReceived: !!submission.is_received
     };
   });

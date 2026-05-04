@@ -15,6 +15,7 @@ const Dashboard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isReceived, setIsReceived] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -122,19 +123,20 @@ const Dashboard = () => {
       if (sub) {
         setFormData(p => ({ ...p, ...sub.data, documentUrl: sub.document_path || p.documentUrl }));
         if (sub.status === 'final') setIsSubmitted(true);
+        if (sub.is_received) setIsReceived(true);
       }
     };
     boot();
   }, [navigate]);
 
   const handleInputChange = (e) => {
-    if (isSubmitted) return;
+    if (isSubmitted && isReceived) return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFileUpload = async (e) => {
-    if (isSubmitted) return;
+    if (isSubmitted && isReceived) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -220,7 +222,7 @@ const Dashboard = () => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (isSubmitted) return;
+    if (isSubmitted && isReceived) return;
 
     if (!formData.signedBy || !formData.position) {
       alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
@@ -239,7 +241,8 @@ const Dashboard = () => {
   };
 
   const renderStepContent = () => {
-    const inputProps = { onChange: handleInputChange, disabled: isSubmitted };
+    const isLocked = isSubmitted && isReceived;
+    const inputProps = { onChange: handleInputChange, disabled: isLocked };
     switch (currentStep) {
       case 1:
         return (
@@ -397,7 +400,10 @@ const Dashboard = () => {
                <div className="mt-12 p-8 bg-amber-50 rounded-[2rem] border border-amber-100 text-right">
                  <div className="flex items-start gap-4">
                    <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-1" />
-                   <p className="text-xs text-amber-800 font-bold leading-relaxed">بمجرد الضغط على "إرسال العرض نهائياً"، تقر الشركة بصحة كافة البيانات المذكورة أعلاه، ولا يمكن التعديل على العرض بعد الإرسال إلا بموافقة رسمية من الجامعة.</p>
+                   <p className="text-xs text-amber-800 font-bold leading-relaxed">{isSubmitted && !isReceived 
+                        ? "لقد قمت بإرسال العرض مسبقاً، ولكن يمكنك تحديث البيانات طالما لم يتم تأييد الاستلام من قبل الجامعة. سيؤدي الضغط على تحديث العرض إلى تحديث البيانات المرسلة حالياً."
+                        : "بمجرد الضغط على \"إرسال العرض نهائياً\"، تقر الشركة بصحة كافة البيانات المذكورة أعلاه. يمكنك تعديل العرض لاحقاً طالما لم يقم المسؤول بتأييد استلام الطلب."
+                      }</p>
                  </div>
                </div>
             </div>
@@ -464,8 +470,13 @@ const Dashboard = () => {
               <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8">
                 <CheckCircle2 className="w-12 h-12 text-emerald-600" />
               </div>
-              <h2 className="text-3xl font-black text-blue-950 mb-4">تم إرسال العرض بنجاح</h2>
-              <p className="text-gray-500 font-bold mb-10 max-w-md mx-auto text-sm leading-relaxed">شكراً لكم، تم استلام عرضكم بنجاح. ستقوم اللجنة الفنية بمراجعة البيانات والتواصل معكم قريباً.</p>
+              <h2 className="text-3xl font-black text-blue-950 mb-4">{isSubmitted && !isReceived ? 'تم تحديث العرض بنجاح' : 'تم إرسال العرض بنجاح'}</h2>
+              <p className="text-gray-500 font-bold mb-10 max-w-md mx-auto text-sm leading-relaxed">
+                {isReceived 
+                  ? 'تم تأييد استلام عرضكم من قبل اللجنة بنجاح. العرض الآن في مرحلة المراجعة النهائية ولا يمكن تعديله.'
+                  : 'شكراً لكم، تم استلام عرضكم بنجاح. يمكنك تعديل البيانات في أي وقت طالما لم يتم تأييد الاستلام من قبل اللجنة.'
+                }
+              </p>
               <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
             </div>
           ) : (
@@ -487,8 +498,8 @@ const Dashboard = () => {
                     {currentStep < 9 ? (
                       <button type="button" onClick={() => setCurrentStep(p => Math.min(9, p+1))} className="w-full md:w-auto px-12 py-4 bg-blue-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:bg-blue-900 transition-all">الخطوة التالية <ChevronLeft className="w-5 h-5" /></button>
                     ) : (
-                      <button type="submit" disabled={isSubmitting || isSubmitted} className={`w-full md:w-auto px-16 py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl transition-all ${isSubmitted ? 'bg-emerald-600 text-white' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-blue-100'}`}>
-                        {isSubmitting ? 'جاري الإرسال...' : isSubmitted ? 'تم الإرسال بنجاح' : 'إرسال العرض نهائياً'}
+                      <button type="submit" disabled={isSubmitting || (isSubmitted && isReceived)} className={`w-full md:w-auto px-16 py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl transition-all ${isReceived ? 'bg-emerald-600 text-white' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-blue-100'}`}>
+                        {isSubmitting ? 'جاري الإرسال...' : isReceived ? 'تم تأييد الاستلام' : isSubmitted ? 'تحديث العرض المرسل' : 'إرسال العرض نهائياً'}
                         <Send className="w-5 h-5" />
                       </button>
                     )}
@@ -506,10 +517,15 @@ const Dashboard = () => {
             <div className="w-20 h-20 bg-blue-50 text-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
                <AlertCircle className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-black text-blue-950 mb-4">تأكيد الإرسال النهائي</h3>
-            <p className="text-gray-500 font-bold mb-10 leading-relaxed text-sm">هل أنت متأكد من إرسال العرض نهائياً؟ لن تتمكن من التعديل على البيانات بعد هذه الخطوة.</p>
+            <h3 className="text-xl font-black text-blue-950 mb-4">{isSubmitted ? 'تأكيد تحديث العرض' : 'تأكيد الإرسال النهائي'}</h3>
+            <p className="text-gray-500 font-bold mb-10 leading-relaxed text-sm">
+              {isSubmitted 
+                ? 'هل أنت متأكد من رغبتك في تحديث بيانات العرض المرسل؟' 
+                : 'هل أنت متأكد من إرسال العرض نهائياً؟ يمكنك التعديل لاحقاً طالما لم يتم تأييد الاستلام.'
+              }
+            </p>
             <div className="flex gap-4">
-              <button onClick={processFinalSubmit} className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-black hover:bg-blue-800 transition-all shadow-lg shadow-blue-100">نعم، إرسال</button>
+              <button onClick={processFinalSubmit} className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-black hover:bg-blue-800 transition-all shadow-lg shadow-blue-100">{isSubmitted ? 'تحديث الآن' : 'نعم، إرسال'}</button>
               <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">تراجع</button>
             </div>
           </div>

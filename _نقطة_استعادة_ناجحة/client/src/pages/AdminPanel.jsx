@@ -124,13 +124,15 @@ const AdminPanel = () => {
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
         alert('تم حذف الشركة بنجاح.');
-      } else if (type === 'finalize') {
-        const { error } = await supabase
-          .from('submissions')
-          .update({ status: 'final', last_updated: new Date().toISOString() })
-          .eq('username', username);
         if (error) throw error;
         alert('تم تثبيت العرض كطلب نهائي بنجاح.');
+      } else if (type === 'confirm_receipt') {
+        const { error } = await supabase
+          .from('submissions')
+          .update({ is_received: true })
+          .eq('username', username);
+        if (error) throw error;
+        alert('تم تأييد الاستلام وقفل التعديل للشركة.');
       }
       await fetchData();
     } catch (err) {
@@ -172,7 +174,8 @@ const AdminPanel = () => {
       companyName: (submission.data && submission.data.companyName) || submission.companyName || u.name || u.username,
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
-      isSubmitted: submission.status === 'final' || !!(submission.last_updated || submission.lastupdated)
+      isSubmitted: submission.status === 'final',
+      isReceived: !!submission.is_received
     };
   });
 
@@ -304,15 +307,18 @@ const AdminPanel = () => {
                           <div className="font-black text-indigo-950">{c.companyName}</div>
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
                         </td>
-                        <td className="px-8 py-6">
-                           {c.isSubmitted ? 
-                             <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span> : 
-                             <div className="flex items-center gap-2">
-                               <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                               <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
-                             </div>
-                           }
-                        </td>
+                         <td className="px-8 py-6">
+                            {c.isReceived ? (
+                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
+                            ) : c.isSubmitted ? (
+                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
+                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
+                              </div>
+                            )}
+                         </td>
                         <td className="px-8 py-6 text-center">
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
                         </td>
@@ -322,6 +328,9 @@ const AdminPanel = () => {
                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center gap-2">
                             <button onClick={() => openDetails(c)} className="bg-indigo-950 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-indigo-900 transition-all">مراجعة</button>
+                            {c.isSubmitted && !c.isReceived && (
+                              <button onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: c.username, title: 'تأييد استلام العرض؟ سيؤدي هذا لقفل إمكانية التعديل للشركة.' })} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-emerald-700 transition-all">تأييد الاستلام</button>
+                            )}
                             <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
                             <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
