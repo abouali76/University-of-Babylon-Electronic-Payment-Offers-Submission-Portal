@@ -124,8 +124,17 @@ const AdminPanel = () => {
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
         alert('تم حذف الشركة بنجاح.');
+      } else if (type === 'finalize') {
+        const { error } = await supabase
+          .from('submissions')
+          .update({ 
+            status: 'final', 
+            is_received: true, 
+            last_updated: new Date().toISOString() 
+          })
+          .eq('username', username);
         if (error) throw error;
-        alert('تم تثبيت العرض كطلب نهائي بنجاح.');
+        alert('تم تثبيت العرض كطلب نهائي وتأييد الاستلام وقفل التعديل بنجاح.');
       } else if (type === 'confirm_receipt') {
         const { error } = await supabase
           .from('submissions')
