@@ -230,7 +230,7 @@ const AdminPanel = () => {
                 <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
-                <h1 className="text-xl font-black text-indigo-950 leading-tight">إدارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
+                <h1 className="text-xl font-black text-indigo-950 leading-tight">نظام إدارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
                 <p className="text-[10px] font-bold text-gray-400">جامعة بابل - 2026/2027</p>
               </div>
             </div>

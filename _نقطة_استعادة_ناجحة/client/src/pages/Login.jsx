@@ -103,7 +103,7 @@ const Login = () => {
               <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
             </motion.div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">جامعة بابل</h1>
-            <p className="text-[11px] font-black text-indigo-600 uppercase tracking-widest mt-2">نظام إدارة عروض الدفع الإلكتروني</p>
+            <p className="text-[11px] font-black text-indigo-600 uppercase tracking-widest mt-2">نظام إدارة معايير التعاقد مع شركات الدفع الالكتروني</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">

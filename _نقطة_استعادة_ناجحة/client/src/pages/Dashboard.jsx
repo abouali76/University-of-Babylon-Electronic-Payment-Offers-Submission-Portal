@@ -422,7 +422,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-12 h-12 object-contain" />
             <div>
-              <h1 className="font-black text-blue-950 text-lg leading-tight">معايير التعاقد مع شركات الدفع الالكتروني</h1>
+                <h1 className="text-xl font-black text-indigo-950 leading-tight">نظام إدارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
               <p className="text-[10px] font-bold text-gray-400">جامعة بابل - لجنة معايير التعاقد</p>
             </div>
           </div>
