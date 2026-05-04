@@ -179,16 +179,27 @@ const Dashboard = () => {
         last_updated: new Date().toISOString()
       };
 
+      // Ensure we update the existing record if it exists
+      const { data: existing } = await supabase
+        .from('submissions')
+        .select('id')
+        .eq('username', user.username)
+        .maybeSingle();
+      
+      if (existing?.id) {
+        payload.id = existing.id;
+      }
+
       const { error } = await supabase
         .from('submissions')
-        .upsert(payload, { onConflict: 'user_id' });
+        .upsert(payload);
 
       if (error) throw error;
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
     } catch (err) {
       console.error('Error saving draft:', err);
-      alert('فشل حفظ المسودة.');
+      alert(`فشل حفظ المسودة: ${err.message || 'خطأ غير معروف'}`);
     }
   };
 
@@ -205,16 +216,27 @@ const Dashboard = () => {
         last_updated: new Date().toISOString()
       };
 
+      // Ensure we update the existing record if it exists
+      const { data: existing } = await supabase
+        .from('submissions')
+        .select('id')
+        .eq('username', user.username)
+        .maybeSingle();
+      
+      if (existing?.id) {
+        payload.id = existing.id;
+      }
+
       const { error } = await supabase
         .from('submissions')
-        .upsert(payload, { onConflict: 'user_id' });
+        .upsert(payload);
 
       if (error) throw error;
       setIsSubmitted(true);
       setShowSuccess(true);
     } catch (err) {
       console.error('Submit error:', err);
-      alert('حدث خطأ أثناء الإرسال.');
+      alert(`حدث خطأ أثناء الإرسال: ${err.message || 'خطأ غير معروف'}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -130,13 +130,13 @@ const Dashboard = () => {
   }, [navigate]);
 
   const handleInputChange = (e) => {
-    if (isSubmitted && isReceived) return;
+    if (isReceived) return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleFileUpload = async (e) => {
-    if (isSubmitted && isReceived) return;
+    if (isReceived) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -179,13 +179,19 @@ const Dashboard = () => {
         last_updated: new Date().toISOString()
       };
 
-      // Ensure we update the existing record if it exists
+      // Ensure we update the existing record and check if it's locked
       const { data: existing } = await supabase
         .from('submissions')
-        .select('id')
+        .select('id, is_received')
         .eq('username', user.username)
         .maybeSingle();
       
+      if (existing?.is_received) {
+        alert('لا يمكن حفظ المسودة: لقد تم تأييد استلام العرض من قبل اللجنة وقفل التعديل.');
+        setIsReceived(true);
+        return;
+      }
+
       if (existing?.id) {
         payload.id = existing.id;
       }
@@ -216,13 +222,20 @@ const Dashboard = () => {
         last_updated: new Date().toISOString()
       };
 
-      // Ensure we update the existing record if it exists
+      // Ensure we update the existing record and check if it's locked
       const { data: existing } = await supabase
         .from('submissions')
-        .select('id')
+        .select('id, is_received')
         .eq('username', user.username)
         .maybeSingle();
       
+      if (existing?.is_received) {
+        alert('لا يمكن التحديث: لقد تم تأييد استلام العرض من قبل اللجنة وقفل التعديل.');
+        setIsReceived(true);
+        setIsSubmitted(true);
+        return;
+      }
+
       if (existing?.id) {
         payload.id = existing.id;
       }
@@ -263,7 +276,7 @@ const Dashboard = () => {
   };
 
   const renderStepContent = () => {
-    const isLocked = isSubmitted && isReceived;
+    const isLocked = isReceived; // Strictly lock based on admin confirmation
     const inputProps = { onChange: handleInputChange, disabled: isLocked };
     switch (currentStep) {
       case 1:
