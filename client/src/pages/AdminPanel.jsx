@@ -453,6 +453,10 @@ const AdminPanel = () => {
                         <span className="font-bold text-lg">التقييم الحالي: {selectedSubmission.evaluation_score || 0}/10</span>
                       </div>
                     </div>
+                    {/* Diagnostic Info for Debugging */}
+                    <div className="mt-6 p-4 bg-black/20 rounded-xl border border-white/10 font-mono text-[10px] text-indigo-200">
+                      DEBUG: is_received={String(selectedSubmission.is_received)} | score={selectedSubmission.evaluation_score} | username={selectedSubmission.username}
+                    </div>
                   </div>
                 </div>
 
