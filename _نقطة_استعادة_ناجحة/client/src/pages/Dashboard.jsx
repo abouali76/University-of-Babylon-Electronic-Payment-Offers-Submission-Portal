@@ -125,6 +125,35 @@ const Dashboard = () => {
     boot();
   }, [navigate]);
 
+  const checkLockStatus = async () => {
+    try {
+      const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const username = (localUser.username || '').toLowerCase().trim();
+      if (!username) return;
+
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('is_received, status')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setIsReceived(!!data.is_received);
+        if (data.status === 'final') setIsSubmitted(true);
+      }
+    } catch (err) {
+      console.error('Lock check failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    checkLockStatus();
+    // Check every 30 seconds as well
+    const interval = setInterval(checkLockStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleInputChange = (e) => {
     if (isReceived) return;
     const { name, value } = e.target;

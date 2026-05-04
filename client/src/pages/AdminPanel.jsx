@@ -166,12 +166,20 @@ const AdminPanel = () => {
         return;
       }
 
-      const { error } = await supabase
+      console.log(`Updating score for ${username} to ${scoreValue}`);
+      const { data, error, status } = await supabase
         .from('submissions')
         .update({ evaluation_score: scoreValue })
-        .eq('username', username);
+        .eq('username', username)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database Error:', error);
+        alert(`فشل التحديث: ${error.message} (كود: ${error.code}). تأكد من إضافة عمود evaluation_score في Supabase.`);
+        return;
+      }
+      
+      console.log('Update result:', { data, status });
       alert(`تم رصد درجة التقييم (${scoreValue}) للشركة بنجاح.`);
       await fetchData();
       if (selectedSubmission && selectedSubmission.username === username) {
