@@ -186,7 +186,7 @@ const AdminPanel = () => {
       
       alert(`تم رصد درجة التقييم (${scoreValue}) للشركة بنجاح.`);
       await fetchData();
-      if (selectedSubmission && selectedSubmission.user_id === userId) {
+      if (selectedSubmission && selectedSubmission.userId === userId) {
         setSelectedSubmission(prev => ({ ...prev, evaluation_score: scoreValue }));
       }
     } catch (err) {
@@ -206,7 +206,7 @@ const AdminPanel = () => {
     const submission = submissions.find(s => s.username === u.username) || {};
     return {
       ...submission,
-      user_id: u.id, // Force using the ID from users table as the source of truth
+      userId: u.id, // Standardize as userId everywhere
       evaluation_score: submission.evaluation_score,
       status: submission.status,
       lastUpdated: submission.last_updated || submission.lastupdated,
@@ -365,7 +365,7 @@ const AdminPanel = () => {
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
                         </td>
                         <td className="px-8 py-6 text-center">
-                          <input type="number" min="0" max="10" disabled={!c.isSubmitted} value={c.evaluation_score || 0} onChange={(e) => handleUpdateScore(c.user_id, parseFloat(e.target.value))} className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" />
+                          <input type="number" min="0" max="10" disabled={!c.isSubmitted} value={c.evaluation_score || 0} onChange={(e) => handleUpdateScore(c.userId, parseFloat(e.target.value))} className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" />
                         </td>
                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center gap-2">
@@ -469,25 +469,6 @@ const AdminPanel = () => {
                         <span className="font-bold text-lg">التقييم الحالي: {selectedSubmission.evaluation_score || 0}/10</span>
                       </div>
                     </div>
-                    {/* Diagnostic Info for Debugging */}
-                    <div className="mt-6 p-6 bg-black/40 rounded-[2rem] border border-white/10 font-mono text-[11px] text-indigo-200 leading-relaxed overflow-x-auto">
-                      <div className="font-black text-amber-400 mb-2 uppercase tracking-widest border-b border-white/10 pb-2">Diagnostic Data (Server View)</div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <div><span className="text-white/50">username:</span> {selectedSubmission.username}</div>
-                        <div><span className="text-white/50">status:</span> {selectedSubmission.status}</div>
-                        <div><span className="text-white/50">is_received:</span> <span className={selectedSubmission.is_received ? 'text-emerald-400' : 'text-red-400'}>{String(selectedSubmission.is_received)}</span></div>
-                        <div><span className="text-white/50">evaluation_score:</span> <span className="text-amber-400">{selectedSubmission.evaluation_score ?? 'N/A'}</span></div>
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-white/10">
-                        <div className="text-white/30 text-[9px] mb-1">Available Columns in DB:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {Object.keys(selectedSubmission).map(k => (
-                            <span key={k} className={`px-2 py-1 rounded-md text-[9px] ${['is_received', 'evaluation_score'].includes(k) ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-white/40 border border-white/5'}`}>
-                              {k}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -611,14 +592,14 @@ const AdminPanel = () => {
 
                 <div className="bg-white p-10 flex gap-4 border-t border-gray-100">
                    <button 
-                     onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: selectedSubmission.username, userId: selectedSubmission.user_id, title: 'هل تريد تأييد استلام هذا العرض وقفل التعديل؟' })}
+                     onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: selectedSubmission.username, userId: selectedSubmission.userId, title: 'هل تريد تأييد استلام هذا العرض وقفل التعديل؟' })}
                      className="flex-1 py-5 bg-emerald-600 text-white rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-3"
                    >
                      <CheckCircle2 className="w-6 h-6" />
                      تأييد استلام العرض (قفل النهائي)
                    </button>
                    <button 
-                     onClick={() => setConfirmModal({ show: true, type: 'finalize', username: selectedSubmission.username, userId: selectedSubmission.user_id, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })}
+                     onClick={() => setConfirmModal({ show: true, type: 'finalize', username: selectedSubmission.username, userId: selectedSubmission.userId, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })}
                      className="flex-1 py-5 bg-indigo-900 text-white rounded-2xl font-black hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"
                    >
                      <ShieldCheck className="w-6 h-6" />

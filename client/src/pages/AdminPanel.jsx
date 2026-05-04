@@ -357,7 +357,7 @@ const AdminPanel = () => {
                             ) : (
                               <div className="flex items-center gap-2">
                                 <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, userId: c.user_id, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
+                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, userId: c.userId, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
                               </div>
                             )}
                          </td>
@@ -371,10 +371,10 @@ const AdminPanel = () => {
                           <div className="flex justify-center gap-2">
                             <button onClick={() => openDetails(c)} className="bg-indigo-950 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-indigo-900 transition-all">مراجعة</button>
                             {c.isSubmitted && !c.isReceived && (
-                              <button onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: c.username, title: 'تأييد استلام العرض؟ سيؤدي هذا لقفل إمكانية التعديل للشركة.' })} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-emerald-700 transition-all">تأييد الاستلام</button>
+                              <button onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: c.username, userId: c.userId, title: 'تأييد استلام العرض؟ سيؤدي هذا لقفل إمكانية التعديل للشركة.' })} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-emerald-700 transition-all">تأييد الاستلام</button>
                             )}
-                            <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
-                            <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, userId: c.userId, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
+                            <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, userId: c.userId, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
