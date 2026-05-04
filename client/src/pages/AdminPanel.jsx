@@ -150,16 +150,23 @@ const AdminPanel = () => {
     setConfirmModal({ show: false, type: '', username: '', title: '' });
   };
 
-  const handleUpdateScore = async (username, score) => {
+  const handleUpdateScore = async (username, newScore) => {
     try {
       const { error } = await supabase
         .from('submissions')
-        .update({ evaluation_score: score })
+        .update({ evaluation_score: parseFloat(newScore) || 0 })
         .eq('username', username);
+
       if (error) throw error;
-      fetchData();
+      alert('تم تحديث التقييم بنجاح.');
+      await fetchData();
+      // Update local state if in details view
+      if (selectedSubmission && selectedSubmission.username === username) {
+        setSelectedSubmission(prev => ({ ...prev, evaluation_score: parseFloat(newScore) || 0 }));
+      }
     } catch (err) {
       console.error('Error updating score:', err);
+      alert('فشل تحديث التقييم.');
     }
   };
 
@@ -422,9 +429,41 @@ const AdminPanel = () => {
                       </div>
                       <div className="flex items-center gap-3 bg-white/10 px-6 py-3 rounded-2xl backdrop-blur-md border border-white/10">
                         <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                        <span className="font-bold text-lg">التقييم: {selectedSubmission.evaluation_score || 0}/10</span>
+                        <span className="font-bold text-lg">التقييم الحالي: {selectedSubmission.evaluation_score || 0}/10</span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Evaluation Section */}
+                <div className="bg-amber-50 p-10 border-y border-amber-100 flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-amber-400 rounded-3xl flex items-center justify-center text-white shadow-xl">
+                      <Star className="w-8 h-8 fill-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-black text-amber-900">تقييم العرض الفني والمالي</h4>
+                      <p className="text-xs font-bold text-amber-700/60 mt-1">تأثير الدرجة يظهر مباشرة في جدول التصنيف العام</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 bg-white p-3 rounded-[2rem] shadow-lg border border-amber-200/50">
+                    <span className="text-xs font-black text-gray-400 mr-4">الدرجة (0-10):</span>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="10" 
+                      step="0.5"
+                      defaultValue={selectedSubmission.evaluation_score || 0}
+                      id="score-input"
+                      className="w-24 p-3 bg-gray-50 rounded-xl border-none text-center font-black text-2xl text-indigo-900 focus:ring-2 ring-amber-400 outline-none"
+                    />
+                    <button 
+                      onClick={() => handleUpdateScore(selectedSubmission.username, document.getElementById('score-input').value)}
+                      className="px-8 py-4 bg-amber-500 text-white rounded-xl font-black hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 active:scale-95"
+                    >
+                      حفظ التقييم
+                    </button>
                   </div>
                 </div>
 

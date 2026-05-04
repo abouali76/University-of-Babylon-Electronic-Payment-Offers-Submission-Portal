@@ -103,27 +103,23 @@ const Dashboard = () => {
 
       const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       setUser({ ...session.user, ...localUser });
+      const currentUser = { ...session.user, ...localUser };
+      setUser(currentUser);
 
-      // Set session variable for RLS
-      const username = session.user.user_metadata?.username || localUser.username;
-      if (username) {
-        await supabase.rpc('set_config', {
-          setting: 'app.current_user',
-          value: username,
-          is_local: false
-        });
-      }
-
-      const { data: sub } = await supabase
+      const username = currentUser.user_metadata?.username || localUser.username;
+      
+      const { data: sub, error: subError } = await supabase
         .from('submissions')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('username', username)
         .maybeSingle();
+
+      if (subError) throw subError;
 
       if (sub) {
         setFormData(p => ({ ...p, ...sub.data, documentUrl: sub.document_path || p.documentUrl }));
         if (sub.status === 'final') setIsSubmitted(true);
-        if (sub.is_received) setIsReceived(true);
+        setIsReceived(!!sub.is_received);
       }
     };
     boot();
