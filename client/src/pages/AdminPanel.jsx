@@ -569,13 +569,14 @@ const AdminPanel = () => {
                     { key: 'q4_3_dataOwnership', label: '3. ملكية البيانات واستردادها' },
                   ]} />
 
-                  <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)" data={selectedSubmission} fields={[
+                  <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" data={selectedSubmission} fields={[
                     { key: 'q4_4_exitClause', label: '4. برامج التدريب المجانية' },
                     { key: 'q4_5_liability', label: '5. شروط وأحكام فسخ العقد' },
                     { key: 'q4_6_jurisdiction', label: '6. القانون والاخُتصاص القضائي' },
                     { key: 'q4_7_auditRight', label: '7. الخضوع للتحكيم التجاري' },
                     { key: 'q4_8_contractDuration', label: '8. مدة العقد المقترحة' },
                     { key: 'q4_9_renewal', label: '9. معالجة شكاوى الطلبة' },
+                    { key: 'q4_10_blacklist', label: '10. القائمة السوداء والحظر' },
                   ]} />
 
                   <DetailSection title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" data={selectedSubmission} fields={[

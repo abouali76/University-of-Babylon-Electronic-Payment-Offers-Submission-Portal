@@ -152,7 +152,7 @@ const PrintTemplate = ({ data }) => {
       </section>
 
       <section style={{ marginBottom: '15px' }}>
-        <div style={styles.sectionTitle}>رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)</div>
+        <div style={styles.sectionTitle}>رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
           <QuestionBox label="4. البرامج التدريبية المجانية" value={getVal('q4_4_exitClause')} styles={styles} />
           <QuestionBox label="5. شروط فسخ العقد" value={getVal('q4_5_liability')} styles={styles} />
@@ -160,6 +160,7 @@ const PrintTemplate = ({ data }) => {
           <QuestionBox label="7. التحكيم التجاري العراقي" value={getVal('q4_7_auditRight')} styles={styles} />
           <QuestionBox label="8. مدة العقد وشروط التجديد" value={getVal('q4_8_contractDuration')} styles={styles} />
           <QuestionBox label="9. معالجة شكاوى الطلبة" value={getVal('q4_9_renewal')} styles={styles} />
+          <QuestionBox label="10. القائمة السوداء والحظر (البنك المركزي)" value={getVal('q4_10_blacklist')} styles={styles} />
         </div>
       </section>
 
@@ -183,6 +184,13 @@ const PrintTemplate = ({ data }) => {
           <QuestionBox label="المستندات المرفقة" value={getVal('documentUrl', ['document_url', 'document_path']) ? "تم إرفاق الملف رسمياً عبر البوابة الإلكترونية" : "لم يتم إرفاق ملفات."} styles={styles} />
           <QuestionBox label="ملاحظات إضافية من الشركة" value={getVal('additionalNotes', ['additionalnotes'])} styles={styles} />
         </div>
+      </section>
+
+      <section style={{ marginTop: '20px', padding: '10px', border: '1px solid #1e1b4b', borderRadius: '4px', backgroundColor: '#f8fafc' }}>
+        <p style={{ fontSize: '10px', fontWeight: '900', color: '#1e1b4b', marginBottom: '5px' }}>إقرار وتعهد الشركة:</p>
+        <p style={{ fontSize: '9.5px', fontWeight: 'bold', lineHeight: '1.5', margin: 0 }}>
+          تقر الشركة بصحة كافة البيانات والمعلومات الواردة في هذا العرض. وفي حالة عدم صحة المعلومات المقدمة من قبل الشركة، يحق للجامعة فسخ العقد دون اللجوء إلى المحاكم المختصة، وتحتفظ الجامعة بحقها الكامل في المطالبة بكافة التعويضات القانونية المترتبة على ذلك.
+        </p>
       </section>
 
       <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '100px', textAlign: 'center' }}>

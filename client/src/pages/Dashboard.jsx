@@ -60,6 +60,7 @@ const Dashboard = () => {
     q4_7_auditRight: '',
     q4_8_contractDuration: '',
     q4_9_renewal: '',
+    q4_10_blacklist: '',
     q5_1_extraFeatures: '',
     q5_2_innovation: '',
     q5_3_scholarships: '',
@@ -382,7 +383,7 @@ const Dashboard = () => {
       case 6:
         return (
           <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)" />
+            <SectionHeader title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" />
             <div className="space-y-6">
               <QuestionBox id="q4_4_exitClause" label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟" value={formData.q4_4_exitClause} {...inputProps} />
               <QuestionBox id="q4_5_liability" label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟" value={formData.q4_5_liability} {...inputProps} />
@@ -390,6 +391,7 @@ const Dashboard = () => {
               <QuestionBox id="q4_7_auditRight" label="7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟" value={formData.q4_7_auditRight} {...inputProps} />
               <QuestionBox id="q4_8_contractDuration" label="8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟" value={formData.q4_8_contractDuration} {...inputProps} />
               <QuestionBox id="q4_9_renewal" label="9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟" value={formData.q4_9_renewal} {...inputProps} />
+              <QuestionBox id="q4_10_blacklist" label="10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟" value={formData.q4_10_blacklist} {...inputProps} />
             </div>
           </div>
         );
@@ -457,13 +459,23 @@ const Dashboard = () => {
                   <InputField label="الصفة الوظيفية للموقع" name="position" value={formData.position} {...inputProps} />
                </div>
 
-               <div className="mt-12 p-8 bg-amber-50 rounded-[2rem] border border-amber-100 text-right">
+               <div className="mt-12 p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-200 text-right shadow-inner">
                  <div className="flex items-start gap-4">
-                   <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-1" />
-                   <p className="text-xs text-amber-800 font-bold leading-relaxed">{isSubmitted && !isReceived 
-                        ? "لقد قمت بإرسال العرض مسبقاً، ولكن يمكنك تحديث البيانات طالما لم يتم تأييد الاستلام من قبل الجامعة. سيؤدي الضغط على تحديث العرض إلى تحديث البيانات المرسلة حالياً."
-                        : "بمجرد الضغط على \"إرسال العرض نهائياً\"، تقر الشركة بصحة كافة البيانات المذكورة أعلاه. يمكنك تعديل العرض لاحقاً طالما لم يقم المسؤول بتأييد استلام الطلب."
-                      }</p>
+                   <ShieldCheck className="w-8 h-8 text-slate-400 shrink-0 mt-1" />
+                   <div className="space-y-4 flex-grow">
+                     <h4 className="text-sm font-black text-slate-900 border-b border-slate-200 pb-2">إقرار وتعهد قانوني</h4>
+                     <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                       {isSubmitted && !isReceived 
+                         ? "لقد قمت بإرسال العرض مسبقاً، ولكن يمكنك تحديث البيانات طالما لم يتم تأييد الاستلام من قبل الجامعة. سيؤدي الضغط على تحديث العرض إلى تحديث البيانات المرسلة حالياً."
+                         : "بمجرد الضغط على \"إرسال العرض نهائياً\"، تقر الشركة بصحة كافة البيانات المذكورة أعلاه. يمكنك تعديل العرض لاحقاً طالما لم يقم المسؤول بتأييد استلام الطلب."
+                       }
+                     </p>
+                     <div className="p-4 bg-white rounded-xl border-r-4 border-red-500 shadow-sm">
+                       <p className="text-xs text-red-700 font-black leading-relaxed">
+                         "في حالة عدم صحة المعلومات المقدمة من قبل الشركة يحق للجامعة فسخ العقد دون اللجوء إلى المحاكم المختصة وتحتفظ بحقها في المطالبة بكافة التعويضات القانونية"
+                       </p>
+                     </div>
+                   </div>
                  </div>
                </div>
             </div>
