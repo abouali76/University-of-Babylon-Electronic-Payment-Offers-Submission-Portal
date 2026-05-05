@@ -193,7 +193,12 @@ const Dashboard = () => {
       if (subError) throw subError;
 
       if (sub) {
-        setFormData(p => ({ ...p, ...sub.data, documentUrl: sub.document_path || p.documentUrl }));
+        // sub contains the columns directly now
+        setFormData(p => ({ 
+          ...p, 
+          ...sub, 
+          documentUrl: sub.document_path || sub.document_url || p.documentUrl 
+        }));
         if (sub.status === 'final') setIsSubmitted(true);
         setIsReceived(!!sub.is_received);
       }
@@ -298,11 +303,12 @@ const Dashboard = () => {
   const saveDraft = async () => {
     try {
       const payload = {
+        ...formData,
         user_id: user.userId || user.id,
         username: user.username,
         status: 'draft',
-        data: { ...formData },
         document_path: formData.documentUrl || null,
+        document_url: formData.documentUrl || null,
         last_updated: new Date().toISOString()
       };
 
@@ -341,11 +347,12 @@ const Dashboard = () => {
     setShowConfirmModal(false);
     try {
       const payload = {
+        ...formData,
         user_id: user.userId || user.id,
         username: user.username,
         status: 'final',
-        data: { ...formData },
         document_path: formData.documentUrl || null,
+        document_url: formData.documentUrl || null,
         last_updated: new Date().toISOString()
       };
 
