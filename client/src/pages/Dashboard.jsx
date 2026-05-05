@@ -18,6 +18,8 @@ const Dashboard = () => {
   const [isReceived, setIsReceived] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [showReview, setShowReview] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     submissionDate: new Date().toISOString().split('T')[0],
@@ -86,6 +88,23 @@ const Dashboard = () => {
     { id: 8, title: 'المرفقات والملاحظات' },
     { id: 9, title: 'المصادقة والتوقيع النهائي' }
   ];
+
+  const STEP_FIELDS = {
+    1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'marketExperience', 'govInstitutionsCount', 'paidCapital', 'officialAddress'],
+    2: ['q2_1_settlement', 'q2_2_commissions', 'q2_3_intermediary', 'q2_4_delayPenalty', 'q2_5_atmCommitment', 'q2_6_studentCards', 'q2_7_chargingCenters', 'q2_8_posCommitment'],
+    3: ['q3a_1_integratedSystem', 'q3a_2_techSpecs', 'q3a_3_appSupport', 'q3a_4_webIntegration', 'q3a_5_reporting', 'q3a_6_training'],
+    4: ['q3b_1_certificates', 'q3b_2_encryption', 'q3b_3_rto_bcp', 'q3b_4_backups', 'q3b_5_supportSla', 'q3b_6_penTest', 'q3b_7_monitoring', 'q3b_8_incident'],
+    5: ['q4_1_bankGuarantee', 'q4_2_penaltyClause', 'q4_3_dataOwnership'],
+    6: ['q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal', 'q4_10_blacklist'],
+    7: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_posUpdates', 'q5_6_foreignPayments', 'q5_7_complaints', 'q5_8_socialResp'],
+    8: ['documentUrl'],
+    9: ['signedBy', 'position']
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setErrors([]);
+  }, [currentStep]);
 
   useEffect(() => {
     const boot = async () => {
@@ -159,6 +178,32 @@ const Dashboard = () => {
     if (isReceived) return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors.includes(name)) {
+      setErrors(prev => prev.filter(f => f !== name));
+    }
+  };
+
+  const validateStep = (stepId) => {
+    const fields = STEP_FIELDS[stepId];
+    if (!fields) return true;
+    
+    const missing = fields.filter(f => !formData[f]);
+    if (missing.length > 0) {
+      setErrors(missing);
+      return false;
+    }
+    return true;
+  };
+
+  const goToStep = (stepId) => {
+    // If moving forward, validate current step
+    if (stepId > currentStep) {
+      if (!validateStep(currentStep)) {
+        alert('يرجى الإجابة على جميع الأسئلة المطلوبة في هذا القسم قبل الانتقال.');
+        return;
+      }
+    }
+    setCurrentStep(stepId);
   };
 
   const handleFileUpload = async (e) => {
@@ -301,25 +346,85 @@ const Dashboard = () => {
     window.location.reload();
   };
 
+  const SummaryTable = () => (
+    <div className="space-y-10 animate-fade-in py-6 text-right">
+      <div className="flex items-center justify-between border-b pb-4">
+        <h3 className="text-xl font-black text-blue-950">مراجعة البيانات قبل الإرسال</h3>
+        <button onClick={() => setShowReview(false)} className="text-sm text-blue-600 font-bold">عودة للتعديل</button>
+      </div>
+      <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+        {steps.map(s => (
+          <div key={s.id} className="space-y-4">
+            <h4 className="text-sm font-black text-blue-900 bg-blue-50 p-2 rounded-lg">{s.title}</h4>
+            <div className="grid grid-cols-1 gap-3">
+              {STEP_FIELDS[s.id]?.map(f => (
+                <div key={f} className="flex justify-between items-start gap-4 p-3 bg-white border rounded-xl text-xs">
+                  <span className="font-bold text-gray-400 shrink-0 w-1/3">
+                    {/* Logic to find label for field f */}
+                    {findLabelForField(f)}
+                  </span>
+                  <span className="font-black text-gray-800 text-left w-2/3">{formData[f] || '---'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100">
+        <p className="text-xs text-amber-800 font-bold leading-relaxed">
+          يرجى مراجعة كافة البيانات أعلاه بدقة. بمجرد الضغط على "تأكيد ومتابعة"، سيتم نقلك لصفحة التوقيع النهائي.
+        </p>
+      </div>
+      <button 
+        onClick={() => { setShowReview(false); setCurrentStep(9); }}
+        className="w-full py-4 bg-blue-900 text-white rounded-2xl font-black shadow-xl"
+      >
+        تأكيد وصحة البيانات - المتابعة للتوقيع
+      </button>
+    </div>
+  );
+
+  const findLabelForField = (fieldName) => {
+    // This is a helper to get labels without re-rendering everything
+    if (fieldName === 'companyName') return 'اسم الشركة';
+    if (fieldName === 'representativeName') return 'الممثل الرسمي';
+    if (fieldName === 'phone') return 'رقم الهاتف';
+    if (fieldName === 'email') return 'البريد الإلكتروني';
+    if (fieldName === 'documentUrl') return 'المستند المرفوع';
+    if (fieldName === 'signedBy') return 'اسم الموقع';
+    if (fieldName === 'position') return 'الصفة الوظيفية';
+    
+    // For questions, extract ID and find in cases (simplification for summary)
+    return fieldName.replace('q', 'السؤال ');
+  };
+
   const renderStepContent = () => {
-    const isLocked = isReceived; // Strictly lock based on admin confirmation
-    const inputProps = { onChange: handleInputChange, disabled: isLocked };
+    const isLocked = isReceived;
+    const inputProps = (name) => ({ 
+      name,
+      onChange: handleInputChange, 
+      disabled: isLocked,
+      error: errors.includes(name)
+    });
+
+    if (showReview) return <SummaryTable />;
+
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="أولاً: المعلومات العامة والخبرات" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <InputField label="اسم الشركة" name="companyName" value={formData.companyName} {...inputProps} />
-              <InputField label="تاريخ تقديم العرض" type="date" name="submissionDate" value={formData.submissionDate} {...inputProps} />
-              <InputField label="اسم ممثل الشركة" name="representativeName" value={formData.representativeName} {...inputProps} />
-              <InputField label="رقم الهاتف المعتمد" name="phone" value={formData.phone} {...inputProps} />
-              <InputField label="البريد الإلكتروني المعتمد" type="email" name="email" value={formData.email} {...inputProps} />
-              <InputField label="رقم إجازة البنك المركزي العراقي" name="centralBankLicense" value={formData.centralBankLicense} {...inputProps} />
-              <InputField label="سنوات الخبرة في السوق المحلي" name="marketExperience" value={formData.marketExperience} {...inputProps} />
-              <InputField label="عدد المؤسسات الحكومية المخدَّمة حالياً" type="number" name="govInstitutionsCount" value={formData.govInstitutionsCount} {...inputProps} />
-              <InputField label="رأس المال المدفوع / الملاءة المالية" name="paidCapital" value={formData.paidCapital} {...inputProps} />
-              <InputField label="العنوان الرسمي / المقر الرئيسي" name="officialAddress" value={formData.officialAddress} {...inputProps} />
+              <InputField label="اسم الشركة" value={formData.companyName} {...inputProps('companyName')} />
+              <InputField label="تاريخ تقديم العرض" type="date" value={formData.submissionDate} {...inputProps('submissionDate')} />
+              <InputField label="اسم ممثل الشركة" value={formData.representativeName} {...inputProps('representativeName')} />
+              <InputField label="رقم الهاتف المعتمد" value={formData.phone} {...inputProps('phone')} />
+              <InputField label="البريد الإلكتروني المعتمد" type="email" value={formData.email} {...inputProps('email')} />
+              <InputField label="رقم إجازة البنك المركزي العراقي" value={formData.centralBankLicense} {...inputProps('centralBankLicense')} />
+              <InputField label="سنوات الخبرة في السوق المحلي" value={formData.marketExperience} {...inputProps('marketExperience')} />
+              <InputField label="عدد المؤسسات الحكومية المخدَّمة حالياً" type="number" value={formData.govInstitutionsCount} {...inputProps('govInstitutionsCount')} />
+              <InputField label="رأس المال المدفوع / الملاءة المالية" value={formData.paidCapital} {...inputProps('paidCapital')} />
+              <InputField label="العنوان الرسمي / المقر الرئيسي" value={formData.officialAddress} {...inputProps('officialAddress')} />
             </div>
           </div>
         );
@@ -328,14 +433,14 @@ const Dashboard = () => {
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" />
             <div className="space-y-6">
-              <QuestionBox id="q2_1_settlement" label="1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟" value={formData.q2_1_settlement} {...inputProps} />
-              <QuestionBox id="q2_2_commissions" label="2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟" value={formData.q2_2_commissions} {...inputProps} />
-              <QuestionBox id="q2_3_intermediary" label="3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية." value={formData.q2_3_intermediary} {...inputProps} />
-              <QuestionBox id="q2_4_delayPenalty" label="4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟" value={formData.q2_4_delayPenalty} {...inputProps} />
-              <QuestionBox id="q2_5_atmCommitment" label="5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟" value={formData.q2_5_atmCommitment} {...inputProps} />
-              <QuestionBox id="q2_6_studentCards" label="6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)" value={formData.q2_6_studentCards} {...inputProps} />
-              <QuestionBox id="q2_7_chargingCenters" label="7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟" value={formData.q2_7_chargingCenters} {...inputProps} />
-              <QuestionBox id="q2_8_posCommitment" label="8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟" value={formData.q2_8_posCommitment} {...inputProps} />
+              <QuestionBox id="q2_1_settlement" label="1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟" value={formData.q2_1_settlement} {...inputProps('q2_1_settlement')} />
+              <QuestionBox id="q2_2_commissions" label="2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟" value={formData.q2_2_commissions} {...inputProps('q2_2_commissions')} />
+              <QuestionBox id="q2_3_intermediary" label="3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية." value={formData.q2_3_intermediary} {...inputProps('q2_3_intermediary')} />
+              <QuestionBox id="q2_4_delayPenalty" label="4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟" value={formData.q2_4_delayPenalty} {...inputProps('q2_4_delayPenalty')} />
+              <QuestionBox id="q2_5_atmCommitment" label="5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟" value={formData.q2_5_atmCommitment} {...inputProps('q2_5_atmCommitment')} />
+              <QuestionBox id="q2_6_studentCards" label="6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)" value={formData.q2_6_studentCards} {...inputProps('q2_6_studentCards')} />
+              <QuestionBox id="q2_7_chargingCenters" label="7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟" value={formData.q2_7_chargingCenters} {...inputProps('q2_7_chargingCenters')} />
+              <QuestionBox id="q2_8_posCommitment" label="8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟" value={formData.q2_8_posCommitment} {...inputProps('q2_8_posCommitment')} />
             </div>
           </div>
         );
@@ -344,12 +449,12 @@ const Dashboard = () => {
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)" />
             <div className="space-y-6">
-              <QuestionBox id="q3a_1_integratedSystem" label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟" value={formData.q3a_1_integratedSystem} {...inputProps} />
-              <QuestionBox id="q3a_2_techSpecs" label="2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟" value={formData.q3a_2_techSpecs} {...inputProps} />
-              <QuestionBox id="q3a_3_appSupport" label="3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟" value={formData.q3a_3_appSupport} {...inputProps} />
-              <QuestionBox id="q3a_4_webIntegration" label="4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟" value={formData.q3a_4_webIntegration} {...inputProps} />
-              <QuestionBox id="q3a_5_reporting" label="5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية." value={formData.q3a_5_reporting} {...inputProps} />
-              <QuestionBox id="q3a_6_training" label="6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟" value={formData.q3a_6_training} {...inputProps} />
+              <QuestionBox id="q3a_1_integratedSystem" label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟" value={formData.q3a_1_integratedSystem} {...inputProps('q3a_1_integratedSystem')} />
+              <QuestionBox id="q3a_2_techSpecs" label="2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟" value={formData.q3a_2_techSpecs} {...inputProps('q3a_2_techSpecs')} />
+              <QuestionBox id="q3a_3_appSupport" label="3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟" value={formData.q3a_3_appSupport} {...inputProps('q3a_3_appSupport')} />
+              <QuestionBox id="q3a_4_webIntegration" label="4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟" value={formData.q3a_4_webIntegration} {...inputProps('q3a_4_webIntegration')} />
+              <QuestionBox id="q3a_5_reporting" label="5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية." value={formData.q3a_5_reporting} {...inputProps('q3a_5_reporting')} />
+              <QuestionBox id="q3a_6_training" label="6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟" value={formData.q3a_6_training} {...inputProps('q3a_6_training')} />
             </div>
           </div>
         );
@@ -358,14 +463,14 @@ const Dashboard = () => {
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)" />
             <div className="space-y-6">
-              <QuestionBox id="q3b_1_certificates" label="1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)" value={formData.q3b_1_certificates} {...inputProps} />
-              <QuestionBox id="q3b_2_encryption" label="2. ما هو بروتوكول التشفير المستخدم في المعاملات؟" value={formData.q3b_2_encryption} {...inputProps} />
-              <QuestionBox id="q3b_3_rto_bcp" label="3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟" value={formData.q3b_3_rto_bcp} {...inputProps} />
-              <QuestionBox id="q3b_4_backups" label="4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟" value={formData.q3b_4_backups} {...inputProps} />
-              <QuestionBox id="q3b_5_supportSla" label="5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟" value={formData.q3b_5_supportSla} {...inputProps} />
-              <QuestionBox id="q3b_6_penTest" label="6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟" value={formData.q3b_6_penTest} {...inputProps} />
-              <QuestionBox id="q3b_7_monitoring" label="7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)" value={formData.q3b_7_monitoring} {...inputProps} />
-              <QuestionBox id="q3b_8_incident" label="8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟" value={formData.q3b_8_incident} {...inputProps} />
+              <QuestionBox id="q3b_1_certificates" label="1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)" value={formData.q3b_1_certificates} {...inputProps('q3b_1_certificates')} />
+              <QuestionBox id="q3b_2_encryption" label="2. ما هو بروتوكول التشفير المستخدم في المعاملات؟" value={formData.q3b_2_encryption} {...inputProps('q3b_2_encryption')} />
+              <QuestionBox id="q3b_3_rto_bcp" label="3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟" value={formData.q3b_3_rto_bcp} {...inputProps('q3b_3_rto_bcp')} />
+              <QuestionBox id="q3b_4_backups" label="4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟" value={formData.q3b_4_backups} {...inputProps('q3b_4_backups')} />
+              <QuestionBox id="q3b_5_supportSla" label="5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟" value={formData.q3b_5_supportSla} {...inputProps('q3b_5_supportSla')} />
+              <QuestionBox id="q3b_6_penTest" label="6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟" value={formData.q3b_6_penTest} {...inputProps('q3b_6_penTest')} />
+              <QuestionBox id="q3b_7_monitoring" label="7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)" value={formData.q3b_7_monitoring} {...inputProps('q3b_7_monitoring')} />
+              <QuestionBox id="q3b_8_incident" label="8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟" value={formData.q3b_8_incident} {...inputProps('q3b_8_incident')} />
             </div>
           </div>
         );
@@ -374,9 +479,9 @@ const Dashboard = () => {
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="رابعاً: أ- الضمانات وملكية البيانات (3 أسئلة)" />
             <div className="space-y-6">
-              <QuestionBox id="q4_1_bankGuarantee" label="1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟" value={formData.q4_1_bankGuarantee} {...inputProps} />
-              <QuestionBox id="q4_2_penaltyClause" label="2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟" value={formData.q4_2_penaltyClause} {...inputProps} />
-              <QuestionBox id="q4_3_dataOwnership" label="3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟" value={formData.q4_3_dataOwnership} {...inputProps} />
+              <QuestionBox id="q4_1_bankGuarantee" label="1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟" value={formData.q4_1_bankGuarantee} {...inputProps('q4_1_bankGuarantee')} />
+              <QuestionBox id="q4_2_penaltyClause" label="2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟" value={formData.q4_2_penaltyClause} {...inputProps('q4_2_penaltyClause')} />
+              <QuestionBox id="q4_3_dataOwnership" label="3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟" value={formData.q4_3_dataOwnership} {...inputProps('q4_3_dataOwnership')} />
             </div>
           </div>
         );
@@ -385,13 +490,13 @@ const Dashboard = () => {
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" />
             <div className="space-y-6">
-              <QuestionBox id="q4_4_exitClause" label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟" value={formData.q4_4_exitClause} {...inputProps} />
-              <QuestionBox id="q4_5_liability" label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟" value={formData.q4_5_liability} {...inputProps} />
-              <QuestionBox id="q4_6_jurisdiction" label="6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟" value={formData.q4_6_jurisdiction} {...inputProps} />
-              <QuestionBox id="q4_7_auditRight" label="7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟" value={formData.q4_7_auditRight} {...inputProps} />
-              <QuestionBox id="q4_8_contractDuration" label="8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟" value={formData.q4_8_contractDuration} {...inputProps} />
-              <QuestionBox id="q4_9_renewal" label="9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟" value={formData.q4_9_renewal} {...inputProps} />
-              <QuestionBox id="q4_10_blacklist" label="10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟" value={formData.q4_10_blacklist} {...inputProps} />
+              <QuestionBox id="q4_4_exitClause" label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟" value={formData.q4_4_exitClause} {...inputProps('q4_4_exitClause')} />
+              <QuestionBox id="q4_5_liability" label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟" value={formData.q4_5_liability} {...inputProps('q4_5_liability')} />
+              <QuestionBox id="q4_6_jurisdiction" label="6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟" value={formData.q4_6_jurisdiction} {...inputProps('q4_6_jurisdiction')} />
+              <QuestionBox id="q4_7_auditRight" label="7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟" value={formData.q4_7_auditRight} {...inputProps('q4_7_auditRight')} />
+              <QuestionBox id="q4_8_contractDuration" label="8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟" value={formData.q4_8_contractDuration} {...inputProps('q4_8_contractDuration')} />
+              <QuestionBox id="q4_9_renewal" label="9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟" value={formData.q4_9_renewal} {...inputProps('q4_9_renewal')} />
+              <QuestionBox id="q4_10_blacklist" label="10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟" value={formData.q4_10_blacklist} {...inputProps('q4_10_blacklist')} />
             </div>
           </div>
         );
@@ -400,14 +505,14 @@ const Dashboard = () => {
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" />
             <div className="space-y-6">
-              <QuestionBox id="q5_1_extraFeatures" label="1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟" value={formData.q5_1_extraFeatures} {...inputProps} />
-              <QuestionBox id="q5_2_innovation" label="2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟" value={formData.q5_2_innovation} {...inputProps} />
-              <QuestionBox id="q5_3_scholarships" label="3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟" value={formData.q5_3_scholarships} {...inputProps} />
-              <QuestionBox id="q5_4_staffTraining" label="4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟" value={formData.q5_4_staffTraining} {...inputProps} />
-              <QuestionBox id="q5_5_posUpdates" label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟" value={formData.q5_5_posUpdates} {...inputProps} />
-              <QuestionBox id="q5_6_foreignPayments" label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟" value={formData.q5_6_foreignPayments} {...inputProps} />
-              <QuestionBox id="q5_7_complaints" label="7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟" value={formData.q5_7_complaints} {...inputProps} />
-              <QuestionBox id="q5_8_socialResp" label="8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟" value={formData.q5_8_socialResp} {...inputProps} />
+              <QuestionBox id="q5_1_extraFeatures" label="1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟" value={formData.q5_1_extraFeatures} {...inputProps('q5_1_extraFeatures')} />
+              <QuestionBox id="q5_2_innovation" label="2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟" value={formData.q5_2_innovation} {...inputProps('q5_2_innovation')} />
+              <QuestionBox id="q5_3_scholarships" label="3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟" value={formData.q5_3_scholarships} {...inputProps('q5_3_scholarships')} />
+              <QuestionBox id="q5_4_staffTraining" label="4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟" value={formData.q5_4_staffTraining} {...inputProps('q5_4_staffTraining')} />
+              <QuestionBox id="q5_5_posUpdates" label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟" value={formData.q5_5_posUpdates} {...inputProps('q5_5_posUpdates')} />
+              <QuestionBox id="q5_6_foreignPayments" label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟" value={formData.q5_6_foreignPayments} {...inputProps('q5_6_foreignPayments')} />
+              <QuestionBox id="q5_7_complaints" label="7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟" value={formData.q5_7_complaints} {...inputProps('q5_7_complaints')} />
+              <QuestionBox id="q5_8_socialResp" label="8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟" value={formData.q5_8_socialResp} {...inputProps('q5_8_socialResp')} />
             </div>
           </div>
         );
@@ -415,9 +520,9 @@ const Dashboard = () => {
         return (
           <div className="space-y-8 animate-fade-in">
             <SectionHeader title="سادساً: المرفقات والملاحظات" />
-            <div className="bg-white p-12 rounded-[2rem] border-4 border-dashed border-gray-100 flex flex-col items-center text-center">
-              <FileCheck className="w-20 h-20 text-blue-900 mb-6 opacity-20" />
-              <h4 className="text-xl font-black text-blue-950 mb-2">تحميل عرض الشركة الفني والمالي (PDF)</h4>
+            <div className={`bg-white p-12 rounded-[2rem] border-4 border-dashed transition-all flex flex-col items-center text-center ${errors.includes('documentUrl') ? 'border-red-500 bg-red-50' : 'border-gray-100'}`}>
+              <FileCheck className={`w-20 h-20 mb-6 opacity-20 ${errors.includes('documentUrl') ? 'text-red-500' : 'text-blue-900'}`} />
+              <h4 className={`text-xl font-black mb-2 ${errors.includes('documentUrl') ? 'text-red-900' : 'text-blue-950'}`}>تحميل عرض الشركة الفني والمالي (PDF)</h4>
               <p className="text-xs text-gray-400 mb-8 font-bold">يرجى رفع ملف واحد يحتوي على كافة المخططات والإجازات</p>
               
               {formData.documentUrl ? (
@@ -431,10 +536,11 @@ const Dashboard = () => {
                   <div className="bg-blue-900 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">اختيار ملف PDF</div>
                 </div>
               )}
+              {errors.includes('documentUrl') && <p className="mt-4 text-red-600 font-black text-xs animate-bounce">يرجى رفع الملف الإلزامي للمتابعة</p>}
             </div>
             
             <div className="mt-10">
-              <label className="block text-sm font-black text-blue-950 mb-4">ملاحظات إضافية ترغب الشركة بإضافتها:</label>
+              <label className="block text-sm font-black text-blue-950 mb-4">ملاحظات إضافية ترغب الشركة بإضافتها (اختياري):</label>
               <textarea 
                 name="additionalNotes"
                 placeholder="اكتب ملاحظاتك هنا..."
@@ -455,8 +561,8 @@ const Dashboard = () => {
                <p className="text-gray-500 font-bold mb-12">يرجى كتابة الاسم الكامل والصفة الوظيفية للمسؤول المخول بالتوقيع قبل إرسال العرض نهائياً.</p>
                
                <div className="space-y-6 text-right">
-                  <InputField label="اسم المفوض بالتوقيع" name="signedBy" value={formData.signedBy} {...inputProps} />
-                  <InputField label="الصفة الوظيفية للموقع" name="position" value={formData.position} {...inputProps} />
+                  <InputField label="اسم المفوض بالتوقيع" value={formData.signedBy} {...inputProps('signedBy')} />
+                  <InputField label="الصفة الوظيفية للموقع" value={formData.position} {...inputProps('position')} />
                </div>
 
                <div className="mt-12 p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-200 text-right shadow-inner">
@@ -521,7 +627,7 @@ const Dashboard = () => {
               {steps.map(s => (
                 <button 
                   key={s.id} 
-                  onClick={() => setCurrentStep(s.id)}
+                  onClick={() => goToStep(s.id)}
                   className={`w-full text-right px-6 py-4 rounded-2xl font-black text-[11px] transition-all flex items-center justify-between group ${currentStep === s.id ? 'bg-blue-900 text-white shadow-xl shadow-blue-100' : 'text-gray-400 hover:bg-gray-50'}`}
                 >
                   <span>{s.title}</span>
@@ -574,8 +680,10 @@ const Dashboard = () => {
                   </div>
                   
                   <div className="flex gap-4 w-full md:w-auto">
-                    {currentStep < 9 ? (
-                      <button type="button" onClick={() => setCurrentStep(p => Math.min(9, p+1))} className="w-full md:w-auto px-12 py-4 bg-blue-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:bg-blue-900 transition-all">الخطوة التالية <ChevronLeft className="w-5 h-5" /></button>
+                    {currentStep < 8 ? (
+                      <button type="button" onClick={() => goToStep(currentStep + 1)} className="w-full md:w-auto px-12 py-4 bg-blue-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:bg-blue-900 transition-all">الخطوة التالية <ChevronLeft className="w-5 h-5" /></button>
+                    ) : currentStep === 8 ? (
+                      <button type="button" onClick={() => { if(validateStep(8)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
                     ) : (
                       !isReceived && (
                         <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-16 py-5 bg-blue-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-100 hover:bg-blue-800 transition-all">
@@ -623,9 +731,12 @@ const SectionHeader = ({ title }) => (
   </div>
 );
 
-const InputField = ({ label, name, value, onChange, type = 'text', disabled }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', disabled, error }) => (
   <div className="space-y-2">
-    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block pr-2">{label}</label>
+    <div className="flex justify-between items-center pr-2">
+      <label className={`text-[11px] font-black uppercase tracking-widest block ${error ? 'text-red-500' : 'text-gray-400'}`}>{label}</label>
+      {error && <span className="text-[9px] text-red-500 font-black animate-pulse">يجب الإجابة</span>}
+    </div>
     <input 
       type={type} 
       name={name} 
@@ -633,20 +744,23 @@ const InputField = ({ label, name, value, onChange, type = 'text', disabled }) =
       onChange={onChange} 
       disabled={disabled}
       onKeyDown={(e) => { if(e.key === 'Enter') e.preventDefault(); }}
-      className="w-full p-5 rounded-2xl bg-gray-50/50 border-2 border-transparent focus:bg-white focus:border-blue-900 outline-none font-bold transition-all text-sm" 
+      className={`w-full p-5 rounded-2xl border-2 outline-none font-bold transition-all text-sm ${error ? 'bg-red-50 border-red-200 focus:border-red-500' : 'bg-gray-50/50 border-transparent focus:bg-white focus:border-blue-900'}`} 
     />
   </div>
 );
 
-const QuestionBox = ({ id, label, value, onChange, disabled }) => (
-  <div className="p-8 rounded-[2.5rem] bg-gray-50/30 border-2 border-transparent hover:border-blue-50 hover:bg-white transition-all group shadow-sm">
-    <label className="block text-sm font-black mb-4 text-blue-950 leading-relaxed group-hover:text-blue-900">{label}</label>
+const QuestionBox = ({ id, label, value, onChange, disabled, error }) => (
+  <div className={`p-8 rounded-[2.5rem] border-2 transition-all group shadow-sm ${error ? 'bg-red-50/50 border-red-200' : 'bg-gray-50/30 border-transparent hover:border-blue-50 hover:bg-white'}`}>
+    <div className="flex justify-between items-start mb-4">
+      <label className={`block text-sm font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
+      {error && <span className="text-[10px] bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
+    </div>
     <textarea 
       name={id} 
       value={value} 
       onChange={onChange} 
       disabled={disabled}
-      className="w-full h-40 p-6 rounded-2xl border-2 border-gray-100 focus:border-blue-900 focus:ring-4 ring-blue-50 outline-none font-bold transition-all text-sm bg-white" 
+      className={`w-full h-40 p-6 rounded-2xl border-2 focus:ring-4 outline-none font-bold transition-all text-sm bg-white ${error ? 'border-red-200 focus:border-red-500 ring-red-50' : 'border-gray-100 focus:border-blue-900 ring-blue-50'}`} 
     />
   </div>
 );
