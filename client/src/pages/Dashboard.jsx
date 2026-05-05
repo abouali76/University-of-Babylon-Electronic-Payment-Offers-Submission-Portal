@@ -210,7 +210,7 @@ const Dashboard = () => {
     if (!dbData) return {};
     const data = {};
     
-    // Map of DB lowercase columns to React camelCase keys
+    // Comprehensive Map of DB lowercase columns to React camelCase keys
     const mapping = {
       companyname: 'companyName',
       submissiondate: 'submissionDate',
@@ -220,9 +220,37 @@ const Dashboard = () => {
       govinstitutionscount: 'govInstitutionsCount',
       paidcapital: 'paidCapital',
       officialaddress: 'officialAddress',
+      // Step 2-7 questions
+      q2_2_commissions: 'q2_2_commissions',
+      q2_4_delaypenalty: 'q2_4_delayPenalty',
+      q2_5_atmcommitment: 'q2_5_atmCommitment',
+      q2_6_studentcards: 'q2_6_studentCards',
+      q2_7_chargingcenters: 'q2_7_chargingCenters',
+      q2_8_poscommitment: 'q2_8_posCommitment',
+      q3a_1_integratedsystem: 'q3a_1_integratedSystem',
+      q3a_2_techspecs: 'q3a_2_techSpecs',
+      q3a_3_appsupport: 'q3a_3_appSupport',
+      q3a_4_webintegration: 'q3a_4_webIntegration',
+      q3b_1_certificates: 'q3b_1_certificates',
+      q3b_5_supportsla: 'q3b_5_supportSla',
+      q3b_6_pentest: 'q3b_6_penTest',
+      q4_1_bankguarantee: 'q4_1_bankGuarantee',
+      q4_2_penaltyclause: 'q4_2_penaltyClause',
+      q4_3_dataownership: 'q4_3_dataOwnership',
+      q4_4_exitclause: 'q4_4_exitClause',
+      q4_7_auditright: 'q4_7_auditRight',
+      q4_8_contractduration: 'q4_8_contractDuration',
+      q5_1_extrafeatures: 'q5_1_extraFeatures',
+      q5_4_stafftraining: 'q5_4_staffTraining',
+      q5_5_posupdates: 'q5_5_posUpdates',
+      q5_6_foreignpayments: 'q5_6_foreignPayments',
+      q5_8_socialresp: 'q5_8_socialResp',
+      // Other fields
       document_url: 'documentUrl',
       document_path: 'documentUrl',
-      additionalnotes: 'additionalNotes'
+      additionalnotes: 'additionalNotes',
+      signedby: 'signedBy',
+      is_received: 'isReceived'
     };
 
     Object.keys(dbData).forEach(dbKey => {
