@@ -208,22 +208,13 @@ const Dashboard = () => {
 
   const toDbPayload = (data) => {
     const payload = {};
-    // Map of React keys to DB column names
-    const mapping = {
-      documentUrl: 'document_url',
-      additionalNotes: 'additionalnotes', // Based on user error, it's likely lowercase
-      companyName: 'companyName',
-      submissionDate: 'submissionDate',
-      representativeName: 'representativeName',
-      centralBankLicense: 'centralBankLicense',
-      marketExperience: 'marketExperience',
-      govInstitutionsCount: 'govInstitutionsCount',
-      paidCapital: 'paidCapital',
-      officialAddress: 'officialAddress'
-    };
-
     Object.keys(data).forEach(key => {
-      const dbKey = mapping[key] || key;
+      // Convert to lowercase by default to match most DB setups
+      let dbKey = key.toLowerCase();
+      
+      // Specifically handle underscore cases
+      if (dbKey === 'documenturl') dbKey = 'document_url';
+      
       payload[dbKey] = data[key];
     });
     return payload;
