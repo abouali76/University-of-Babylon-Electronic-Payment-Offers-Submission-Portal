@@ -302,8 +302,13 @@ const Dashboard = () => {
 
   const saveDraft = async () => {
     try {
+      const dbPayload = {};
+      Object.keys(formData).forEach(key => {
+        dbPayload[key.toLowerCase()] = formData[key];
+      });
+
       const payload = {
-        ...formData,
+        ...dbPayload,
         user_id: user.userId || user.id,
         username: user.username,
         status: 'draft',
@@ -346,8 +351,13 @@ const Dashboard = () => {
     setIsSubmitting(true);
     setShowConfirmModal(false);
     try {
+      const dbPayload = {};
+      Object.keys(formData).forEach(key => {
+        dbPayload[key.toLowerCase()] = formData[key];
+      });
+
       const payload = {
-        ...formData,
+        ...dbPayload,
         user_id: user.userId || user.id,
         username: user.username,
         status: 'final',
