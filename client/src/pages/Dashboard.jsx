@@ -193,11 +193,11 @@ const Dashboard = () => {
       if (subError) throw subError;
 
       if (sub) {
-        // sub contains the columns directly now
+        const mappedData = fromDbPayload(sub);
         setFormData(p => ({ 
           ...p, 
-          ...sub, 
-          documentUrl: sub.document_path || sub.document_url || p.documentUrl 
+          ...mappedData,
+          documentUrl: sub.document_path || sub.document_url || sub.documentUrl || p.documentUrl 
         }));
         if (sub.status === 'final') setIsSubmitted(true);
         setIsReceived(!!sub.is_received);
@@ -205,6 +205,32 @@ const Dashboard = () => {
     };
     boot();
   }, [navigate]);
+
+  const fromDbPayload = (dbData) => {
+    if (!dbData) return {};
+    const data = {};
+    
+    // Map of DB lowercase columns to React camelCase keys
+    const mapping = {
+      companyname: 'companyName',
+      submissiondate: 'submissionDate',
+      representativename: 'representativeName',
+      centralbanklicense: 'centralBankLicense',
+      marketexperience: 'marketExperience',
+      govinstitutionscount: 'govInstitutionsCount',
+      paidcapital: 'paidCapital',
+      officialaddress: 'officialAddress',
+      document_url: 'documentUrl',
+      document_path: 'documentUrl',
+      additionalnotes: 'additionalNotes'
+    };
+
+    Object.keys(dbData).forEach(dbKey => {
+      const reactKey = mapping[dbKey] || dbKey;
+      data[reactKey] = dbData[dbKey];
+    });
+    return data;
+  };
 
   const toDbPayload = (data) => {
     const payload = {};
