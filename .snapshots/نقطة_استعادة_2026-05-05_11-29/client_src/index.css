@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-indigo-200 rounded-full hover:bg-indigo-300 transition-colors;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Section Theme Colors */
+.theme-blue { --theme-color: #2563eb; --theme-bg: #eff6ff; }
+.theme-emerald { --theme-color: #059669; --theme-bg: #ecfdf5; }
+.theme-indigo { --theme-color: #4f46e5; --theme-bg: #eef2ff; }
+.theme-purple { --theme-color: #7c3aed; --theme-bg: #f5f3ff; }
+.theme-amber { --theme-color: #d97706; --theme-bg: #fffbeb; }
+.theme-rose { --theme-color: #e11d48; --theme-bg: #fff1f2; }
+.theme-cyan { --theme-color: #0891b2; --theme-bg: #ecfeff; }
+.theme-teal { --theme-color: #0d9488; --theme-bg: #f0fdfa; }
+.theme-slate { --theme-color: #475569; --theme-bg: #f8fafc; }
+
+.section-card {
+  border-right: 4px solid var(--theme-color);
+  background: white;
+}
+
+.sidebar-item-active {
+  background-color: var(--theme-bg);
+  color: var(--theme-color);
+  border-right: 4px solid var(--theme-color);
+}

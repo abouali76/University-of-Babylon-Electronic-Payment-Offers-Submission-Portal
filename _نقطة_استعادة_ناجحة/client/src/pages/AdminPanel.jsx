@@ -204,9 +204,12 @@ const AdminPanel = () => {
 
   const allCompanies = dynamicUsers.map(u => {
     const submission = submissions.find(s => s.username === u.username) || {};
+    const finalUserId = u.id || submission.user_id || submission.userId;
+    console.log(`Mapping company ${u.username}:`, { u_id: u.id, sub_user_id: submission.user_id, finalUserId });
+    
     return {
       ...submission,
-      userId: u.id, // Standardize as userId everywhere
+      userId: finalUserId, // Standardize as userId everywhere
       evaluation_score: submission.evaluation_score,
       status: submission.status,
       lastUpdated: submission.last_updated || submission.lastupdated,
@@ -348,6 +351,7 @@ const AdminPanel = () => {
                         <td className="px-8 py-6">
                           <div className="font-black text-indigo-950">{c.companyName}</div>
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
+                          <div className="text-[8px] text-indigo-300 font-mono mt-1">ID: {c.userId || 'MISSING!'}</div>
                         </td>
                          <td className="px-8 py-6">
                             {c.isReceived ? (
