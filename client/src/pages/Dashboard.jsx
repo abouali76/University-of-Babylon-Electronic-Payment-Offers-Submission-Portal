@@ -101,6 +101,62 @@ const Dashboard = () => {
     9: ['signedBy', 'position']
   };
 
+  const FIELD_LABELS = {
+    companyName: 'اسم الشركة',
+    submissionDate: 'تاريخ تقديم العرض',
+    representativeName: 'اسم ممثل الشركة',
+    phone: 'رقم الهاتف المعتمد',
+    email: 'البريد الإلكتروني المعتمد',
+    centralBankLicense: 'رقم إجازة البنك المركزي العراقي',
+    marketExperience: 'سنوات الخبرة في السوق المحلي',
+    govInstitutionsCount: 'عدد المؤسسات الحكومية المخدَّمة',
+    paidCapital: 'رأس المال / الملاءة المالية',
+    officialAddress: 'العنوان الرسمي / المقر الرئيسي',
+    q2_1_settlement: '1. آلية التسوية المالية (المقاصة)',
+    q2_2_commissions: '2. نسب العمولات والخصومات المقترحة',
+    q2_3_intermediary: '3. تفاصيل البنك الوسيط (إن وجد)',
+    q2_4_delayPenalty: '4. قيمة غرامة التأخير المقترحة',
+    q2_5_atmCommitment: '5. الالتزام بتوفير أجهزة ATM',
+    q2_6_studentCards: '6. تفاصيل إصدار بطاقات الطلبة',
+    q2_7_chargingCenters: '7. مراكز التعبئة وساعات العمل',
+    q2_8_posCommitment: '8. تجهيز PoS والورق الحراري والصيانة',
+    q3a_1_integratedSystem: '1. توفر نظام إلكتروني متكامل للتقارير',
+    q3a_2_techSpecs: '2. إصدار بطاقات خاصة بالوحدات الإدارية',
+    q3a_3_appSupport: '3. كشف حساب لحظي (Real-time)',
+    q3a_4_webIntegration: '4. التكامل مع موقع الجامعة (QR/رابط)',
+    q3a_5_reporting: '5. خدمة التحويلات خارج العراق',
+    q3a_6_training: '6. توفر رقم IBAN لكل بطاقة',
+    q3b_1_certificates: '1. شهادات الأمن (PCI-DSS / ISO)',
+    q3b_2_encryption: '2. بروتوكول التشفير المستخدم',
+    q3b_3_rto_bcp: '3. وقت استعادة الخدمة (RTO)',
+    q3b_4_backups: '4. سياسة النسخ الاحتياطي ومكان التخزين',
+    q3b_5_supportSla: '5. نظام الدعم الفني (24/7)',
+    q3b_6_penTest: '6. اختبارات الاختراق الأمني الدورية',
+    q3b_7_monitoring: '7. سياسة الاحتفاظ بالبيانات',
+    q3b_8_incident: '8. طرائق الاتصال والحاجة للإنترنت',
+    q4_1_bankGuarantee: '1. خطاب الضمان المصرفي غير المشروط',
+    q4_2_penaltyClause: '2. الالتزام بسرية البيانات (NDA)',
+    q4_3_dataOwnership: '3. ملكية البيانات للجامعة حصراً',
+    q4_4_exitClause: '4. برامج تدريبية مجانية للموظفين',
+    q4_5_liability: '5. حق الجامعة بفسخ العقد فورياً',
+    q4_6_jurisdiction: '6. القانون العراقي واختصاص محاكم بابل',
+    q4_7_auditRight: '7. اللجوء للتحكيم التجاري العراقي',
+    q4_8_contractDuration: '8. مدة العقد وشروط التجديد',
+    q4_9_renewal: '9. آلية معالجة شكاوى الطلبة',
+    q4_10_blacklist: '10. القائمة السوداء (البنك المركزي)',
+    q5_1_extraFeatures: '1. تطبيق هاتفي (iOS/Android)',
+    q5_2_innovation: '2. خدمات مصرفية إضافية ومحافظ رقمية',
+    q5_3_scholarships: '3. الطاقة الاستيعابية لمعالجة الحركات',
+    q5_4_staffTraining: '4. دعم الفعاليات والمؤتمرات العلمية',
+    q5_5_posUpdates: '5. التحديث الدوري للأجهزة والأنظمة',
+    q5_6_foreignPayments: '6. تسديد أجور بالدولار للخارج',
+    q5_7_complaints: '7. ميزات إضافية لصالح جامعة بابل',
+    q5_8_socialResp: '8. المؤسسات الحكومية المخدَّمة حالياً',
+    documentUrl: 'الملف المرفق (PDF)',
+    signedBy: 'اسم المفوض بالتوقيع',
+    position: 'الصفة الوظيفية للموقع'
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setErrors([]);
@@ -385,17 +441,7 @@ const Dashboard = () => {
   );
 
   const findLabelForField = (fieldName) => {
-    // This is a helper to get labels without re-rendering everything
-    if (fieldName === 'companyName') return 'اسم الشركة';
-    if (fieldName === 'representativeName') return 'الممثل الرسمي';
-    if (fieldName === 'phone') return 'رقم الهاتف';
-    if (fieldName === 'email') return 'البريد الإلكتروني';
-    if (fieldName === 'documentUrl') return 'المستند المرفوع';
-    if (fieldName === 'signedBy') return 'اسم الموقع';
-    if (fieldName === 'position') return 'الصفة الوظيفية';
-    
-    // For questions, extract ID and find in cases (simplification for summary)
-    return fieldName.replace('q', 'السؤال ');
+    return FIELD_LABELS[fieldName] || fieldName;
   };
 
   const renderStepContent = () => {
@@ -653,11 +699,11 @@ const Dashboard = () => {
               <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8">
                 <CheckCircle2 className="w-12 h-12 text-emerald-600" />
               </div>
-              <h2 className="text-3xl font-black text-blue-950 mb-4">{isSubmitted && !isReceived ? 'تم تحديث العرض بنجاح' : 'تم إرسال العرض بنجاح'}</h2>
+              <h2 className="text-3xl font-black text-blue-950 mb-4">تم استلام عرضكم بنجاح</h2>
               <p className="text-gray-500 font-bold mb-10 max-w-md mx-auto text-sm leading-relaxed">
                 {isReceived 
                   ? 'تم تأييد استلام عرضكم من قبل اللجنة بنجاح. العرض الآن في مرحلة المراجعة النهائية ولا يمكن تعديله.'
-                  : 'شكراً لكم، تم استلام عرضكم بنجاح. يمكنك تعديل البيانات في أي وقت طالما لم يتم تأييد الاستلام من قبل اللجنة.'
+                  : 'شكراً لكم، تم استلام بيانات العرض بنجاح. يمكنك دائماً تحديث البيانات طالما لم يتم تأييد الاستلام من قبل اللجنة.'
                 }
               </p>
               <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
