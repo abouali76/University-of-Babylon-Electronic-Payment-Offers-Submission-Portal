@@ -206,6 +206,29 @@ const Dashboard = () => {
     boot();
   }, [navigate]);
 
+  const toDbPayload = (data) => {
+    const payload = {};
+    // Map of React keys to DB column names
+    const mapping = {
+      documentUrl: 'document_url',
+      additionalNotes: 'additionalnotes', // Based on user error, it's likely lowercase
+      companyName: 'companyName',
+      submissionDate: 'submissionDate',
+      representativeName: 'representativeName',
+      centralBankLicense: 'centralBankLicense',
+      marketExperience: 'marketExperience',
+      govInstitutionsCount: 'govInstitutionsCount',
+      paidCapital: 'paidCapital',
+      officialAddress: 'officialAddress'
+    };
+
+    Object.keys(data).forEach(key => {
+      const dbKey = mapping[key] || key;
+      payload[dbKey] = data[key];
+    });
+    return payload;
+  };
+
   const checkLockStatus = async () => {
     try {
       const localUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -302,18 +325,13 @@ const Dashboard = () => {
 
   const saveDraft = async () => {
     try {
-      const dbPayload = {};
-      Object.keys(formData).forEach(key => {
-        dbPayload[key.toLowerCase()] = formData[key];
-      });
-
+      const dbFields = toDbPayload(formData);
+      
       const payload = {
-        ...dbPayload,
+        ...dbFields,
         user_id: user.userId || user.id,
         username: user.username,
         status: 'draft',
-        document_path: formData.documentUrl || null,
-        document_url: formData.documentUrl || null,
         last_updated: new Date().toISOString()
       };
 
@@ -351,18 +369,13 @@ const Dashboard = () => {
     setIsSubmitting(true);
     setShowConfirmModal(false);
     try {
-      const dbPayload = {};
-      Object.keys(formData).forEach(key => {
-        dbPayload[key.toLowerCase()] = formData[key];
-      });
+      const dbFields = toDbPayload(formData);
 
       const payload = {
-        ...dbPayload,
+        ...dbFields,
         user_id: user.userId || user.id,
         username: user.username,
         status: 'final',
-        document_path: formData.documentUrl || null,
-        document_url: formData.documentUrl || null,
         last_updated: new Date().toISOString()
       };
 
