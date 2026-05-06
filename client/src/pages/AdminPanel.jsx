@@ -31,6 +31,32 @@ const AdminPanel = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Subscribe to realtime activity logs
+    const channel = supabase
+      .channel('admin-activity-logs')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'activity_logs',
+        },
+        (payload) => {
+          console.log('New activity received:', payload.new);
+          setActivities(prev => [payload.new, ...prev].slice(0, 20));
+          
+          // If it's a submission, refresh the data to show the new status in the table
+          if (payload.new.event_type === 'submit') {
+            fetchData();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
