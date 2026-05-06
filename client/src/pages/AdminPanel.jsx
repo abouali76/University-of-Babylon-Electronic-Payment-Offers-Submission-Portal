@@ -349,7 +349,6 @@ const AdminPanel = () => {
                             ) : (
                               <div className="flex items-center gap-2">
                                 <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, userId: c.userId, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
                               </div>
                             )}
                          </td>
@@ -610,13 +609,7 @@ const AdminPanel = () => {
                      <CheckCircle2 className="w-6 h-6" />
                      تأييد استلام العرض (قفل النهائي)
                    </button>
-                   <button 
-                     onClick={() => setConfirmModal({ show: true, type: 'finalize', username: selectedSubmission.username, userId: selectedSubmission.userId, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })}
-                     className="flex-1 py-5 bg-indigo-900 text-white rounded-2xl font-black hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"
-                   >
-                     <ShieldCheck className="w-6 h-6" />
-                     إرسال نهائي نيابة عن الشركة
-                   </button>
+
                 </div>
               </div>
             </div>
