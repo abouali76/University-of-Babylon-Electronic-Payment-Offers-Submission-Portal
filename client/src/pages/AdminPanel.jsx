@@ -818,7 +818,21 @@ const AdminPanel = () => {
               </div>
               <h3 className="text-lg font-black text-indigo-950">النشاطات الأخيرة</h3>
             </div>
-            <button onClick={() => setShowActivities(false)} className="p-2 hover:bg-white rounded-lg text-gray-400 transition-all"><X className="w-5 h-5" /></button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={async () => {
+                  if (confirm('هل تريد مسح جميع النشاطات؟')) {
+                    await supabase.from('activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                    setActivities([]);
+                  }
+                }}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                title="مسح الكل"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+              <button onClick={() => setShowActivities(false)} className="p-2 hover:bg-white rounded-lg text-gray-400 transition-all"><X className="w-5 h-5" /></button>
+            </div>
           </div>
           <div className="flex-grow overflow-y-auto p-6 space-y-4">
             {activities.length === 0 ? (
@@ -833,7 +847,18 @@ const AdminPanel = () => {
                     <span className={`text-[9px] font-black px-2 py-1 rounded-full ${log.event_type === 'submit' ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'}`}>
                       {log.event_type === 'submit' ? 'إرسال نهائي' : 'دخول للموقع'}
                     </span>
-                    <span className="text-[9px] font-bold text-gray-400">{new Date(log.created_at).toLocaleTimeString('ar-EG')}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-gray-400">{new Date(log.created_at).toLocaleTimeString('ar-EG')}</span>
+                      <button 
+                        onClick={() => {
+                          supabase.from('activity_logs').delete().eq('id', log.id).then();
+                          setActivities(prev => prev.filter(a => a.id !== log.id));
+                        }}
+                        className="p-1 text-gray-300 hover:text-red-500 transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-xs font-black text-indigo-950">{log.username}</p>
                   <p className="text-[10px] font-bold text-gray-500 mt-1">{log.details}</p>

@@ -222,10 +222,17 @@ const Dashboard = () => {
     boot();
 
     // Cleanup: Delete login notification when leaving
-    return () => {
+    const cleanup = () => {
       if (activityLogId.current) {
         supabase.from('activity_logs').delete().eq('id', activityLogId.current).then();
       }
+    };
+
+    window.addEventListener('beforeunload', cleanup);
+
+    return () => {
+      window.removeEventListener('beforeunload', cleanup);
+      cleanup();
     };
   }, [navigate]);
 
