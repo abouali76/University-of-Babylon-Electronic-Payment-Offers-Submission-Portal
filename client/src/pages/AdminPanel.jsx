@@ -369,6 +369,7 @@ const AdminPanel = () => {
         fixed lg:sticky top-0 right-0 h-screen w-80 bg-white border-l border-gray-100 flex flex-col z-50 
         transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none
         ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        overflow-y-auto
       `}>
         <div className="p-8">
           <div className="hidden lg:flex items-center gap-4 mb-12">
