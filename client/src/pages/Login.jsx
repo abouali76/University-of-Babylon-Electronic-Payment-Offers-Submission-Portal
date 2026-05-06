@@ -30,7 +30,8 @@ const Login = () => {
     setError('');
 
     try {
-      if (String(username).trim() === 'admin' && password === 'admin123') {
+      const savedAdminPass = localStorage.getItem('adminPassword') || 'admin123';
+      if (String(username).trim() === 'admin' && password === savedAdminPass) {
         const userData = {
           username: 'admin',
           role: 'admin',

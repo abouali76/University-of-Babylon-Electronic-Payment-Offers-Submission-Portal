@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -15,6 +15,12 @@ const AdminPanel = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -190,6 +196,41 @@ const AdminPanel = () => {
     window.location.reload();
   };
 
+  const handleChangePassword = () => {
+    setPwError('');
+    setPwSuccess('');
+    const savedAdminPass = localStorage.getItem('adminPassword') || 'admin123';
+
+    if (!pwForm.current || !pwForm.newPass || !pwForm.confirm) {
+      setPwError('يرجى ملء جميع الحقول.');
+      return;
+    }
+    if (pwForm.current !== savedAdminPass) {
+      setPwError('كلمة المرور الحالية غير صحيحة.');
+      return;
+    }
+    if (pwForm.newPass.length < 4) {
+      setPwError('كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل.');
+      return;
+    }
+    if (pwForm.newPass !== pwForm.confirm) {
+      setPwError('كلمة المرور الجديدة وتأكيدها غير متطابقتين.');
+      return;
+    }
+    if (pwForm.newPass === pwForm.current) {
+      setPwError('كلمة المرور الجديدة يجب أن تكون مختلفة عن الحالية.');
+      return;
+    }
+
+    localStorage.setItem('adminPassword', pwForm.newPass);
+    setPwSuccess('تم تغيير كلمة المرور بنجاح!');
+    setPwForm({ current: '', newPass: '', confirm: '' });
+    setTimeout(() => {
+      setShowChangePassword(false);
+      setPwSuccess('');
+    }, 1500);
+  };
+
   const allCompanies = dynamicUsers.map(u => {
     const submission = submissions.find(s => s.username === u.username) || {};
     const finalUserId = u.id || submission.user_id || submission.userId;
@@ -266,6 +307,7 @@ const AdminPanel = () => {
               <button onClick={() => setView('list')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white' : 'text-gray-400'}`}>الشركات</button>
               <button onClick={() => setView('results')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'results' ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'text-gray-400'}`}>نتائج التصنيف</button>
               <button onClick={() => setShowAddUser(!showAddUser)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-black border border-indigo-100">إضافة شركة</button>
+              <button onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all" title="تغيير كلمة المرور"><KeyRound className="w-5 h-5" /></button>
               <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><LogOut className="w-5 h-5" /></button>
             </div>
           </div>
@@ -624,6 +666,84 @@ const AdminPanel = () => {
             <div className="flex gap-4">
               <button onClick={executeDelete} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">تأكيد</button>
               <button onClick={() => setConfirmModal({ show: false })} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">تراجع</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showChangePassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center">
+                <KeyRound className="w-7 h-7 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">تغيير كلمة المرور</h3>
+                <p className="text-xs font-bold text-gray-400 mt-1">أدخل كلمة المرور الحالية والجديدة</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">كلمة المرور الحالية</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPw ? 'text' : 'password'}
+                    value={pwForm.current}
+                    onChange={(e) => setPwForm(prev => ({ ...prev, current: e.target.value }))}
+                    className="w-full p-4 pr-12 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
+                    placeholder="••••••••"
+                  />
+                  <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-all">
+                    {showCurrentPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">كلمة المرور الجديدة</label>
+                <div className="relative">
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    value={pwForm.newPass}
+                    onChange={(e) => setPwForm(prev => ({ ...prev, newPass: e.target.value }))}
+                    className="w-full p-4 pr-12 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
+                    placeholder="••••••••"
+                  />
+                  <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-all">
+                    {showNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">تأكيد كلمة المرور الجديدة</label>
+                <input
+                  type="password"
+                  value={pwForm.confirm}
+                  onChange={(e) => setPwForm(prev => ({ ...prev, confirm: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {pwError && (
+              <div className="mt-5 bg-red-50 border border-red-100 p-4 rounded-2xl">
+                <p className="text-red-600 text-xs text-center font-black">{pwError}</p>
+              </div>
+            )}
+
+            {pwSuccess && (
+              <div className="mt-5 bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+                <p className="text-emerald-600 text-xs text-center font-black">{pwSuccess}</p>
+              </div>
+            )}
+
+            <div className="flex gap-4 mt-8">
+              <button onClick={handleChangePassword} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">حفظ كلمة المرور</button>
+              <button onClick={() => setShowChangePassword(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
             </div>
           </div>
         </div>
