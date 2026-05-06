@@ -9,8 +9,8 @@ const FALLBACK_SUPABASE_ANON =
 
 // Prevent white screen when env vars are missing in deployed GitHub Pages build.
 // We keep app booting and show actionable errors on API actions instead.
-const safeUrl = supabaseUrl || FALLBACK_SUPABASE_URL
-const safeAnon = supabaseAnonKey || FALLBACK_SUPABASE_ANON
+export const safeUrl = supabaseUrl || FALLBACK_SUPABASE_URL
+export const safeAnon = supabaseAnonKey || FALLBACK_SUPABASE_ANON
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(

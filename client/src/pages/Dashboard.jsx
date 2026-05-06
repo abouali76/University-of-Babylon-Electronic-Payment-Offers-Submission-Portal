@@ -5,7 +5,7 @@ import {
   CheckCircle2, AlertCircle, Building2, User, 
   Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X
 } from 'lucide-react';
-import { supabase } from '../utils/supabaseClient';
+import { supabase, safeUrl, safeAnon } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 
 const Dashboard = () => {
@@ -224,7 +224,17 @@ const Dashboard = () => {
     // Cleanup: Delete login notification when leaving
     const cleanup = () => {
       if (activityLogId.current) {
-        supabase.from('activity_logs').delete().eq('id', activityLogId.current).then();
+        // Use native fetch with keepalive to ensure it finishes even on tab close
+        const url = `${safeUrl}/rest/v1/activity_logs?id=eq.${activityLogId.current}`;
+        fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'apikey': safeAnon,
+            'Authorization': `Bearer ${safeAnon}`,
+            'Content-Type': 'application/json'
+          },
+          keepalive: true
+        });
       }
     };
 
