@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -21,6 +21,8 @@ const AdminPanel = () => {
   const [pwSuccess, setPwSuccess] = useState('');
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+  const [activities, setActivities] = useState([]);
+  const [showActivities, setShowActivities] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -80,8 +82,17 @@ const AdminPanel = () => {
         subsData = subsResult.data || [];
       }
 
+      const logsResult = await supabase
+        .from('activity_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      const logsData = logsResult.data || [];
+
       setDynamicUsers(usersData);
       setSubmissions(subsData);
+      setActivities(logsData);
     } catch (err) {
       console.error('Error fetching data:', err);
       alert(`خطأ غير متوقع: ${err.message}`);
@@ -312,6 +323,14 @@ const AdminPanel = () => {
             <div className="flex items-center gap-4">
               <button onClick={fetchData} className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all">
                 <RefreshCcw className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setShowActivities(!showActivities)} 
+                className={`p-2.5 rounded-xl transition-all relative ${showActivities ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                title="النشاطات الأخيرة"
+              >
+                <Bell className="w-5 h-5" />
+                {activities.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">{activities.length}</span>}
               </button>
               <button onClick={() => setView('list')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white' : 'text-gray-400'}`}>الشركات</button>
               <button onClick={() => setView('results')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'results' ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'text-gray-400'}`}>نتائج التصنيف</button>
@@ -755,6 +774,46 @@ const AdminPanel = () => {
               <button onClick={handleChangePassword} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">حفظ كلمة المرور</button>
               <button onClick={() => setShowChangePassword(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showActivities && (
+        <div className="fixed inset-y-0 left-0 z-[60] w-96 bg-white shadow-2xl border-r border-indigo-50 animate-slide-left flex flex-col">
+          <div className="p-8 border-b border-indigo-50 flex items-center justify-between bg-indigo-50/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                <History className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-black text-indigo-950">النشاطات الأخيرة</h3>
+            </div>
+            <button onClick={() => setShowActivities(false)} className="p-2 hover:bg-white rounded-lg text-gray-400 transition-all"><X className="w-5 h-5" /></button>
+          </div>
+          <div className="flex-grow overflow-y-auto p-6 space-y-4">
+            {activities.length === 0 ? (
+              <div className="text-center py-20 opacity-20">
+                 <Bell className="w-20 h-20 mx-auto mb-4" />
+                 <p className="font-bold">لا توجد نشاطات حالياً</p>
+              </div>
+            ) : (
+              activities.map((log) => (
+                <div key={log.id} className={`p-4 rounded-2xl border transition-all hover:scale-[1.02] ${log.event_type === 'submit' ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-[9px] font-black px-2 py-1 rounded-full ${log.event_type === 'submit' ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'}`}>
+                      {log.event_type === 'submit' ? 'إرسال نهائي' : 'دخول للموقع'}
+                    </span>
+                    <span className="text-[9px] font-bold text-gray-400">{new Date(log.created_at).toLocaleTimeString('ar-EG')}</span>
+                  </div>
+                  <p className="text-xs font-black text-indigo-950">{log.username}</p>
+                  <p className="text-[10px] font-bold text-gray-500 mt-1">{log.details}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="p-6 border-t border-indigo-50">
+             <button onClick={fetchData} className="w-full py-4 bg-gray-50 text-indigo-600 rounded-2xl font-black text-xs hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+               <RefreshCcw className="w-4 h-4" /> تحديث النشاطات
+             </button>
           </div>
         </div>
       )}

@@ -202,6 +202,17 @@ const Dashboard = () => {
         if (sub.status === 'final') setIsSubmitted(true);
         setIsReceived(!!sub.is_received);
       }
+
+      // Log Login Activity
+      try {
+        await supabase.from('activity_logs').insert({
+          username: username,
+          event_type: 'login',
+          details: `دخلت الشركة للعمل على الاستمارة`
+        });
+      } catch (logErr) {
+        console.warn('Logging failed (table might not exist yet):', logErr);
+      }
     };
     boot();
   }, [navigate]);
@@ -447,6 +458,18 @@ const Dashboard = () => {
         .upsert(payload);
 
       if (error) throw error;
+      
+      // Log Submission Activity
+      try {
+        await supabase.from('activity_logs').insert({
+          username: user.username,
+          event_type: 'submit',
+          details: `قامت الشركة بإرسال العرض النهائي بنجاح`
+        });
+      } catch (logErr) {
+        console.warn('Logging failed:', logErr);
+      }
+
       setIsSubmitted(true);
       setShowSuccess(true);
     } catch (err) {
