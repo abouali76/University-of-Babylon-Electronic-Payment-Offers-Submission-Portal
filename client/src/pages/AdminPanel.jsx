@@ -38,17 +38,22 @@ const AdminPanel = () => {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to INSERT and DELETE
           schema: 'public',
           table: 'activity_logs',
         },
         (payload) => {
-          console.log('New activity received:', payload.new);
-          setActivities(prev => [payload.new, ...prev].slice(0, 20));
+          console.log('Realtime activity update:', payload);
           
-          // If it's a submission, refresh the data to show the new status in the table
-          if (payload.new.event_type === 'submit') {
-            fetchData();
+          if (payload.eventType === 'INSERT') {
+            setActivities(prev => [payload.new, ...prev].slice(0, 20));
+            // If it's a submission, refresh the data to show the new status in the table
+            if (payload.new.event_type === 'submit') {
+              fetchData();
+            }
+          } else if (payload.eventType === 'DELETE') {
+            // Remove the deleted log from the activities list
+            setActivities(prev => prev.filter(a => a.id !== payload.old.id));
           }
         }
       )

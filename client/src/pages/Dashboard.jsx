@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, ChevronLeft, Save, Send, LogOut, 
@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isReceived, setIsReceived] = useState(false);
+  const activityLogId = useRef(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -205,16 +206,27 @@ const Dashboard = () => {
 
       // Log Login Activity
       try {
-        await supabase.from('activity_logs').insert({
+        const { data: logData } = await supabase.from('activity_logs').insert({
           username: username,
           event_type: 'login',
           details: `دخلت الشركة للعمل على الاستمارة`
-        });
+        }).select();
+        
+        if (logData && logData[0]) {
+          activityLogId.current = logData[0].id;
+        }
       } catch (logErr) {
         console.warn('Logging failed (table might not exist yet):', logErr);
       }
     };
     boot();
+
+    // Cleanup: Delete login notification when leaving
+    return () => {
+      if (activityLogId.current) {
+        supabase.from('activity_logs').delete().eq('id', activityLogId.current).then();
+      }
+    };
   }, [navigate]);
 
   const fromDbPayload = (dbData) => {
