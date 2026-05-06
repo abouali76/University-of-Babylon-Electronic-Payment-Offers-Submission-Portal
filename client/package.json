@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://abouali76.github.io/epcs/",
+  "homepage": "https://abouali76.github.io/University-of-Babylon-Electronic-Payment-Offers-Submission-Portal/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
