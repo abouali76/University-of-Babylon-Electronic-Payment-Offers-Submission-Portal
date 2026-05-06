@@ -347,12 +347,21 @@ const AdminPanel = () => {
           </div>
           <h1 className="text-sm font-black text-indigo-950">لوحة الإدارة</h1>
         </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 bg-gray-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all"
-        >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={logout}
+            className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+            title="تسجيل الخروج"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 bg-gray-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Overlay */}
@@ -430,7 +439,7 @@ const AdminPanel = () => {
           </nav>
         </div>
 
-        <div className="mt-auto p-8 border-t border-gray-50 space-y-3">
+        <div className="mt-auto p-8 border-t border-gray-50 space-y-3 pb-24 lg:pb-8">
           {JSON.parse(localStorage.getItem('currentUser') || '{}').username === 'admin' && (
             <button 
               onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} 
