@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -23,6 +23,7 @@ const AdminPanel = () => {
   const [showNewPw, setShowNewPw] = useState(false);
   const [activities, setActivities] = useState([]);
   const [showActivities, setShowActivities] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -333,14 +334,44 @@ const AdminPanel = () => {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex" dir="rtl">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row" dir="rtl">
       <div className="hidden print:block w-full bg-white">
         <PrintTemplate data={selectedSubmission} />
       </div>
 
-      <div className="print:hidden w-80 h-screen sticky top-0 bg-white border-l border-gray-100 flex flex-col z-50 transition-all shadow-sm">
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-[60] shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white p-1 rounded-xl shadow-sm border border-gray-50">
+            <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
+          </div>
+          <h1 className="text-sm font-black text-indigo-950">لوحة الإدارة</h1>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 bg-gray-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-indigo-950/20 backdrop-blur-sm z-[45] animate-fade-in" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        print:hidden 
+        fixed lg:sticky top-0 right-0 h-screen w-80 bg-white border-l border-gray-100 flex flex-col z-50 
+        transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none
+        ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+      `}>
         <div className="p-8">
-          <div className="flex items-center gap-4 mb-12">
+          <div className="hidden lg:flex items-center gap-4 mb-12">
             <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg border border-gray-50 shrink-0">
               <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
             </div>
@@ -352,7 +383,7 @@ const AdminPanel = () => {
 
           <nav className="space-y-2">
             <button 
-              onClick={() => setView('list')} 
+              onClick={() => { setView('list'); setIsMobileMenuOpen(false); }} 
               className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white shadow-xl shadow-indigo-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-indigo-600'}`}
             >
               <Building2 className="w-5 h-5" />
@@ -360,7 +391,7 @@ const AdminPanel = () => {
             </button>
             
             <button 
-              onClick={() => setView('results')} 
+              onClick={() => { setView('results'); setIsMobileMenuOpen(false); }} 
               className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'results' ? 'bg-amber-500 text-white shadow-xl shadow-amber-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-amber-600'}`}
             >
               <BarChart3 className="w-5 h-5" />
@@ -419,7 +450,7 @@ const AdminPanel = () => {
         </div>
       </div>
 
-      <main className="flex-grow p-12 overflow-y-auto print:hidden">
+      <main className="flex-grow p-4 lg:p-12 overflow-y-auto print:hidden">
           {showAddUser && (
             <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-indigo-100 mb-10 animate-slide-down">
               <h3 className="text-lg font-black text-indigo-900 mb-6">إنشاء حساب شركة جديدة</h3>
@@ -763,7 +794,6 @@ const AdminPanel = () => {
             </div>
           )}
         </main>
-      </div>
 
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
