@@ -23,11 +23,13 @@ const PrintTemplate = ({ data }) => {
   const styles = {
     container: {
       width: '210mm',
+      minHeight: '297mm',
       backgroundColor: '#ffffff',
       color: '#000000',
       direction: 'rtl',
       fontFamily: "'IBM Plex Sans Arabic', Arial, sans-serif",
-      padding: '20px 40px'
+      padding: '15mm 20mm',
+      boxSizing: 'border-box'
     },
     header: {
       display: 'flex',
@@ -40,11 +42,12 @@ const PrintTemplate = ({ data }) => {
     sectionTitle: {
       backgroundColor: '#1e1b4b',
       color: '#ffffff',
-      padding: '4px 12px',
-      fontWeight: 'bold',
-      fontSize: '13px',
-      marginBottom: '10px',
-      borderRadius: '2px'
+      padding: '8px 15px',
+      fontWeight: '900',
+      fontSize: '14px',
+      marginBottom: '15px',
+      borderRadius: '4px',
+      marginTop: '20px'
     },
     label: {
       color: '#1e1b4b',
@@ -54,16 +57,16 @@ const PrintTemplate = ({ data }) => {
     row: {
       display: 'flex',
       borderBottom: '1px solid #f1f5f9',
-      paddingBottom: '4px',
-      fontSize: '11.5px',
-      marginBottom: '5px'
+      paddingBottom: '8px',
+      fontSize: '12.5px',
+      marginBottom: '8px'
     },
     questionBox: {
       backgroundColor: '#f8fafc',
-      padding: '8px 12px',
-      borderRadius: '4px',
-      border: '1px solid #e2e8f0',
-      marginBottom: '8px',
+      padding: '12px 18px',
+      borderRadius: '8px',
+      border: '1.5px solid #e2e8f0',
+      marginBottom: '12px',
       pageBreakInside: 'avoid'
     }
   };
@@ -77,10 +80,10 @@ const PrintTemplate = ({ data }) => {
           <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0 0 0' }}>لجنة معايير التعاقد مع شركات الدفع الالكتروني</p>
         </div>
         <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
-        <div style={{ textAlign: 'left', fontSize: '9px', fontWeight: 'bold', color: '#64748b' }}>
+        <div style={{ textAlign: 'left', fontSize: '11px', fontWeight: 'bold', color: '#64748b' }}>
           <p style={{ margin: 0 }}>التاريخ: {new Date().toLocaleDateString('ar-IQ')}</p>
           <p style={{ margin: 0 }}>الرقم المرجعي: UOB-{String(data.username || '').toUpperCase()}</p>
-          <p style={{ margin: '5px 0 0 0', fontSize: '11px', color: '#1e1b4b', fontWeight: '900' }}>تقييم اللجنة: {data.evaluation_score || 0} / 10</p>
+          <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#1e1b4b', fontWeight: '900' }}>تقييم اللجنة: {data.evaluation_score || 0} / 10</p>
         </div>
       </div>
 
@@ -223,8 +226,8 @@ const InfoRow = ({ label, value, styles }) => (
 
 const QuestionBox = ({ label, value, styles }) => (
   <div style={styles.questionBox}>
-    <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '5px', fontSize: '11.5px', lineHeight: '1.4' }}>{label}</p>
-    <p style={{ lineHeight: '1.6', fontSize: '11px', color: '#334155', whiteSpace: 'pre-wrap' }}>{value || 'لم يتم تقديم إجابة.'}</p>
+    <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '8px', fontSize: '13.5px', lineHeight: '1.6' }}>{label}</p>
+    <p style={{ lineHeight: '1.8', fontSize: '13px', color: '#334155', whiteSpace: 'pre-wrap' }}>{value || 'لم يتم تقديم إجابة.'}</p>
   </div>
 );
 
