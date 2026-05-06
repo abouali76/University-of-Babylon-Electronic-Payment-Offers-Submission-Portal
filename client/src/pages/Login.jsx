@@ -30,8 +30,15 @@ const Login = () => {
     setError('');
 
     try {
-      const savedAdminPass = localStorage.getItem('adminPassword') || 'admin123';
-      if (String(username).trim() === 'admin' && password === savedAdminPass) {
+      if (String(username).trim() === 'admin') {
+        const { data: adminCheck, error: adminError } = await supabase.functions.invoke('create-company-user', {
+          body: { action: 'admin_login', password }
+        });
+        if (adminError) throw adminError;
+        if (!adminCheck?.success) {
+          throw new Error('invalid admin password');
+        }
+
         const userData = {
           username: 'admin',
           role: 'admin',
@@ -87,7 +94,7 @@ const Login = () => {
         <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] bg-blue-50 rounded-full blur-[120px] opacity-50"></div>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -96,7 +103,7 @@ const Login = () => {
         <div className="bg-white rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(30,41,59,0.1)] border border-white p-10 md:p-14 overflow-hidden relative">
           {/* Top Branding */}
           <div className="text-center mb-12">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
@@ -141,7 +148,7 @@ const Login = () => {
 
             <AnimatePresence mode="wait">
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}

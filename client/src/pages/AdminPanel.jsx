@@ -196,17 +196,12 @@ const AdminPanel = () => {
     window.location.reload();
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     setPwError('');
     setPwSuccess('');
-    const savedAdminPass = localStorage.getItem('adminPassword') || 'admin123';
 
     if (!pwForm.current || !pwForm.newPass || !pwForm.confirm) {
       setPwError('يرجى ملء جميع الحقول.');
-      return;
-    }
-    if (pwForm.current !== savedAdminPass) {
-      setPwError('كلمة المرور الحالية غير صحيحة.');
       return;
     }
     if (pwForm.newPass.length < 4) {
@@ -221,14 +216,27 @@ const AdminPanel = () => {
       setPwError('كلمة المرور الجديدة يجب أن تكون مختلفة عن الحالية.');
       return;
     }
+    try {
+      const { data, error } = await supabase.functions.invoke('create-company-user', {
+        body: {
+          action: 'change_admin_password',
+          currentPassword: pwForm.current,
+          newPassword: pwForm.newPass
+        }
+      });
 
-    localStorage.setItem('adminPassword', pwForm.newPass);
-    setPwSuccess('تم تغيير كلمة المرور بنجاح!');
-    setPwForm({ current: '', newPass: '', confirm: '' });
-    setTimeout(() => {
-      setShowChangePassword(false);
-      setPwSuccess('');
-    }, 1500);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setPwSuccess('تم تغيير كلمة المرور بنجاح!');
+      setPwForm({ current: '', newPass: '', confirm: '' });
+      setTimeout(() => {
+        setShowChangePassword(false);
+        setPwSuccess('');
+      }, 1500);
+    } catch (err) {
+      setPwError(err?.message || 'فشل تغيير كلمة المرور.');
+    }
   };
 
   const allCompanies = dynamicUsers.map(u => {

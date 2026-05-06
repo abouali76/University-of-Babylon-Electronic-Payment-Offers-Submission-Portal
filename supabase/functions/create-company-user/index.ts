@@ -39,6 +39,71 @@ serve(async (req) => {
     const password = String(body.password || "");
     const displayName = String(body.displayName || username).trim();
 
+    if (action === "admin_login") {
+      const adminPasswordInput = String(body.password || "");
+      if (!adminPasswordInput) {
+        return new Response(JSON.stringify({ error: "password required" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: adminRow, error: adminRowError } = await adminClient
+        .from("users")
+        .select("password")
+        .eq("username", "admin")
+        .maybeSingle();
+      if (adminRowError) throw adminRowError;
+
+      const savedAdminPass = String(adminRow?.password || "admin123");
+      const isValid = adminPasswordInput === savedAdminPass;
+
+      return new Response(JSON.stringify({ success: isValid }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "change_admin_password") {
+      const currentPassword = String(body.currentPassword || "");
+      const newPassword = String(body.newPassword || "");
+
+      if (!currentPassword || !newPassword) {
+        return new Response(JSON.stringify({ error: "currentPassword and newPassword required" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: adminRow, error: adminRowError } = await adminClient
+        .from("users")
+        .select("password")
+        .eq("username", "admin")
+        .maybeSingle();
+      if (adminRowError) throw adminRowError;
+
+      const savedAdminPass = String(adminRow?.password || "admin123");
+      if (currentPassword !== savedAdminPass) {
+        return new Response(JSON.stringify({ error: "current password is invalid" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: upsertError } = await adminClient.from("users").upsert({
+        username: "admin",
+        name: "Admin",
+        password: newPassword,
+        role: "admin",
+      });
+      if (upsertError) throw upsertError;
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!username) {
       return new Response(JSON.stringify({ error: "username required" }), {
         status: 200,
