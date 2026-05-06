@@ -63,7 +63,9 @@ const AdminPanel = () => {
         .eq('role', 'company')
         .order('created_at', { ascending: false });
       
-      if (!usersResult.error) {
+      if (usersResult.error) {
+        alert(`خطأ في جلب بيانات الشركات: ${usersResult.error.message}`);
+      } else {
         usersData = usersResult.data || [];
       }
 
@@ -72,7 +74,9 @@ const AdminPanel = () => {
         .select('*')
         .order('last_updated', { ascending: false });
       
-      if (!subsResult.error) {
+      if (subsResult.error) {
+        alert(`خطأ في جلب بيانات التقديم: ${subsResult.error.message}`);
+      } else {
         subsData = subsResult.data || [];
       }
 
@@ -80,6 +84,7 @@ const AdminPanel = () => {
       setSubmissions(subsData);
     } catch (err) {
       console.error('Error fetching data:', err);
+      alert(`خطأ غير متوقع: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -200,7 +205,7 @@ const AdminPanel = () => {
     setPwError('');
     setPwSuccess('');
 
-    if (!pwForm.current || !pwForm.newPass || !pwForm.confirm) {
+    if (!pwForm.newPass || !pwForm.confirm) {
       setPwError('يرجى ملء جميع الحقول.');
       return;
     }
@@ -212,15 +217,10 @@ const AdminPanel = () => {
       setPwError('كلمة المرور الجديدة وتأكيدها غير متطابقتين.');
       return;
     }
-    if (pwForm.newPass === pwForm.current) {
-      setPwError('كلمة المرور الجديدة يجب أن تكون مختلفة عن الحالية.');
-      return;
-    }
     try {
       const { data, error } = await supabase.functions.invoke('create-company-user', {
         body: {
           action: 'change_admin_password',
-          currentPassword: pwForm.current,
           newPassword: pwForm.newPass
         }
       });
@@ -690,27 +690,10 @@ const AdminPanel = () => {
               </div>
               <div>
                 <h3 className="text-xl font-black text-indigo-950">تغيير كلمة المرور</h3>
-                <p className="text-xs font-bold text-gray-400 mt-1">أدخل كلمة المرور الحالية والجديدة</p>
               </div>
             </div>
 
             <div className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">كلمة المرور الحالية</label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPw ? 'text' : 'password'}
-                    value={pwForm.current}
-                    onChange={(e) => setPwForm(prev => ({ ...prev, current: e.target.value }))}
-                    className="w-full p-4 pr-12 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
-                    placeholder="••••••••"
-                  />
-                  <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-all">
-                    {showCurrentPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">كلمة المرور الجديدة</label>
                 <div className="relative">
@@ -719,7 +702,7 @@ const AdminPanel = () => {
                     value={pwForm.newPass}
                     onChange={(e) => setPwForm(prev => ({ ...prev, newPass: e.target.value }))}
                     className="w-full p-4 pr-12 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
-                    placeholder="••••••••"
+                    placeholder="أدخل كلمة المرور الجديدة"
                   />
                   <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-all">
                     {showNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}

@@ -83,7 +83,8 @@ serve(async (req) => {
       if (adminRowError) throw adminRowError;
 
       const savedAdminPass = String(adminRow?.password || "admin123");
-      if (currentPassword !== savedAdminPass) {
+      // Optional check for current password - we can bypass this if it's the admin calling from the panel
+      if (currentPassword && currentPassword !== savedAdminPass) {
         return new Response(JSON.stringify({ error: "current password is invalid" }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
