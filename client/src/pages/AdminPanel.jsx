@@ -333,48 +333,93 @@ const AdminPanel = () => {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20" dir="rtl">
+    <div className="min-h-screen bg-[#F8FAFC] flex" dir="rtl">
       <div className="hidden print:block w-full bg-white">
         <PrintTemplate data={selectedSubmission} />
       </div>
 
-      <div className="print:hidden">
-        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg border border-gray-50">
-                <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-indigo-950 leading-tight">نظام إدارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
-                <p className="text-[10px] font-bold text-gray-400">جامعة بابل - 2026/2027</p>
-              </div>
+      <div className="print:hidden w-80 h-screen sticky top-0 bg-white border-l border-gray-100 flex flex-col z-50 transition-all shadow-sm">
+        <div className="p-8">
+          <div className="flex items-center gap-4 mb-12">
+            <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg border border-gray-50 shrink-0">
+              <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
             </div>
-            
-            <div className="flex items-center gap-4">
-              <button onClick={fetchData} className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all">
-                <RefreshCcw className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => setShowActivities(!showActivities)} 
-                className={`p-2.5 rounded-xl transition-all relative ${showActivities ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
-                title="النشاطات الأخيرة"
-              >
-                <Bell className="w-5 h-5" />
-                {activities.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">{activities.length}</span>}
-              </button>
-              <button onClick={() => setView('list')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white' : 'text-gray-400'}`}>الشركات</button>
-              <button onClick={() => setView('results')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'results' ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'text-gray-400'}`}>نتائج التصنيف</button>
-              <button onClick={() => setShowAddUser(!showAddUser)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-black border border-indigo-100">إضافة شركة</button>
-              {JSON.parse(localStorage.getItem('currentUser') || '{}').username === 'admin' && (
-                <button onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all" title="تغيير كلمة المرور"><KeyRound className="w-5 h-5" /></button>
-              )}
-              <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><LogOut className="w-5 h-5" /></button>
+            <div>
+              <h1 className="text-sm font-black text-indigo-950 leading-tight">نظام إدارة المعايير</h1>
+              <p className="text-[9px] font-bold text-gray-400 mt-1">جامعة بابل - 2026</p>
             </div>
           </div>
-        </header>
 
-        <main className="max-w-7xl mx-auto px-6 mt-12">
+          <nav className="space-y-2">
+            <button 
+              onClick={() => setView('list')} 
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white shadow-xl shadow-indigo-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-indigo-600'}`}
+            >
+              <Building2 className="w-5 h-5" />
+              قائمة الشركات
+            </button>
+            
+            <button 
+              onClick={() => setView('results')} 
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'results' ? 'bg-amber-500 text-white shadow-xl shadow-amber-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-amber-600'}`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              نتائج التصنيف
+            </button>
+
+            <button 
+              onClick={() => setShowAddUser(!showAddUser)} 
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAddUser ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+            >
+              <UserPlus className="w-5 h-5" />
+              إضافة شركة
+            </button>
+
+            <div className="pt-8 pb-4">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest pr-4 mb-4">النظام والنشاطات</p>
+              
+              <button 
+                onClick={fetchData} 
+                className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+              >
+                <RefreshCcw className="w-5 h-5" />
+                تحديث البيانات
+              </button>
+
+              <button 
+                onClick={() => setShowActivities(!showActivities)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all relative ${showActivities ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+              >
+                <Bell className="w-5 h-5" />
+                <span>النشاطات الأخيرة</span>
+                {activities.length > 0 && <span className="mr-auto w-5 h-5 bg-red-500 text-white text-[9px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">{activities.length}</span>}
+              </button>
+            </div>
+          </nav>
+        </div>
+
+        <div className="mt-auto p-8 border-t border-gray-50 space-y-3">
+          {JSON.parse(localStorage.getItem('currentUser') || '{}').username === 'admin' && (
+            <button 
+              onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} 
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-amber-600 bg-amber-50 hover:bg-amber-500 hover:text-white transition-all"
+            >
+              <KeyRound className="w-5 h-5" />
+              كلمة المرور
+            </button>
+          )}
+          
+          <button 
+            onClick={logout} 
+            className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-red-500 bg-red-50 hover:bg-red-500 hover:text-white transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            تسجيل الخروج
+          </button>
+        </div>
+      </div>
+
+      <main className="flex-grow p-12 overflow-y-auto print:hidden">
           {showAddUser && (
             <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-indigo-100 mb-10 animate-slide-down">
               <h3 className="text-lg font-black text-indigo-900 mb-6">إنشاء حساب شركة جديدة</h3>
