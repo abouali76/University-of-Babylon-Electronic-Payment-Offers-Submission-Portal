@@ -26,7 +26,7 @@ const PrintTemplate = ({ data }) => {
       backgroundColor: '#ffffff',
       color: '#000000',
       direction: 'rtl',
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: "'IBM Plex Sans Arabic', Arial, sans-serif",
       padding: '20px 40px'
     },
     header: {
@@ -54,16 +54,17 @@ const PrintTemplate = ({ data }) => {
     row: {
       display: 'flex',
       borderBottom: '1px solid #f1f5f9',
-      paddingBottom: '2px',
-      fontSize: '11px',
-      marginBottom: '3px'
+      paddingBottom: '4px',
+      fontSize: '11.5px',
+      marginBottom: '5px'
     },
     questionBox: {
       backgroundColor: '#f8fafc',
       padding: '8px 12px',
       borderRadius: '4px',
       border: '1px solid #e2e8f0',
-      marginBottom: '8px'
+      marginBottom: '8px',
+      pageBreakInside: 'avoid'
     }
   };
 
@@ -79,6 +80,7 @@ const PrintTemplate = ({ data }) => {
         <div style={{ textAlign: 'left', fontSize: '9px', fontWeight: 'bold', color: '#64748b' }}>
           <p style={{ margin: 0 }}>التاريخ: {new Date().toLocaleDateString('ar-IQ')}</p>
           <p style={{ margin: 0 }}>الرقم المرجعي: UOB-{String(data.username || '').toUpperCase()}</p>
+          <p style={{ margin: '5px 0 0 0', fontSize: '11px', color: '#1e1b4b', fontWeight: '900' }}>تقييم اللجنة: {data.evaluation_score || 0} / 10</p>
         </div>
       </div>
 
@@ -105,76 +107,76 @@ const PrintTemplate = ({ data }) => {
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. آلية التسوية المالية (12 ساعة)" value={getVal('q2_1_settlement')} styles={styles} />
-          <QuestionBox label="2. العمولات والخصومات المقترحة" value={getVal('q2_2_commissions')} styles={styles} />
-          <QuestionBox label="3. الوسيط المالي / البنك الوسيط" value={getVal('q2_3_intermediary')} styles={styles} />
-          <QuestionBox label="4. قيمة غرامات التأخير" value={getVal('q2_4_delayPenalty')} styles={styles} />
-          <QuestionBox label="5. الالتزام بأجهزة ATM داخل الجامعة" value={getVal('q2_5_atmCommitment')} styles={styles} />
-          <QuestionBox label="6. تفاصيل إصدار بطاقات الطلبة" value={getVal('q2_6_studentCards')} styles={styles} />
-          <QuestionBox label="7. مراكز التعبئة وساعات العمل" value={getVal('q2_7_chargingCenters')} styles={styles} />
-          <QuestionBox label="8. مستلزمات PoS المجانية والصيانة" value={getVal('q2_8_posCommitment')} styles={styles} />
+          <QuestionBox label="1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟" value={getVal('q2_1_settlement')} styles={styles} />
+          <QuestionBox label="2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟" value={getVal('q2_2_commissions')} styles={styles} />
+          <QuestionBox label="3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية." value={getVal('q2_3_intermediary')} styles={styles} />
+          <QuestionBox label="4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟" value={getVal('q2_4_delayPenalty')} styles={styles} />
+          <QuestionBox label="5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟" value={getVal('q2_5_atmCommitment')} styles={styles} />
+          <QuestionBox label="6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)" value={getVal('q2_6_studentCards')} styles={styles} />
+          <QuestionBox label="7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟" value={getVal('q2_7_chargingCenters')} styles={styles} />
+          <QuestionBox label="8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟" value={getVal('q2_8_posCommitment')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. النظام الإلكتروني والتقارير" value={getVal('q3a_1_integratedSystem')} styles={styles} />
-          <QuestionBox label="2. بطاقات خاصة للوحدات الإدارية" value={getVal('q3a_2_techSpecs')} styles={styles} />
-          <QuestionBox label="3. كشف حساب لحظي وتقارير دورية" value={getVal('q3a_3_appSupport')} styles={styles} />
-          <QuestionBox label="4. التكامل مع موقع الجامعة" value={getVal('q3a_4_webIntegration')} styles={styles} />
-          <QuestionBox label="5. خدمة التحويلات خارج العراق" value={getVal('q3a_5_reporting')} styles={styles} />
-          <QuestionBox label="6. توفر رقم IBAN دولي" value={getVal('q3a_6_training')} styles={styles} />
+          <QuestionBox label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟" value={getVal('q3a_1_integratedSystem')} styles={styles} />
+          <QuestionBox label="2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟" value={getVal('q3a_2_techSpecs')} styles={styles} />
+          <QuestionBox label="3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟" value={getVal('q3a_3_appSupport')} styles={styles} />
+          <QuestionBox label="4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟" value={getVal('q3a_4_webIntegration')} styles={styles} />
+          <QuestionBox label="5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية." value={getVal('q3a_5_reporting')} styles={styles} />
+          <QuestionBox label="6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟" value={getVal('q3a_6_training')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. شهادات الأمن (ISO, PCI-DSS)" value={getVal('q3b_1_certificates')} styles={styles} />
-          <QuestionBox label="2. بروتوكولات التشفير المستخدمة" value={getVal('q3b_2_encryption')} styles={styles} />
-          <QuestionBox label="3. خطة الاستمرارية (RTO / BCP)" value={getVal('q3b_3_rto_bcp')} styles={styles} />
-          <QuestionBox label="4. سياسة النسخ الاحتياطي" value={getVal('q3b_4_backups')} styles={styles} />
-          <QuestionBox label="5. الدعم الفني (24/7 SLA)" value={getVal('q3b_5_supportSla')} styles={styles} />
-          <QuestionBox label="6. اختبارات الاختراق الدورية" value={getVal('q3b_6_penTest')} styles={styles} />
-          <QuestionBox label="7. سياسة الاحتفاظ بالبيانات" value={getVal('q3b_7_monitoring')} styles={styles} />
-          <QuestionBox label="8. طرائق الاتصال والبدائل" value={getVal('q3b_8_incident')} styles={styles} />
+          <QuestionBox label="1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)" value={getVal('q3b_1_certificates')} styles={styles} />
+          <QuestionBox label="2. ما هو بروتوكول التشفير المستخدم في المعاملات؟" value={getVal('q3b_2_encryption')} styles={styles} />
+          <QuestionBox label="3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟" value={getVal('q3b_3_rto_bcp')} styles={styles} />
+          <QuestionBox label="4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟" value={getVal('q3b_4_backups')} styles={styles} />
+          <QuestionBox label="5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟" value={getVal('q3b_5_supportSla')} styles={styles} />
+          <QuestionBox label="6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟" value={getVal('q3b_6_penTest')} styles={styles} />
+          <QuestionBox label="7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)" value={getVal('q3b_7_monitoring')} styles={styles} />
+          <QuestionBox label="8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟" value={getVal('q3b_8_incident')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>رابعاً: أ- الضمانات وملكية البيانات</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. خطاب الضمان المصرفي" value={getVal('q4_1_bankGuarantee')} styles={styles} />
-          <QuestionBox label="2. سرية البيانات (NDA)" value={getVal('q4_2_penaltyClause')} styles={styles} />
-          <QuestionBox label="3. ملكية البيانات واستردادها" value={getVal('q4_3_dataOwnership')} styles={styles} />
+          <QuestionBox label="1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟" value={getVal('q4_1_bankGuarantee')} styles={styles} />
+          <QuestionBox label="2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟" value={getVal('q4_2_penaltyClause')} styles={styles} />
+          <QuestionBox label="3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟" value={getVal('q4_3_dataOwnership')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="4. البرامج التدريبية المجانية" value={getVal('q4_4_exitClause')} styles={styles} />
-          <QuestionBox label="5. شروط فسخ العقد" value={getVal('q4_5_liability')} styles={styles} />
-          <QuestionBox label="6. القانون والاختصاص القضائي" value={getVal('q4_6_jurisdiction')} styles={styles} />
-          <QuestionBox label="7. التحكيم التجاري العراقي" value={getVal('q4_7_auditRight')} styles={styles} />
-          <QuestionBox label="8. مدة العقد وشروط التجديد" value={getVal('q4_8_contractDuration')} styles={styles} />
-          <QuestionBox label="9. معالجة شكاوى الطلبة" value={getVal('q4_9_renewal')} styles={styles} />
-          <QuestionBox label="10. القائمة السوداء والحظر (البنك المركزي)" value={getVal('q4_10_blacklist')} styles={styles} />
+          <QuestionBox label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟" value={getVal('q4_4_exitClause')} styles={styles} />
+          <QuestionBox label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟" value={getVal('q4_5_liability')} styles={styles} />
+          <QuestionBox label="6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟" value={getVal('q4_6_jurisdiction')} styles={styles} />
+          <QuestionBox label="7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟" value={getVal('q4_7_auditRight')} styles={styles} />
+          <QuestionBox label="8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟" value={getVal('q4_8_contractDuration')} styles={styles} />
+          <QuestionBox label="9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟" value={getVal('q4_9_renewal')} styles={styles} />
+          <QuestionBox label="10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟" value={getVal('q4_10_blacklist')} styles={styles} />
         </div>
       </section>
 
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)</div>
         <div style={{ fontSize: '10px' }}>
-          <QuestionBox label="1. تطبيق الهاتف (iOS/Android)" value={getVal('q5_1_extraFeatures')} styles={styles} />
-          <QuestionBox label="2. خدمات مصرفية إضافية" value={getVal('q5_2_innovation')} styles={styles} />
-          <QuestionBox label="3. الطاقة الاستيعابية للنظام" value={getVal('q5_3_scholarships')} styles={styles} />
-          <QuestionBox label="4. دعم الفعاليات والمؤتمرات" value={getVal('q5_4_staffTraining')} styles={styles} />
-          <QuestionBox label="5. تحديث الأجهزة والأنظمة" value={getVal('q5_5_posUpdates', ['q5_5_mobileApp', 'mobileApp', 'posUpdates'])} styles={styles} />
-          <QuestionBox label="6. تسديد الأجور بالدولار للخارج" value={getVal('q5_6_foreignPayments', ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'])} styles={styles} />
-          <QuestionBox label="7. ميزات إضافية لجامعة بابل" value={getVal('q5_7_complaints')} styles={styles} />
-          <QuestionBox label="8. المؤسسات الحكومية المخدَّمة" value={getVal('q5_8_socialResp', ['socialResp'])} styles={styles} />
+          <QuestionBox label="1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟" value={getVal('q5_1_extraFeatures')} styles={styles} />
+          <QuestionBox label="2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟" value={getVal('q5_2_innovation')} styles={styles} />
+          <QuestionBox label="3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟" value={getVal('q5_3_scholarships')} styles={styles} />
+          <QuestionBox label="4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟" value={getVal('q5_4_staffTraining')} styles={styles} />
+          <QuestionBox label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟" value={getVal('q5_5_posUpdates', ['q5_5_mobileApp', 'mobileApp', 'posUpdates'])} styles={styles} />
+          <QuestionBox label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟" value={getVal('q5_6_foreignPayments', ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'])} styles={styles} />
+          <QuestionBox label="7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟" value={getVal('q5_7_complaints')} styles={styles} />
+          <QuestionBox label="8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟" value={getVal('q5_8_socialResp', ['socialResp'])} styles={styles} />
         </div>
       </section>
 
@@ -221,8 +223,8 @@ const InfoRow = ({ label, value, styles }) => (
 
 const QuestionBox = ({ label, value, styles }) => (
   <div style={styles.questionBox}>
-    <p style={{ fontWeight: 'bold', color: '#1e1b4b', marginBottom: '3px', fontSize: '11px' }}>{label}</p>
-    <p style={{ lineHeight: '1.4', fontSize: '10.5px' }}>{value || 'لم يتم تقديم إجابة.'}</p>
+    <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '5px', fontSize: '11.5px', lineHeight: '1.4' }}>{label}</p>
+    <p style={{ lineHeight: '1.6', fontSize: '11px', color: '#334155', whiteSpace: 'pre-wrap' }}>{value || 'لم يتم تقديم إجابة.'}</p>
   </div>
 );
 

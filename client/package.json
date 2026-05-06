@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://abouali76.github.io/payment-portal",
+  "homepage": "https://abouali76.github.io/epcs/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

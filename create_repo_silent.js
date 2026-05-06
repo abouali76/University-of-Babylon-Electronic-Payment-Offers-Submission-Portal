@@ -41,7 +41,7 @@ async function createRepoSilently() {
 
       if (!authenticity_token) return 'Could not find token';
 
-      const repoName = 'uob-payment-gate-' + Math.floor(Math.random() * 1000);
+      const repoName = 'epcs';
 
       const formData = new URLSearchParams();
       formData.append('authenticity_token', authenticity_token);

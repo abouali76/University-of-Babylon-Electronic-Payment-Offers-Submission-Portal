@@ -36,7 +36,7 @@ async function createRepo() {
     await page.waitForSelector('input[aria-label="Repository"]', { timeout: 10000 });
     
     // Type repo name
-    const repoName = 'uob-payment-gate-' + Math.floor(Math.random() * 10000);
+    const repoName = 'epcs';
     await page.type('input[aria-label="Repository"]', repoName);
     
     await new Promise(r => setTimeout(r, 2000));

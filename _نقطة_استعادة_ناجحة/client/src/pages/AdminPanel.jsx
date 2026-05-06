@@ -117,13 +117,16 @@ const AdminPanel = () => {
     }
 
     try {
-      if (type === 'reset') {
-        const { error } = await supabase
-          .from('submissions')
-          .delete()
-          .eq('user_id', userId);
-        if (error) throw error;
-        alert('تم تصفير العرض بنجاح.');
+      if (type === 'reset' || type === 'confirm_receipt' || type === 'finalize') {
+        const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+          body: { action: type, username }
+        });
+        if (fnError) throw fnError;
+        if (data?.error) throw new Error(data.error);
+        
+        if (type === 'reset') alert('تم تصفير العرض بنجاح.');
+        else if (type === 'confirm_receipt') alert('تم تأييد الاستلام وقفل التعديل للشركة.');
+        else if (type === 'finalize') alert('تم تثبيت العرض كطلب نهائي وتأييد الاستلام وقفل التعديل بنجاح.');
       } else if (type === 'delete') {
         const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
           body: { action: 'delete', username }
@@ -131,24 +134,6 @@ const AdminPanel = () => {
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
         alert('تم حذف الشركة بنجاح.');
-      } else if (type === 'finalize') {
-        const { error } = await supabase
-          .from('submissions')
-          .update({ 
-            status: 'final', 
-            is_received: true, 
-            last_updated: new Date().toISOString() 
-          })
-          .eq('user_id', userId);
-        if (error) throw error;
-        alert('تم تثبيت العرض كطلب نهائي وتأييد الاستلام وقفل التعديل بنجاح.');
-      } else if (type === 'confirm_receipt') {
-        const { error } = await supabase
-          .from('submissions')
-          .update({ is_received: true })
-          .eq('user_id', userId);
-        if (error) throw error;
-        alert('تم تأييد الاستلام وقفل التعديل للشركة.');
       }
       await fetchData();
     } catch (err) {
@@ -158,7 +143,7 @@ const AdminPanel = () => {
     setConfirmModal({ show: false, type: '', username: '', userId: '', title: '' });
   };
 
-  const handleUpdateScore = async (userId, newScore) => {
+  const handleUpdateScore = async (username, newScore) => {
     if (newScore === undefined || newScore === null || newScore === '') {
       alert('يرجى إدخال درجة التقييم أولاً.');
       return;
@@ -171,22 +156,25 @@ const AdminPanel = () => {
         return;
       }
 
-      console.log(`Updating score for ID ${userId} to ${scoreValue}`);
-      const { data, error } = await supabase
-        .from('submissions')
-        .update({ evaluation_score: scoreValue })
-        .eq('user_id', userId)
-        .select();
+      console.log(`Updating score for user ${username} to ${scoreValue}`);
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_score', username, score: scoreValue }
+      });
 
-      if (error) {
-        console.error('Database Error:', error);
-        alert(`فشل التحديث: ${error.message}`);
+      if (fnError) {
+        console.error('Function Error:', fnError);
+        alert(`فشل التحديث: ${fnError.message}`);
+        return;
+      }
+      if (data?.error) {
+        console.error('Data Error:', data.error);
+        alert(`فشل التحديث: ${data.error}`);
         return;
       }
       
       alert(`تم رصد درجة التقييم (${scoreValue}) للشركة بنجاح.`);
       await fetchData();
-      if (selectedSubmission && selectedSubmission.userId === userId) {
+      if (selectedSubmission && selectedSubmission.username === username) {
         setSelectedSubmission(prev => ({ ...prev, evaluation_score: scoreValue }));
       }
     } catch (err) {
@@ -209,6 +197,7 @@ const AdminPanel = () => {
     
     return {
       ...submission,
+      ...(submission.data || {}),
       userId: finalUserId, // Standardize as userId everywhere
       evaluation_score: submission.evaluation_score,
       status: submission.status,
@@ -369,7 +358,24 @@ const AdminPanel = () => {
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
                         </td>
                         <td className="px-8 py-6 text-center">
-                          <input type="number" min="0" max="10" disabled={!c.isSubmitted} value={c.evaluation_score || 0} onChange={(e) => handleUpdateScore(c.userId, parseFloat(e.target.value))} className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" />
+                          <input 
+                            type="number" 
+                            min="0" 
+                            max="10" 
+                            step="0.5"
+                            disabled={!c.isSubmitted} 
+                            defaultValue={c.evaluation_score !== undefined && c.evaluation_score !== null ? c.evaluation_score : ''} 
+                            onBlur={(e) => {
+                              const val = e.target.value;
+                              if (val !== '' && parseFloat(val) !== c.evaluation_score) {
+                                handleUpdateScore(c.username, val);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') e.target.blur();
+                            }}
+                            className="w-14 p-2 text-center font-black border-2 border-gray-100 rounded-xl focus:border-indigo-600 outline-none transition-all" 
+                          />
                         </td>
                         <td className="px-8 py-6 text-center">
                           <div className="flex justify-center gap-2">
@@ -473,7 +479,6 @@ const AdminPanel = () => {
                         <span className="font-bold text-lg">التقييم الحالي: {selectedSubmission.evaluation_score || 0}/10</span>
                       </div>
                     </div>
-                    </div>
                   </div>
                 </div>
 
@@ -497,13 +502,15 @@ const AdminPanel = () => {
                       max="10" 
                       step="0.5"
                       placeholder="0.0"
+                      defaultValue={selectedSubmission.evaluation_score ?? ''}
                       onChange={(e) => window.pendingScore = e.target.value}
                       className="w-24 p-3 bg-gray-50 rounded-xl border-none text-center font-black text-2xl text-indigo-900 focus:ring-2 ring-amber-400 outline-none"
                     />
                     <button 
                       onClick={() => {
-                        const val = window.pendingScore || 0;
-                        handleUpdateScore(selectedSubmission.user_id, val);
+                        const val = window.pendingScore !== undefined && window.pendingScore !== '' ? window.pendingScore : (selectedSubmission.evaluation_score ?? 0);
+                        handleUpdateScore(selectedSubmission.username, val);
+                        window.pendingScore = undefined; // Reset pending score after save
                       }}
                       className="px-8 py-4 bg-indigo-950 text-white rounded-xl font-black hover:bg-indigo-900 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center gap-2"
                     >
@@ -514,77 +521,79 @@ const AdminPanel = () => {
 
                 <div className="p-16 space-y-20">
                   <DetailSection title="أولاً: المعلومات العامة والخبرات" data={selectedSubmission} fields={[
-                    { key: 'submissionDate', label: 'تاريخ التقديم', aliases: ['submissiondate'] },
-                    { key: 'representativeName', label: 'الممثل الرسمي', aliases: ['representativename'] },
-                    { key: 'phone', label: 'رقم الهاتف' },
-                    { key: 'email', label: 'البريد الإلكتروني' },
-                    { key: 'centralBankLicense', label: 'إجازة البنك المركزي', aliases: ['centralbanklicense'] },
-                    { key: 'marketExperience', label: 'سنوات الخبرة', aliases: ['marketexperience'] },
-                    { key: 'govInstitutionsCount', label: 'المؤسسات الحكومية المخدَّمة', aliases: ['govinstitutionscount'] },
-                    { key: 'paidCapital', label: 'رأس المال المودع', aliases: ['paidcapital'] },
-                    { key: 'officialAddress', label: 'العنوان الرسمي والمقر', aliases: ['officialaddress'] },
+                    { key: 'companyName', label: 'اسم الشركة', aliases: ['companyname'] },
+                    { key: 'submissionDate', label: 'تاريخ تقديم العرض', aliases: ['submissiondate'] },
+                    { key: 'representativeName', label: 'اسم ممثل الشركة', aliases: ['representativename'] },
+                    { key: 'phone', label: 'رقم الهاتف المعتمد' },
+                    { key: 'email', label: 'البريد الإلكتروني المعتمد' },
+                    { key: 'centralBankLicense', label: 'رقم إجازة البنك المركزي العراقي', aliases: ['centralbanklicense'] },
+                    { key: 'marketExperience', label: 'سنوات الخبرة في السوق المحلي', aliases: ['marketexperience'] },
+                    { key: 'govInstitutionsCount', label: 'عدد المؤسسات الحكومية المخدَّمة حالياً', aliases: ['govinstitutionscount'] },
+                    { key: 'paidCapital', label: 'رأس المال المدفوع / الملاءة المالية', aliases: ['paidcapital'] },
+                    { key: 'officialAddress', label: 'العنوان الرسمي / المقر الرئيسي', aliases: ['officialaddress'] },
                   ]} />
 
                   <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" data={selectedSubmission} fields={[
-                    { key: 'q2_1_settlement', label: '1. آلية التسوية المالية' },
-                    { key: 'q2_2_commissions', label: '2. العمولات والخصومات' },
-                    { key: 'q2_3_intermediary', label: '3. الوسيط المالي المعتمد' },
-                    { key: 'q2_4_delayPenalty', label: '4. غرامات التأخير' },
-                    { key: 'q2_5_atmCommitment', label: '5. توفير أجهزة ATM' },
-                    { key: 'q2_6_studentCards', label: '6. إصدار بطاقات الطلبة' },
-                    { key: 'q2_7_chargingCenters', label: '7. مراكز التعبئة والخدمة' },
-                    { key: 'q2_8_posCommitment', label: '8. تزويد PoS المجانية' },
+                    { key: 'q2_1_settlement', label: '1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟' },
+                    { key: 'q2_2_commissions', label: '2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟' },
+                    { key: 'q2_3_intermediary', label: '3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية.' },
+                    { key: 'q2_4_delayPenalty', label: '4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟' },
+                    { key: 'q2_5_atmCommitment', label: '5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟' },
+                    { key: 'q2_6_studentCards', label: '6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)' },
+                    { key: 'q2_7_chargingCenters', label: '7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟' },
+                    { key: 'q2_8_posCommitment', label: '8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟' },
                   ]} />
 
                   <DetailSection title="ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)" data={selectedSubmission} fields={[
-                    { key: 'q3a_1_integratedSystem', label: '1. شمولية النظام الإلكتروني' },
-                    { key: 'q3a_2_techSpecs', label: '2. بطاقات الوحدات الإدارية' },
-                    { key: 'q3a_3_appSupport', label: '3. كشف حساب لحظي (App)' },
-                    { key: 'q3a_4_webIntegration', label: '4. التكامل مع بوابة الجامعة' },
-                    { key: 'q3a_5_reporting', label: '5. التحويلات والتقارير' },
-                    { key: 'q3a_6_training', label: '6. توفير رقم IBAN دولي' },
+                    { key: 'q3a_1_integratedSystem', label: '1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟' },
+                    { key: 'q3a_2_techSpecs', label: '2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟', aliases: ['q3a_2_techspecs'] },
+                    { key: 'q3a_3_appSupport', label: '3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟', aliases: ['q3a_3_appsupport'] },
+                    { key: 'q3a_4_webIntegration', label: '4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟', aliases: ['q3a_4_webintegration'] },
+                    { key: 'q3a_5_reporting', label: '5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية.' },
+                    { key: 'q3a_6_training', label: '6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟' },
                   ]} />
 
                   <DetailSection title="ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)" data={selectedSubmission} fields={[
-                    { key: 'q3b_1_certificates', label: '1. شهادات الأمن السيبراني' },
-                    { key: 'q3b_2_encryption', label: '2. بروتوكولات التشفير' },
-                    { key: 'q3b_3_rto_bcp', label: '3. خطة الاستمرارية (BCP)' },
-                    { key: 'q3b_4_backups', label: '4. النسخ الاحتياطي للبيانات' },
-                    { key: 'q3b_5_supportSla', label: '5. الدعم الفني وتوافر الخدمة' },
-                    { key: 'q3b_6_penTest', label: '6. اختبارات الاختراق (Pen-test)' },
-                    { key: 'q3b_7_monitoring', label: '7. الاحتفاظ بالبيانات ومراقبتها' },
-                    { key: 'q3b_8_incident', label: '8. طرائق الاتصال والبدائل' },
+                    { key: 'q3b_1_certificates', label: '1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)' },
+                    { key: 'q3b_2_encryption', label: '2. ما هو بروتوكول التشفير المستخدم في المعاملات؟', aliases: ['q3b_2_encryption'] },
+                    { key: 'q3b_3_rto_bcp', label: '3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟' },
+                    { key: 'q3b_4_backups', label: '4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟' },
+                    { key: 'q3b_5_supportSla', label: '5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟', aliases: ['q3b_5_supportsla'] },
+                    { key: 'q3b_6_penTest', label: '6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟', aliases: ['q3b_6_pentest'] },
+                    { key: 'q3b_7_monitoring', label: '7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)', aliases: ['q3b_7_monitoring'] },
+                    { key: 'q3b_8_incident', label: '8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟', aliases: ['q3b_8_incident'] },
                   ]} />
 
                   <DetailSection title="رابعاً: أ- الضمانات وملكية البيانات (3 أسئلة)" data={selectedSubmission} fields={[
-                    { key: 'q4_1_bankGuarantee', label: '1. خطاب الضمان المصرفي' },
-                    { key: 'q4_2_penaltyClause', label: '2. بنود سرية البيانات' },
-                    { key: 'q4_3_dataOwnership', label: '3. ملكية البيانات واستردادها' },
+                    { key: 'q4_1_bankGuarantee', label: '1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟', aliases: ['q4_1_bankguarantee'] },
+                    { key: 'q4_2_penaltyClause', label: '2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟', aliases: ['q4_2_penaltyclause'] },
+                    { key: 'q4_3_dataOwnership', label: '3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟', aliases: ['q4_3_dataownership'] },
                   ]} />
 
-                  <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (6 أسئلة)" data={selectedSubmission} fields={[
-                    { key: 'q4_4_exitClause', label: '4. برامج التدريب المجانية' },
-                    { key: 'q4_5_liability', label: '5. شروط وأحكام فسخ العقد' },
-                    { key: 'q4_6_jurisdiction', label: '6. القانون والاخُتصاص القضائي' },
-                    { key: 'q4_7_auditRight', label: '7. الخضوع للتحكيم التجاري' },
-                    { key: 'q4_8_contractDuration', label: '8. مدة العقد المقترحة' },
-                    { key: 'q4_9_renewal', label: '9. معالجة شكاوى الطلبة' },
+                  <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q4_4_exitClause', label: '4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟', aliases: ['q4_4_exitclause'] },
+                    { key: 'q4_5_liability', label: '5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟', aliases: ['q4_5_liability'] },
+                    { key: 'q4_6_jurisdiction', label: '6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟' },
+                    { key: 'q4_7_auditRight', label: '7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟', aliases: ['q4_7_auditright'] },
+                    { key: 'q4_8_contractDuration', label: '8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟', aliases: ['q4_8_contractduration'] },
+                    { key: 'q4_9_renewal', label: '9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟', aliases: ['q4_9_renewal'] },
+                    { key: 'q4_10_blacklist', label: '10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟' },
                   ]} />
 
                   <DetailSection title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" data={selectedSubmission} fields={[
-                    { key: 'q5_1_extraFeatures', label: '1. تطبيق الهاتف الذكي' },
-                    { key: 'q5_2_innovation', label: '2. خدمات مصرفية إضافية' },
-                    { key: 'q5_3_scholarships', label: '3. الطاقة الاستيعابية للنظام' },
-                    { key: 'q5_4_staffTraining', label: '4. دعم الفعاليات والمؤتمرات' },
-                    { key: 'q5_5_posUpdates', label: '5. تحديث الأجهزة والأنظمة', aliases: ['q5_5_mobileApp', 'mobileApp', 'posUpdates'] },
-                    { key: 'q5_6_foreignPayments', label: '6. تسديد الأجور بالدولار', aliases: ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'] },
-                    { key: 'q5_7_complaints', label: '7. عروض تنافسية لجامعة بابل' },
-                    { key: 'q5_8_socialResp', label: '8. المؤسسات المخدَّمة حالياً', aliases: ['socialResp'] },
+                    { key: 'q5_1_extraFeatures', label: '1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟', aliases: ['q5_1_extrafeatures'] },
+                    { key: 'q5_2_innovation', label: '2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟', aliases: ['q5_2_innovation'] },
+                    { key: 'q5_3_scholarships', label: '3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟', aliases: ['q5_3_scholarships'] },
+                    { key: 'q5_4_staffTraining', label: '4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟', aliases: ['q5_4_stafftraining'] },
+                    { key: 'q5_5_posUpdates', label: '5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟', aliases: ['q5_5_mobileApp', 'mobileApp', 'posUpdates'] },
+                    { key: 'q5_6_foreignPayments', label: '6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟', aliases: ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'] },
+                    { key: 'q5_7_complaints', label: '7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟', aliases: ['q5_7_complaints'] },
+                    { key: 'q5_8_socialResp', label: '8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟', aliases: ['socialResp', 'q5_8_socialresp'] },
                   ]} />
 
                   <DetailSection title="سادساً: المرفقات والملاحظات" data={selectedSubmission} fields={[
-                    { key: 'additionalNotes', label: 'ملاحظات إضافية من الشركة', aliases: ['additionalnotes'] },
-                    { key: 'documentUrl', label: 'المستند المرفوع (رابط التخزين)', aliases: ['document_url', 'document_path'] },
+                    { key: 'additionalNotes', label: 'ملاحظات إضافية ترغب الشركة بإضافتها', aliases: ['additionalnotes'] },
+                    { key: 'documentUrl', label: 'رابط العرض الفني والمالي (PDF)', aliases: ['document_url', 'document_path'] },
                   ]} />
 
                   <DetailSection title="سابعاً: التوقيع والمصادقة النهائية" data={selectedSubmission} fields={[

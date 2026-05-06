@@ -18,7 +18,7 @@ async function automateGitHub() {
     await page.goto('https://github.com/new', { waitUntil: 'networkidle2' });
     
     // Type repo name
-    const repoName = 'uob-payment-gate-' + Math.floor(Math.random() * 1000);
+    const repoName = 'epcs';
     await page.type('input[data-testid="repository-name-input"], input[aria-label="Repository"]', repoName);
     
     // Wait a bit for validation
