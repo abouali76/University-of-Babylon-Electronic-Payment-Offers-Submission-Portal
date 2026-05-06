@@ -315,7 +315,9 @@ const AdminPanel = () => {
               <button onClick={() => setView('list')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white' : 'text-gray-400'}`}>الشركات</button>
               <button onClick={() => setView('results')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'results' ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'text-gray-400'}`}>نتائج التصنيف</button>
               <button onClick={() => setShowAddUser(!showAddUser)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-black border border-indigo-100">إضافة شركة</button>
-              <button onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all" title="تغيير كلمة المرور"><KeyRound className="w-5 h-5" /></button>
+              {JSON.parse(localStorage.getItem('currentUser') || '{}').username === 'admin' && (
+                <button onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all" title="تغيير كلمة المرور"><KeyRound className="w-5 h-5" /></button>
+              )}
               <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><LogOut className="w-5 h-5" /></button>
             </div>
           </div>
