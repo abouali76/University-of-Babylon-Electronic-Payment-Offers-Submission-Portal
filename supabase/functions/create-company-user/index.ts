@@ -123,12 +123,30 @@ serve(async (req) => {
         targetUserId = u.id;
       }
 
+      // 2. Delete files from storage if user found
       if (targetUserId) {
+        try {
+          // List all files in the user's folder in 'documents' bucket
+          const { data: files, error: listError } = await adminClient.storage
+            .from("documents")
+            .list(targetUserId);
+          
+          if (files && files.length > 0) {
+            const paths = files.map(f => `${targetUserId}/${f.name}`);
+            await adminClient.storage.from("documents").remove(paths);
+            console.log(`Deleted ${files.length} files for user ${targetUserId}`);
+          }
+        } catch (e) {
+          console.error("Storage cleanup failed:", e);
+        }
+
+        // 3. Delete auth user
         const { error: delError } = await adminClient.auth.admin.deleteUser(targetUserId);
         if (delError) throw delError;
       }
       
-      // Cascade delete should handle submissions, but we can be explicit
+      // 4. Delete database records explicitly
+      // Cascade delete should handle submissions if FK is set, but we be explicit for safety
       await adminClient.from("submissions").delete().eq("username", username);
       await adminClient.from("users").delete().eq("username", username);
 
