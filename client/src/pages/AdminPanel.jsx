@@ -340,7 +340,6 @@ const AdminPanel = () => {
                         <td className="px-8 py-6">
                           <div className="font-black text-indigo-950">{c.companyName}</div>
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
-                          <div className="text-[8px] text-indigo-300 font-mono mt-1">ID: {c.userId || 'MISSING!'}</div>
                         </td>
                          <td className="px-8 py-6">
                             {c.isReceived ? (
