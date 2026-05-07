@@ -588,7 +588,8 @@ const AdminPanel = () => {
                                 <div className="font-black text-indigo-950">{c.companyName}</div>
                                 <button 
                                   onClick={() => setEditingName({ username: c.username, name: c.companyName })}
-                                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-indigo-600 transition-all"
+                                  className="p-1 text-indigo-400 hover:text-indigo-600 transition-all"
+                                  title="تعديل الاسم"
                                 >
                                   <Edit3 className="w-3 h-3" />
                                 </button>
