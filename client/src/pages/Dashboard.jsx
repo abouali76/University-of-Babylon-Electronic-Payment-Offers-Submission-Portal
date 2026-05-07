@@ -303,10 +303,15 @@ const Dashboard = () => {
 
   const toDbPayload = (data) => {
     const payload = {};
+    // Fields to exclude from the company's update payload
+    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id'];
+    
     Object.keys(data).forEach(key => {
       // Convert to lowercase by default to match most DB setups
       let dbKey = key.toLowerCase();
       
+      if (exclude.includes(dbKey)) return;
+
       // Specifically handle underscore cases
       if (dbKey === 'documenturl') dbKey = 'document_url';
       
