@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -24,8 +24,6 @@ const AdminPanel = () => {
   const [activities, setActivities] = useState([]);
   const [showActivities, setShowActivities] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [editingName, setEditingName] = useState({ username: '', name: '' });
-  const [isUpdatingName, setIsUpdatingName] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -239,33 +237,6 @@ const AdminPanel = () => {
     }
   };
 
-  const handleUpdateName = async () => {
-    if (!editingName.username || !editingName.name.trim()) return;
-    
-    setIsUpdatingName(true);
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
-        body: { 
-          action: 'update_name', 
-          username: editingName.username, 
-          newName: editingName.name.trim() 
-        }
-      });
-
-      if (fnError) throw fnError;
-      if (data?.error) throw new Error(data.error);
-
-      await fetchData();
-      setEditingName({ username: '', name: '' });
-      alert('تم تحديث اسم الشركة بنجاح.');
-    } catch (err) {
-      console.error('Error updating name:', err);
-      alert(`فشل تحديث الاسم: ${err.message}`);
-    } finally {
-      setIsUpdatingName(false);
-    }
-  };
-
   const logout = () => {
     supabase.auth.signOut().catch(() => {});
     localStorage.removeItem('currentUser');
@@ -326,7 +297,7 @@ const AdminPanel = () => {
       lastUpdated: submission.last_updated || submission.lastupdated,
       documentUrl: submission.document_path || submission.document_url,
       username: u.username,
-      companyName: (submission.data && submission.data.companyName) || submission.companyName || submission.companyname || u.name || u.username,
+      companyName: (submission.data && submission.data.companyName) || submission.companyName || u.name || u.username,
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
       isSubmitted: submission.status === 'final',
@@ -556,45 +527,7 @@ const AdminPanel = () => {
                            </button>
                         </td>
                         <td className="px-8 py-6">
-                          <div className="flex items-center gap-2 group">
-                            {editingName.username === c.username ? (
-                              <div className="flex items-center gap-2 w-full">
-                                <input 
-                                  autoFocus
-                                  className="p-2 border-2 border-indigo-600 rounded-lg text-sm font-black w-full outline-none"
-                                  value={editingName.name}
-                                  onChange={(e) => setEditingName({ ...editingName, name: e.target.value })}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleUpdateName();
-                                    if (e.key === 'Escape') setEditingName({ username: '', name: '' });
-                                  }}
-                                />
-                                <button 
-                                  onClick={handleUpdateName}
-                                  disabled={isUpdatingName}
-                                  className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all shrink-0"
-                                >
-                                  <SaveIcon className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => setEditingName({ username: '', name: '' })}
-                                  className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-all shrink-0"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="font-black text-indigo-950">{c.companyName}</div>
-                                <button 
-                                  onClick={() => setEditingName({ username: c.username, name: c.companyName })}
-                                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-indigo-600 transition-all"
-                                >
-                                  <Edit3 className="w-3 h-3" />
-                                </button>
-                              </>
-                            )}
-                          </div>
+                          <div className="font-black text-indigo-950">{c.companyName}</div>
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
                         </td>
                          <td className="px-8 py-6">

@@ -181,45 +181,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (action === "update_name") {
-      const newName = String(body.newName || "").trim();
-      if (!newName) {
-        return new Response(JSON.stringify({ error: "newName required" }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // 1. Update users table
-      const { error: usersError } = await adminClient
-        .from("users")
-        .update({ name: newName })
-        .eq("username", username);
-      if (usersError) throw usersError;
-
-      // 2. Update submissions table (if exists)
-      const { error: subsError } = await adminClient
-        .from("submissions")
-        .update({ companyname: newName })
-        .eq("username", username);
-      if (subsError) console.error("Note: Submissions update error (might not exist yet):", subsError);
-
-      // 3. Update Auth user metadata
-      const { data: list } = await adminClient.auth.admin.listUsers();
-      const u = list?.users?.find((user) => user.email === email);
-      if (u) {
-        const { error: authError } = await adminClient.auth.admin.updateUserById(u.id, {
-          user_metadata: { ...u.user_metadata, display_name: newName }
-        });
-        if (authError) console.error("Failed to update auth metadata:", authError);
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // CREATE ACTION
     if (!password) {
       return new Response(JSON.stringify({ error: "password required" }), {
