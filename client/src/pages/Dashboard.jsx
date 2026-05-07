@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, ChevronLeft, Save, Send, LogOut, 
   CheckCircle2, AlertCircle, Building2, User, 
-  Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X
+  Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X,
+  Download
 } from 'lucide-react';
 import { supabase, safeUrl, safeAnon } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -450,6 +451,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleDownloadBlankForm = () => {
+    window.print();
+  };
+
   const processFinalSubmit = async () => {
     setIsSubmitting(true);
     setShowConfirmModal(false);
@@ -768,7 +773,12 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-arabic" dir="rtl">
-      <header className="bg-white border-b sticky top-0 z-50">
+      {/* Hidden Print Template */}
+      <div className="hidden print:block w-full bg-white">
+        <PrintTemplate isBlank={true} />
+      </div>
+
+      <header className="bg-white border-b sticky top-0 z-50 print:hidden">
         {isReceived && (
           <div className="bg-red-600 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest">
             تم تأييد الاستلام - هذا العرض مقفل للمراجعة النهائية ولا يمكن تعديله
@@ -792,7 +802,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="flex-grow flex max-w-7xl mx-auto w-full p-6 md:p-10 gap-10">
+      <div className="flex-grow flex max-w-7xl mx-auto w-full p-6 md:p-10 gap-10 print:hidden">
         <aside className="hidden lg:flex flex-col w-72 shrink-0">
           <div className="bg-white rounded-[2.5rem] border shadow-sm p-4 sticky top-28">
             <p className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">أقسام الاستمارة</p>
@@ -848,7 +858,17 @@ const Dashboard = () => {
                   <div className="flex gap-4">
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
                     {!isReceived && (
-                      <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
+                        <button 
+                          type="button" 
+                          onClick={handleDownloadBlankForm} 
+                          title="تحميل الاستمارة فارغة للمطالعة"
+                          className="p-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm"
+                        >
+                          <Download className="w-5 h-5" />
+                        </button>
+                      </div>
                     )}
                   </div>
                   
