@@ -869,9 +869,10 @@ const Dashboard = () => {
                           type="button" 
                           onClick={handleDownloadBlankForm} 
                           title="تحميل الاستمارة فارغة للمطالعة"
-                          className="p-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm"
+                          className="px-6 py-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm flex items-center gap-2"
                         >
                           <Download className="w-5 h-5" />
+                          <span className="text-xs font-black">تحميل الاستمارة فارغة (للاطلاع)</span>
                         </button>
                       </div>
                     )}

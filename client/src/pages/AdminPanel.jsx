@@ -343,10 +343,6 @@ const AdminPanel = () => {
     if (selectedForCompare.includes(username)) {
       setSelectedForCompare(prev => prev.filter(u => u !== username));
     } else {
-      if (selectedForCompare.length >= 4) {
-        alert('يمكنك مقارنة 4 شركات كحد أقصى');
-        return;
-      }
       setSelectedForCompare(prev => [...prev, username]);
     }
   };
@@ -1013,7 +1009,9 @@ const AdminPanel = () => {
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs font-black text-indigo-950">{log.username}</p>
+                  <p className="text-xs font-black text-indigo-950">
+                    {allCompanies.find(c => c.username === log.username)?.companyName || log.username}
+                  </p>
                   <p className="text-[10px] font-bold text-gray-500 mt-1">{log.details}</p>
                 </div>
               ))
