@@ -14,7 +14,6 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isReceived, setIsReceived] = useState(false);
   const activityLogId = useRef(null);
@@ -414,47 +413,6 @@ const Dashboard = () => {
     }
   };
 
-  const saveDraft = async () => {
-    try {
-      const dbFields = toDbPayload(formData);
-      
-      const payload = {
-        ...dbFields,
-        user_id: user.userId || user.id,
-        username: user.username,
-        status: 'draft',
-        last_updated: new Date().toISOString()
-      };
-
-      // Ensure we update the existing record and check if it's locked
-      const { data: existing } = await supabase
-        .from('submissions')
-        .select('id, is_received')
-        .eq('username', (user.username || '').toLowerCase().trim())
-        .maybeSingle();
-      
-      if (existing?.is_received) {
-        alert('لا يمكن حفظ المسودة: لقد تم تأييد استلام العرض من قبل اللجنة وقفل التعديل.');
-        setIsReceived(true);
-        return;
-      }
-
-      if (existing?.id) {
-        payload.id = existing.id;
-      }
-
-      const { error } = await supabase
-        .from('submissions')
-        .upsert(payload);
-
-      if (error) throw error;
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    } catch (err) {
-      console.error('Error saving draft:', err);
-      alert(`فشل حفظ المسودة: ${err.message || 'خطأ غير معروف'}`);
-    }
-  };
 
   const handleDownloadBlankForm = () => {
     window.print();
@@ -864,7 +822,6 @@ const Dashboard = () => {
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
                     {!isReceived && (
                       <div className="flex gap-2">
-                        <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
                         <button 
                           type="button" 
                           onClick={handleDownloadBlankForm} 
