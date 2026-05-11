@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronLeft, Save, Send, LogOut, 
   CheckCircle2, AlertCircle, Building2, User, 
   Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X,
-  Download
+  Download, Megaphone
 } from 'lucide-react';
 import { supabase, safeUrl, safeAnon } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -21,6 +21,11 @@ const Dashboard = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errors, setErrors] = useState([]);
   const [showReview, setShowReview] = useState(false);
+  const [announcement, setAnnouncement] = useState(null);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const [isSystemClosed, setIsSystemClosed] = useState(false);
+  const [systemCloseTime, setSystemCloseTime] = useState(null);
   const [formData, setFormData] = useState({
     companyName: '',
     submissionDate: new Date().toISOString().split('T')[0],
@@ -218,6 +223,45 @@ const Dashboard = () => {
       } catch (logErr) {
         console.warn('Logging failed (table might not exist yet):', logErr);
       }
+
+      // Fetch active announcement
+      try {
+        const { data: annData } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (annData && annData[0]) {
+          const ann = annData[0];
+          setAnnouncement(ann);
+          // Always show on entry as per user request
+          setShowAnnouncementModal(true);
+          setAnnouncementDismissed(false);
+        }
+      } catch (annErr) {
+        console.warn('Announcement fetch failed:', annErr);
+      }
+
+      // Fetch system settings
+      try {
+        const { data: sysData } = await supabase
+          .from('system_settings')
+          .select('*')
+          .eq('id', 'global')
+          .maybeSingle();
+        
+        if (sysData && sysData.close_at) {
+          const closeDate = new Date(sysData.close_at);
+          setSystemCloseTime(closeDate);
+          if (new Date() > closeDate) {
+            setIsSystemClosed(true);
+          }
+        }
+      } catch (sysErr) {
+        console.warn('System settings fetch failed:', sysErr);
+      }
     };
     boot();
 
@@ -349,7 +393,7 @@ const Dashboard = () => {
   }, []);
 
   const handleInputChange = (e) => {
-    if (isReceived) return;
+    if (isReceived || isSystemClosed) return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors.includes(name)) {
@@ -381,7 +425,7 @@ const Dashboard = () => {
   };
 
   const handleFileUpload = async (e) => {
-    if (isReceived) return;
+    if (isReceived || isSystemClosed) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -479,7 +523,7 @@ const Dashboard = () => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (isSubmitted && isReceived) return;
+    if ((isSubmitted && isReceived) || isSystemClosed) return;
 
     if (!formData.signedBy || !formData.position) {
       alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
@@ -540,7 +584,7 @@ const Dashboard = () => {
   };
 
   const renderStepContent = () => {
-    const isLocked = isReceived;
+    const isLocked = isReceived || isSystemClosed;
     const inputProps = (name) => ({ 
       name,
       onChange: handleInputChange, 
@@ -747,6 +791,12 @@ const Dashboard = () => {
             تم تأييد الاستلام - هذا العرض مقفل للمراجعة النهائية ولا يمكن تعديله
           </div>
         )}
+        {isSystemClosed && (
+          <div className="bg-rose-600 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            انتهت الفترة المحددة للتقديم - النظام مغلق حالياً ولا يمكن تعديل أو إرسال العروض
+          </div>
+        )}
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-12 h-12 object-contain" />
@@ -841,7 +891,7 @@ const Dashboard = () => {
                     ) : currentStep === 8 ? (
                       <button type="button" onClick={() => { if(validateStep(8)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
                     ) : (
-                      !isReceived && (
+                      (!isReceived && !isSystemClosed) && (
                         <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-16 py-5 bg-blue-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-100 hover:bg-blue-800 transition-all">
                           {isSubmitting ? 'جاري الإرسال...' : isSubmitted ? 'تحديث العرض المرسل' : 'إرسال العرض نهائياً'}
                           <Send className="w-5 h-5" />
@@ -875,6 +925,55 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && announcement && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-blue-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[3rem] p-0 max-w-lg w-full shadow-2xl animate-scale-in overflow-hidden">
+            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 p-10 text-white text-center relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white rounded-full"></div>
+              </div>
+              <div className="relative z-10">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-white/20">
+                  <Megaphone className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-black leading-tight">{announcement.title || 'إعلان هام'}</h2>
+              </div>
+            </div>
+            <div className="p-10">
+              <div className="text-gray-700 font-bold text-sm leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">
+                {announcement.content}
+              </div>
+              <button 
+                onClick={() => {
+                  setShowAnnouncementModal(false);
+                  setAnnouncementDismissed(true);
+                  localStorage.setItem('dismissed_announcement_id', announcement.id);
+                }}
+                className="w-full mt-8 py-4 bg-indigo-950 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-900 transition-all"
+              >
+                تم الاطلاع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Announcement Sidebar Reminder */}
+      {announcementDismissed && announcement && !showAnnouncementModal && (
+        <button
+          onClick={() => setShowAnnouncementModal(true)}
+          className="fixed bottom-6 left-6 z-[90] bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl shadow-purple-200 hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-3 group print:hidden"
+        >
+          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+            <Megaphone className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black">إعلان هام</span>
+          <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+        </button>
       )}
     </div>
   );

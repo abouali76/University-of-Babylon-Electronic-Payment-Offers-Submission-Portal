@@ -105,6 +105,101 @@ serve(async (req) => {
       });
     }
 
+    // ========== TOGGLE LOCK (Admin locks/unlocks a company account) ==========
+    if (action === "toggle_lock") {
+      const targetUsername = String(body.username || "").trim().toLowerCase();
+      const locked = Boolean(body.locked);
+
+      if (!targetUsername) {
+        return new Response(JSON.stringify({ error: "username required" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: lockError } = await adminClient
+        .from("users")
+        .update({ is_locked: locked })
+        .eq("username", targetUsername);
+
+      if (lockError) throw lockError;
+
+      return new Response(JSON.stringify({ success: true, locked }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ========== CHECK LOCK (Login checks if account is locked) ==========
+    if (action === "check_lock") {
+      const targetUsername = String(body.username || "").trim().toLowerCase();
+
+      if (!targetUsername) {
+        return new Response(JSON.stringify({ error: "username required" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: userRow, error: userError } = await adminClient
+        .from("users")
+        .select("is_locked")
+        .eq("username", targetUsername)
+        .maybeSingle();
+
+      if (userError) throw userError;
+
+      return new Response(JSON.stringify({ locked: !!userRow?.is_locked }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ========== UPDATE SYSTEM SETTINGS (Admin sets closure time) ==========
+    if (action === "update_system_settings") {
+      const closeAt = body.closeAt; // Expected as ISO string or null
+
+      const { error } = await adminClient
+        .from("system_settings")
+        .upsert({ 
+          id: 'global', 
+          close_at: closeAt || null, 
+          updated_at: new Date().toISOString() 
+        });
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ========== UPDATE ANNOUNCEMENT (Admin sets welcome announcement) ==========
+    if (action === "update_announcement") {
+      const title = String(body.title || "").trim();
+      const content = String(body.content || "").trim();
+      const isActive = body.is_active !== undefined ? Boolean(body.is_active) : true;
+
+      // Deactivate all existing announcements first, then upsert the new one
+      await adminClient.from("announcements").update({ is_active: false }).neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (title || content) {
+        const { error: annError } = await adminClient.from("announcements").insert({
+          title,
+          content,
+          is_active: isActive,
+          updated_at: new Date().toISOString(),
+        });
+        if (annError) throw annError;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!username) {
       return new Response(JSON.stringify({ error: "username required" }), {
         status: 200,

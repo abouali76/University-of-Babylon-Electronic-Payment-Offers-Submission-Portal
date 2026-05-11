@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -26,6 +26,12 @@ const AdminPanel = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [editingName, setEditingName] = useState({ username: '', name: '' });
   const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [announcementForm, setAnnouncementForm] = useState({ title: '', content: '' });
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
+  const [showSystemSettings, setShowSystemSettings] = useState(false);
+  const [systemSettingsForm, setSystemSettingsForm] = useState({ closeAt: '' });
+  const [systemSettingsSaving, setSystemSettingsSaving] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -95,7 +101,7 @@ const AdminPanel = () => {
 
       const usersResult = await supabase
         .from('users')
-        .select('id, username, name, role, created_at')
+        .select('id, username, name, role, created_at, is_locked')
         .eq('role', 'company')
         .order('created_at', { ascending: false });
       
@@ -127,6 +133,32 @@ const AdminPanel = () => {
       setDynamicUsers(usersData);
       setSubmissions(subsData);
       setActivities(logsData);
+
+      // Fetch current announcement
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (annData && annData[0]) {
+        setAnnouncementForm({ title: annData[0].title || '', content: annData[0].content || '' });
+      }
+
+      // Fetch system settings
+      const { data: sysData } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('id', 'global')
+        .maybeSingle();
+      if (sysData && sysData.close_at) {
+        // Convert to datetime-local format (YYYY-MM-DDTHH:mm)
+        const date = new Date(sysData.close_at);
+        const localDateTime = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        setSystemSettingsForm({ closeAt: localDateTime });
+      } else {
+        setSystemSettingsForm({ closeAt: '' });
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       alert(`خطأ غير متوقع: ${err.message}`);
@@ -266,6 +298,56 @@ const AdminPanel = () => {
     }
   };
 
+  const handleToggleLock = async (username, currentLocked) => {
+    const newLocked = !currentLocked;
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'toggle_lock', username, locked: newLocked }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert(newLocked ? 'تم تعليق حساب الشركة بنجاح.' : 'تم إعادة تفعيل حساب الشركة.');
+      await fetchData();
+    } catch (err) {
+      alert(`فشل العملية: ${err.message}`);
+    }
+  };
+
+  const handleSaveAnnouncement = async () => {
+    setAnnouncementSaving(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_announcement', title: announcementForm.title, content: announcementForm.content, is_active: true }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert('تم حفظ الإعلان بنجاح. سيظهر للشركات عند الدخول.');
+      setShowAnnouncement(false);
+    } catch (err) {
+      alert(`فشل حفظ الإعلان: ${err.message}`);
+    } finally {
+      setAnnouncementSaving(false);
+    }
+  };
+  const handleSaveSystemSettings = async () => {
+    setSystemSettingsSaving(true);
+    try {
+      const closeAt = systemSettingsForm.closeAt ? new Date(systemSettingsForm.closeAt).toISOString() : null;
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_system_settings', closeAt }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert('تم تحديث موعد غلق النظام بنجاح.');
+      setShowSystemSettings(false);
+      await fetchData();
+    } catch (err) {
+      alert(`فشل التحديث: ${err.message}`);
+    } finally {
+      setSystemSettingsSaving(false);
+    }
+  };
+
   const logout = () => {
     supabase.auth.signOut().catch(() => {});
     localStorage.removeItem('currentUser');
@@ -330,7 +412,8 @@ const AdminPanel = () => {
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
       isSubmitted: submission.status === 'final',
-      isReceived: !!submission.is_received
+      isReceived: !!submission.is_received,
+      isLocked: !!u.is_locked
     };
   });
 
@@ -459,6 +542,20 @@ const AdminPanel = () => {
                 <Bell className="w-5 h-5" />
                 <span>النشاطات الأخيرة</span>
                 {activities.length > 0 && <span className="mr-auto w-5 h-5 bg-red-500 text-white text-[9px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">{activities.length}</span>}
+              </button>
+              <button 
+                onClick={() => setShowAnnouncement(!showAnnouncement)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAnnouncement ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:bg-purple-50 hover:text-purple-600'}`}
+              >
+                <Megaphone className="w-5 h-5" />
+                لوحة الإعلانات
+              </button>
+              <button 
+                onClick={() => setShowSystemSettings(!showSystemSettings)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showSystemSettings ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:bg-rose-50 hover:text-rose-600'}`}
+              >
+                <Clock className="w-5 h-5" />
+                موعد غلق النظام
               </button>
             </div>
           </nav>
@@ -595,15 +692,18 @@ const AdminPanel = () => {
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
                         </td>
                          <td className="px-8 py-6">
-                            {c.isReceived ? (
-                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
-                            ) : c.isSubmitted ? (
-                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                              </div>
+                            <div className="flex flex-col gap-1">
+                            {c.isLocked && (
+                              <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><Lock className="w-3 h-3" /> حساب معلّق</span>
                             )}
+                            {c.isReceived ? (
+                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
+                            ) : c.isSubmitted ? (
+                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
+                            ) : (
+                              <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black w-fit">مسودة</span>
+                            )}
+                            </div>
                          </td>
                         <td className="px-8 py-6 text-center">
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
@@ -635,6 +735,13 @@ const AdminPanel = () => {
                               <button onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: c.username, userId: c.userId, title: 'تأييد استلام العرض؟ سيؤدي هذا لقفل إمكانية التعديل للشركة.' })} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-emerald-700 transition-all">تأييد الاستلام</button>
                             )}
                             <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, userId: c.userId, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
+                            <button 
+                              onClick={() => handleToggleLock(c.username, c.isLocked)} 
+                              className={`p-2 rounded-xl transition-all ${c.isLocked ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
+                              title={c.isLocked ? 'إعادة تفعيل الحساب' : 'تعليق الحساب'}
+                            >
+                              {c.isLocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                            </button>
                             <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, userId: c.userId, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
@@ -1021,6 +1128,110 @@ const AdminPanel = () => {
              <button onClick={fetchData} className="w-full py-4 bg-gray-50 text-indigo-600 rounded-2xl font-black text-xs hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
                <RefreshCcw className="w-4 h-4" /> تحديث النشاطات
              </button>
+          </div>
+        </div>
+      )}
+
+      {showAnnouncement && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center">
+                <Megaphone className="w-7 h-7 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">لوحة الإعلانات</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1">سيظهر هذا الإعلان للشركات عند دخول النظام</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">عنوان الإعلان</label>
+                <input
+                  value={announcementForm.title}
+                  onChange={(e) => setAnnouncementForm(p => ({ ...p, title: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-purple-500/30 focus:ring-4 focus:ring-purple-500/5 font-bold text-gray-900 transition-all"
+                  placeholder="مثال: مرحباً بكم في نظام جامعة بابل"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">محتوى الإعلان</label>
+                <textarea
+                  value={announcementForm.content}
+                  onChange={(e) => setAnnouncementForm(p => ({ ...p, content: e.target.value }))}
+                  rows={6}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-purple-500/30 focus:ring-4 focus:ring-purple-500/5 font-bold text-gray-900 transition-all resize-none"
+                  placeholder="اكتب نص الإعلان هنا... سيظهر للشركات كنافذة ترحيبية عند أول دخول"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button 
+                onClick={handleSaveAnnouncement} 
+                disabled={announcementSaving}
+                className="flex-1 py-4 bg-purple-600 text-white rounded-2xl font-black hover:bg-purple-700 transition-all shadow-lg shadow-purple-100 disabled:opacity-50"
+              >
+                {announcementSaving ? 'جاري الحفظ...' : 'نشر الإعلان'}
+              </button>
+              <button onClick={() => setShowAnnouncement(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSystemSettings && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center">
+                <Clock className="w-7 h-7 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">إعدادات غلق النظام</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1">تحديد موعد توقف النظام عن استقبال الطلبات</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">تاريخ ووقت الإغلاق</label>
+                <input
+                  type="datetime-local"
+                  value={systemSettingsForm.closeAt}
+                  onChange={(e) => setSystemSettingsForm(p => ({ ...p, closeAt: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-rose-500/30 focus:ring-4 focus:ring-rose-500/5 font-bold text-gray-900 transition-all"
+                />
+                <p className="text-[9px] text-gray-400 mt-2 pr-2 leading-relaxed">
+                  * سيتم منع الشركات من الدخول أو تعديل العروض تلقائياً بعد هذا الموعد.
+                  <br />
+                  * اترك الحقل فارغاً لإبقاء النظام مفتوحاً دائماً.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-10">
+              <button 
+                onClick={handleSaveSystemSettings} 
+                disabled={systemSettingsSaving}
+                className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-black hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 disabled:opacity-50"
+              >
+                {systemSettingsSaving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+              </button>
+              <button 
+                onClick={() => {
+                  setSystemSettingsForm({ closeAt: '' });
+                  handleSaveSystemSettings();
+                }} 
+                className="px-6 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black hover:bg-gray-200 transition-all"
+                title="إلغاء الموعد"
+              >
+                فتح النظام
+              </button>
+              <button onClick={() => setShowSystemSettings(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
+            </div>
           </div>
         </div>
       )}
