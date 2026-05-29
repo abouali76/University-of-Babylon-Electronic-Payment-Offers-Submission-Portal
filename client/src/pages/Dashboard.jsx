@@ -26,6 +26,9 @@ const Dashboard = () => {
   const [announcementDismissed, setAnnouncementDismissed] = useState(false);
   const [isSystemClosed, setIsSystemClosed] = useState(false);
   const [systemCloseTime, setSystemCloseTime] = useState(null);
+  const [criteria, setCriteria] = useState([]);
+  const [evaluationAnswers, setEvaluationAnswers] = useState({});
+  const [printMode, setPrintMode] = useState('blank');
   const [formData, setFormData] = useState({
     companyName: '',
     submissionDate: new Date().toISOString().split('T')[0],
@@ -92,7 +95,8 @@ const Dashboard = () => {
     { id: 6, title: 'الالتزامات القانونية' },
     { id: 7, title: 'الخدمات الإضافية والميزات' },
     { id: 8, title: 'المرفقات والملاحظات' },
-    { id: 9, title: 'المصادقة والتوقيع النهائي' }
+    { id: 9, title: 'المصادقة والتوقيع النهائي' },
+    { id: 10, title: 'استمارة التقييم التلقائي' }
   ];
 
   const STEP_FIELDS = {
@@ -104,7 +108,8 @@ const Dashboard = () => {
     6: ['q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal', 'q4_10_blacklist'],
     7: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_posUpdates', 'q5_6_foreignPayments', 'q5_7_complaints', 'q5_8_socialResp'],
     8: ['documentUrl'],
-    9: ['signedBy', 'position']
+    9: ['signedBy', 'position'],
+    10: [] // Answers handled separately
   };
 
   const FIELD_LABELS = {
@@ -261,6 +266,30 @@ const Dashboard = () => {
         }
       } catch (sysErr) {
         console.warn('System settings fetch failed:', sysErr);
+      }
+
+      // Fetch evaluation criteria
+      try {
+        const { data: critData } = await supabase
+          .from('evaluation_criteria')
+          .select('*')
+          .order('display_order', { ascending: true });
+        setCriteria(critData || []);
+
+        if (sub?.id) {
+          const { data: ansData } = await supabase
+            .from('company_answers')
+            .select('*')
+            .eq('submission_id', sub.id);
+          
+          if (ansData) {
+            const ansMap = {};
+            ansData.forEach(a => { ansMap[a.criterion_id] = a.answer_value; });
+            setEvaluationAnswers(ansMap);
+          }
+        }
+      } catch (critErr) {
+        console.warn('Criteria fetch failed:', critErr);
       }
     };
     boot();
@@ -440,7 +469,8 @@ const Dashboard = () => {
       const uid = sessionData?.session?.user?.id;
       if (!uid) throw new Error('No session');
 
-      const path = `${uid}/${Date.now()}-${file.name}`.replace(/\s+/g, '_');
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const path = `${uid}/${Date.now()}-${safeFileName}`;
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(path, file, { upsert: false, contentType: 'application/pdf' });
@@ -458,11 +488,27 @@ const Dashboard = () => {
   };
 
 
-  const handleDownloadBlankForm = () => {
-    window.print();
+  const handlePrintBlank = () => {
+    setPrintMode('blank');
+    setTimeout(() => window.print(), 100);
+  };
+
+  const handlePrintFilled = () => {
+    setPrintMode('filled');
+    setTimeout(() => window.print(), 100);
   };
 
   const processFinalSubmit = async () => {
+    // Check if all criteria are answered if any exist
+    if (criteria.length > 0) {
+      const unanswered = criteria.filter(c => !evaluationAnswers[c.id]);
+      if (unanswered.length > 0) {
+        alert('يرجى الإجابة على جميع أسئلة استمارة التقييم التلقائي في الخطوة الأخيرة.');
+        setCurrentStep(10);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setShowConfirmModal(false);
     try {
@@ -490,15 +536,48 @@ const Dashboard = () => {
         return;
       }
 
-      if (existing?.id) {
-        payload.id = existing.id;
+      let submissionId = existing?.id;
+      if (submissionId) {
+        payload.id = submissionId;
       }
 
-      const { error } = await supabase
+      const { data: upsertData, error } = await supabase
         .from('submissions')
-        .upsert(payload);
+        .upsert(payload)
+        .select();
 
       if (error) throw error;
+      submissionId = upsertData[0].id;
+
+      // Save evaluation answers
+      if (criteria.length > 0) {
+        const answerPayloads = Object.entries(evaluationAnswers).map(([critId, val]) => ({
+          submission_id: submissionId,
+          criterion_id: critId,
+          answer_value: val
+        }));
+
+        const { error: ansError } = await supabase
+          .from('company_answers')
+          .upsert(answerPayloads, { onConflict: 'submission_id,criterion_id' });
+        
+        if (ansError) console.error('Failed to save answers:', ansError);
+
+        // Trigger auto-evaluation edge function
+        try {
+          await supabase.functions.invoke('auto-evaluate', {
+            body: { submissionId }
+          });
+        } catch (evalErr) {
+          console.error('Auto-evaluation trigger failed:', evalErr);
+          // Don't block submission if evaluation fails, just log it
+          await supabase.from('activity_logs').insert({
+            username: user.username,
+            event_type: 'error',
+            details: `فشل التقييم التلقائي: ${evalErr.message}`
+          });
+        }
+      }
       
       // Log Submission Activity
       try {
@@ -553,12 +632,12 @@ const Dashboard = () => {
             <h4 className="text-sm font-black text-blue-900 bg-blue-50 p-2 rounded-lg">{s.title}</h4>
             <div className="grid grid-cols-1 gap-3">
               {STEP_FIELDS[s.id]?.map(f => (
-                <div key={f} className="flex justify-between items-start gap-4 p-3 bg-white border rounded-xl text-xs">
-                  <span className="font-bold text-gray-400 shrink-0 w-1/3">
+                <div key={f} className="flex justify-between items-start gap-4 p-4 bg-white border rounded-xl text-base">
+                  <span className="font-bold text-gray-700 shrink-0 w-1/3">
                     {/* Logic to find label for field f */}
                     {findLabelForField(f)}
                   </span>
-                  <span className="font-black text-gray-800 text-left w-2/3">{formData[f] || '---'}</span>
+                  <span className="font-black text-gray-900 text-left w-2/3 leading-relaxed">{formData[f] || '---'}</span>
                 </div>
               ))}
             </div>
@@ -772,6 +851,50 @@ const Dashboard = () => {
             </div>
           </div>
         );
+      case 10:
+        return (
+          <div className="space-y-8 animate-fade-in">
+            <SectionHeader title="عاشراً: استمارة المعايير (التقييم التلقائي)" />
+            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex gap-4 mb-6">
+              <Info className="w-6 h-6 text-indigo-600 shrink-0" />
+              <p className="text-xs font-bold text-indigo-900 leading-relaxed">
+                يرجى الإجابة بدقة على هذه الأسئلة. هذه البيانات ستستخدم للمقارنة التلقائية بين الشركات وتحديد الأفضلية التقنية والمالية.
+              </p>
+            </div>
+            <div className="space-y-4">
+              {criteria.map((c) => (
+                <div key={c.id} className="p-6 bg-white border-2 border-gray-50 rounded-3xl shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-2 mb-2">
+                         <h4 className="font-black text-indigo-950 text-sm">{c.question_text}</h4>
+                         {c.is_mandatory && <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-1 rounded-lg">إلزامي</span>}
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-400">الفئة: {c.category === 'Technical' ? 'فني' : 'مالي'}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {['accept', 'provide', 'reject'].map((opt) => (
+                        <button
+                          key={opt}
+                          disabled={isLocked}
+                          onClick={() => setEvaluationAnswers(prev => ({ ...prev, [c.id]: opt }))}
+                          className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border-2 ${
+                            evaluationAnswers[c.id] === opt 
+                              ? opt === 'accept' ? 'bg-emerald-600 border-emerald-600 text-white' : opt === 'provide' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-red-600 border-red-600 text-white'
+                              : 'bg-white border-gray-100 text-gray-400 hover:border-indigo-100'
+                          }`}
+                        >
+                          {opt === 'accept' ? 'نعم / قبول' : opt === 'provide' ? 'توفير المستلزمات' : 'لا / رفض'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {criteria.length === 0 && <div className="text-center py-20 text-gray-300 font-bold">لا توجد معايير مضافة حالياً</div>}
+            </div>
+          </div>
+        );
       default: return null;
     }
   };
@@ -782,7 +905,11 @@ const Dashboard = () => {
     <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-arabic" dir="rtl">
       {/* Hidden Print Template */}
       <div className="hidden print:block w-full bg-white">
-        <PrintTemplate isBlank={true} />
+        {printMode === 'blank' ? (
+          <PrintTemplate isBlank={true} />
+        ) : (
+          <PrintTemplate data={{ ...formData, username: user?.username }} isBlank={false} />
+        )}
       </div>
 
       <header className="bg-white border-b sticky top-0 z-50 print:hidden">
@@ -856,7 +983,12 @@ const Dashboard = () => {
                   : 'شكراً لكم، تم استلام بيانات العرض بنجاح. يمكنك دائماً تحديث البيانات طالما لم يتم تأييد الاستلام من قبل اللجنة.'
                 }
               </p>
-              <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
+                <button onClick={handlePrintFilled} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 flex items-center justify-center gap-2">
+                   <Download className="w-5 h-5" /> تحميل العرض المكتمل (PDF)
+                </button>
+              </div>
             </div>
           ) : (
             <div className="bg-white rounded-[3rem] border shadow-sm flex flex-col min-h-[700px] overflow-hidden">
@@ -868,21 +1000,32 @@ const Dashboard = () => {
                 <div className="p-10 md:p-16 flex-grow">{renderStepContent()}</div>
                 
                 <div className="p-8 md:p-12 bg-gray-50/50 border-t flex flex-col md:flex-row justify-between items-center gap-6">
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
-                    {!isReceived && (
-                      <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {!isReceived && (
                         <button 
                           type="button" 
-                          onClick={handleDownloadBlankForm} 
+                          onClick={handlePrintBlank} 
                           title="تحميل الاستمارة فارغة للمطالعة"
                           className="px-6 py-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm flex items-center gap-2"
                         >
                           <Download className="w-5 h-5" />
-                          <span className="text-xs font-black">تحميل الاستمارة فارغة (للاطلاع)</span>
+                          <span className="text-xs font-black hidden lg:inline">تحميل فارغة (للاطلاع)</span>
                         </button>
-                      </div>
-                    )}
+                      )}
+                      {isSubmitted && (
+                        <button 
+                          type="button" 
+                          onClick={handlePrintFilled} 
+                          title="تحميل العرض المكتمل للشركة"
+                          className="px-6 py-4 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 shadow-sm flex items-center gap-2"
+                        >
+                          <Download className="w-5 h-5" />
+                          <span className="text-xs font-black">تحميل العرض المكتمل</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex gap-4 w-full md:w-auto">
@@ -989,7 +1132,7 @@ const SectionHeader = ({ title }) => (
 const InputField = ({ label, name, value, onChange, type = 'text', disabled, error }) => (
   <div className="space-y-2">
     <div className="flex justify-between items-center pr-2">
-      <label className={`text-[11px] font-black uppercase tracking-widest block ${error ? 'text-red-500' : 'text-gray-400'}`}>{label}</label>
+      <label className={`text-sm font-black uppercase tracking-widest block ${error ? 'text-red-500' : 'text-gray-600'}`}>{label}</label>
       {error && <span className="text-[9px] text-red-500 font-black animate-pulse">يجب الإجابة</span>}
     </div>
     <input 
@@ -1007,15 +1150,15 @@ const InputField = ({ label, name, value, onChange, type = 'text', disabled, err
 const QuestionBox = ({ id, label, value, onChange, disabled, error }) => (
   <div className={`p-8 rounded-[2.5rem] border-2 transition-all group shadow-sm ${error ? 'bg-red-50/50 border-red-200' : 'bg-gray-50/30 border-transparent hover:border-blue-50 hover:bg-white'}`}>
     <div className="flex justify-between items-start mb-4">
-      <label className={`block text-sm font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
-      {error && <span className="text-[10px] bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
+      <label className={`block text-lg font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
+      {error && <span className="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
     </div>
     <textarea 
       name={id} 
       value={value} 
       onChange={onChange} 
       disabled={disabled}
-      className={`w-full h-40 p-6 rounded-2xl border-2 focus:ring-4 outline-none font-bold transition-all text-sm bg-white ${error ? 'border-red-200 focus:border-red-500 ring-red-50' : 'border-gray-100 focus:border-blue-900 ring-blue-50'}`} 
+      className={`w-full h-40 p-6 rounded-2xl border-2 focus:ring-4 outline-none font-bold transition-all text-base leading-relaxed bg-white ${error ? 'border-red-200 focus:border-red-500 ring-red-50' : 'border-gray-100 focus:border-blue-900 ring-blue-50'}`} 
     />
   </div>
 );

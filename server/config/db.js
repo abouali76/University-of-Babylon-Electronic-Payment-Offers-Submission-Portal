@@ -118,17 +118,75 @@ const initDb = async () => {
             position TEXT,
             document_url TEXT,
             evaluation_score INTEGER DEFAULT 0,
+            auto_score NUMERIC(5,2) DEFAULT 0,
+            auto_ranking INTEGER,
+            auto_rejection_reason TEXT,
+            evaluation_details TEXT, -- Store JSON as string in SQLite
             status TEXT DEFAULT 'draft',
             lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`;
 
+    const createCriteriaTable = `
+        CREATE TABLE IF NOT EXISTS evaluation_criteria (
+            id TEXT PRIMARY KEY,
+            question_text TEXT NOT NULL,
+            category TEXT,
+            weight NUMERIC(5,2) DEFAULT 1.0,
+            is_mandatory BOOLEAN DEFAULT FALSE,
+            options_scores TEXT DEFAULT '{"accept": 100, "provide": 50, "reject": 0}',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            display_order INTEGER DEFAULT 0
+        )`;
+
+    const createAnswersTable = `
+        CREATE TABLE IF NOT EXISTS company_answers (
+            id TEXT PRIMARY KEY,
+            submission_id TEXT,
+            criterion_id TEXT,
+            answer_value TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(submission_id, criterion_id)
+        )`;
+
     if (isProduction) {
-        await db.query(createUsersTable);
-        await db.query(createSubmissionsTable);
+        await db.query(`CREATE TABLE IF NOT EXISTS evaluation_criteria (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            question_text TEXT NOT NULL,
+            category TEXT,
+            weight NUMERIC(5,2) DEFAULT 1.0,
+            is_mandatory BOOLEAN DEFAULT FALSE,
+            options_scores JSONB DEFAULT '{"accept": 100, "provide": 50, "reject": 0}',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            display_order INTEGER DEFAULT 0
+        )`);
+        await db.query(`CREATE TABLE IF NOT EXISTS company_answers (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            submission_id UUID REFERENCES submissions(id) ON DELETE CASCADE,
+            criterion_id UUID REFERENCES evaluation_criteria(id) ON DELETE CASCADE,
+            answer_value TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(submission_id, criterion_id)
+        )`);
     } else {
         db.serialize(() => {
-            db.run(createUsersTable.replace('SERIAL PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT').replace('TIMESTAMP', 'DATETIME'));
-            db.run(createSubmissionsTable.replace('SERIAL PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT').replace('TIMESTAMP', 'DATETIME'));
+            db.run(`CREATE TABLE IF NOT EXISTS evaluation_criteria (
+                id TEXT PRIMARY KEY,
+                question_text TEXT NOT NULL,
+                category TEXT,
+                weight NUMERIC(5,2) DEFAULT 1.0,
+                is_mandatory BOOLEAN DEFAULT FALSE,
+                options_scores TEXT DEFAULT '{"accept": 100, "provide": 50, "reject": 0}',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                display_order INTEGER DEFAULT 0
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS company_answers (
+                id TEXT PRIMARY KEY,
+                submission_id TEXT,
+                criterion_id TEXT,
+                answer_value TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(submission_id, criterion_id)
+            )`);
         });
     }
 };

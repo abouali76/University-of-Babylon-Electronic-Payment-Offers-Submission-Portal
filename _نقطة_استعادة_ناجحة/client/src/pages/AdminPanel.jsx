@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -15,6 +15,23 @@ const AdminPanel = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [activities, setActivities] = useState([]);
+  const [showActivities, setShowActivities] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [editingName, setEditingName] = useState({ username: '', name: '' });
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [announcementForm, setAnnouncementForm] = useState({ title: '', content: '' });
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
+  const [showSystemSettings, setShowSystemSettings] = useState(false);
+  const [systemSettingsForm, setSystemSettingsForm] = useState({ closeAt: '' });
+  const [systemSettingsSaving, setSystemSettingsSaving] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -23,6 +40,37 @@ const AdminPanel = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Subscribe to realtime activity logs
+    const channel = supabase
+      .channel('admin-activity-logs')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT and DELETE
+          schema: 'public',
+          table: 'activity_logs',
+        },
+        (payload) => {
+          console.log('Realtime activity update:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            setActivities(prev => [payload.new, ...prev].slice(0, 20));
+            // If it's a submission, refresh the data to show the new status in the table
+            if (payload.new.event_type === 'submit') {
+              fetchData();
+            }
+          } else if (payload.eventType === 'DELETE') {
+            // Remove the deleted log from the activities list
+            setActivities(prev => prev.filter(a => a.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -53,11 +101,13 @@ const AdminPanel = () => {
 
       const usersResult = await supabase
         .from('users')
-        .select('id, username, name, role, created_at')
+        .select('id, username, name, role, created_at, is_locked')
         .eq('role', 'company')
         .order('created_at', { ascending: false });
       
-      if (!usersResult.error) {
+      if (usersResult.error) {
+        alert(`خطأ في جلب بيانات الشركات: ${usersResult.error.message}`);
+      } else {
         usersData = usersResult.data || [];
       }
 
@@ -66,14 +116,52 @@ const AdminPanel = () => {
         .select('*')
         .order('last_updated', { ascending: false });
       
-      if (!subsResult.error) {
+      if (subsResult.error) {
+        alert(`خطأ في جلب بيانات التقديم: ${subsResult.error.message}`);
+      } else {
         subsData = subsResult.data || [];
       }
 
+      const logsResult = await supabase
+        .from('activity_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      const logsData = logsResult.data || [];
+
       setDynamicUsers(usersData);
       setSubmissions(subsData);
+      setActivities(logsData);
+
+      // Fetch current announcement
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (annData && annData[0]) {
+        setAnnouncementForm({ title: annData[0].title || '', content: annData[0].content || '' });
+      }
+
+      // Fetch system settings
+      const { data: sysData } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('id', 'global')
+        .maybeSingle();
+      if (sysData && sysData.close_at) {
+        // Convert to datetime-local format (YYYY-MM-DDTHH:mm)
+        const date = new Date(sysData.close_at);
+        const localDateTime = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        setSystemSettingsForm({ closeAt: localDateTime });
+      } else {
+        setSystemSettingsForm({ closeAt: '' });
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
+      alert(`خطأ غير متوقع: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -183,11 +271,127 @@ const AdminPanel = () => {
     }
   };
 
+  const handleUpdateName = async () => {
+    if (!editingName.username || !editingName.name.trim()) return;
+    
+    setIsUpdatingName(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { 
+          action: 'update_name', 
+          username: editingName.username, 
+          newName: editingName.name.trim() 
+        }
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+
+      await fetchData();
+      setEditingName({ username: '', name: '' });
+      alert('تم تحديث اسم الشركة بنجاح.');
+    } catch (err) {
+      console.error('Error updating name:', err);
+      alert(`فشل تحديث الاسم: ${err.message}`);
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
+
+  const handleToggleLock = async (username, currentLocked) => {
+    const newLocked = !currentLocked;
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'toggle_lock', username, locked: newLocked }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert(newLocked ? 'تم تعليق حساب الشركة بنجاح.' : 'تم إعادة تفعيل حساب الشركة.');
+      await fetchData();
+    } catch (err) {
+      alert(`فشل العملية: ${err.message}`);
+    }
+  };
+
+  const handleSaveAnnouncement = async () => {
+    setAnnouncementSaving(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_announcement', title: announcementForm.title, content: announcementForm.content, is_active: true }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert('تم حفظ الإعلان بنجاح. سيظهر للشركات عند الدخول.');
+      setShowAnnouncement(false);
+    } catch (err) {
+      alert(`فشل حفظ الإعلان: ${err.message}`);
+    } finally {
+      setAnnouncementSaving(false);
+    }
+  };
+  const handleSaveSystemSettings = async () => {
+    setSystemSettingsSaving(true);
+    try {
+      const closeAt = systemSettingsForm.closeAt ? new Date(systemSettingsForm.closeAt).toISOString() : null;
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_system_settings', closeAt }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert('تم تحديث موعد غلق النظام بنجاح.');
+      setShowSystemSettings(false);
+      await fetchData();
+    } catch (err) {
+      alert(`فشل التحديث: ${err.message}`);
+    } finally {
+      setSystemSettingsSaving(false);
+    }
+  };
+
   const logout = () => {
     supabase.auth.signOut().catch(() => {});
     localStorage.removeItem('currentUser');
     navigate('/login');
     window.location.reload();
+  };
+
+  const handleChangePassword = async () => {
+    setPwError('');
+    setPwSuccess('');
+
+    if (!pwForm.current || !pwForm.newPass || !pwForm.confirm) {
+      setPwError('يرجى ملء جميع الحقول.');
+      return;
+    }
+    if (pwForm.newPass.length < 4) {
+      setPwError('كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل.');
+      return;
+    }
+    if (pwForm.newPass !== pwForm.confirm) {
+      setPwError('كلمة المرور الجديدة وتأكيدها غير متطابقتين.');
+      return;
+    }
+    try {
+      const { data, error } = await supabase.functions.invoke('create-company-user', {
+        body: {
+          action: 'change_admin_password',
+          currentPassword: pwForm.current,
+          newPassword: pwForm.newPass
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setPwSuccess('تم تغيير كلمة المرور بنجاح!');
+      setPwForm({ current: '', newPass: '', confirm: '' });
+      setTimeout(() => {
+        setShowChangePassword(false);
+        setPwSuccess('');
+      }, 1500);
+    } catch (err) {
+      setPwError(err?.message || 'فشل تغيير كلمة المرور.');
+    }
   };
 
   const allCompanies = dynamicUsers.map(u => {
@@ -204,11 +408,12 @@ const AdminPanel = () => {
       lastUpdated: submission.last_updated || submission.lastupdated,
       documentUrl: submission.document_path || submission.document_url,
       username: u.username,
-      companyName: (submission.data && submission.data.companyName) || submission.companyName || u.name || u.username,
+      companyName: (submission.data && submission.data.companyName) || submission.companyName || submission.companyname || u.name || u.username,
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
       isSubmitted: submission.status === 'final',
-      isReceived: !!submission.is_received
+      isReceived: !!submission.is_received,
+      isLocked: !!u.is_locked
     };
   });
 
@@ -221,10 +426,6 @@ const AdminPanel = () => {
     if (selectedForCompare.includes(username)) {
       setSelectedForCompare(prev => prev.filter(u => u !== username));
     } else {
-      if (selectedForCompare.length >= 4) {
-        alert('يمكنك مقارنة 4 شركات كحد أقصى');
-        return;
-      }
       setSelectedForCompare(prev => [...prev, username]);
     }
   };
@@ -241,37 +442,147 @@ const AdminPanel = () => {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20" dir="rtl">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row" dir="rtl">
       <div className="hidden print:block w-full bg-white">
         <PrintTemplate data={selectedSubmission} />
       </div>
 
-      <div className="print:hidden">
-        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg border border-gray-50">
-                <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-indigo-950 leading-tight">نظام إدارة معايير التعاقد مع شركات الدفع الالكتروني</h1>
-                <p className="text-[10px] font-bold text-gray-400">جامعة بابل - 2026/2027</p>
-              </div>
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-[60] shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white p-1 rounded-xl shadow-sm border border-gray-50">
+            <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
+          </div>
+          <h1 className="text-sm font-black text-indigo-950">لوحة الإدارة</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={logout}
+            className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+            title="تسجيل الخروج"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 bg-gray-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-indigo-950/20 backdrop-blur-sm z-[45] animate-fade-in" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        print:hidden 
+        fixed lg:sticky top-0 right-0 h-screen w-80 bg-white border-l border-gray-100 flex flex-col z-50 
+        transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none
+        ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        overflow-y-auto
+      `}>
+        <div className="p-8">
+          <div className="hidden lg:flex items-center gap-4 mb-12">
+            <div className="w-14 h-14 bg-white p-1 rounded-2xl flex items-center justify-center shadow-lg border border-gray-50 shrink-0">
+              <img src={`${import.meta.env.BASE_URL}logo.jpg`} alt="Logo" className="w-full h-full object-contain" />
             </div>
-            
-            <div className="flex items-center gap-4">
-              <button onClick={fetchData} className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all">
-                <RefreshCcw className="w-5 h-5" />
-              </button>
-              <button onClick={() => setView('list')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white' : 'text-gray-400'}`}>الشركات</button>
-              <button onClick={() => setView('results')} className={`px-6 py-2 rounded-xl text-xs font-black ${view === 'results' ? 'bg-amber-500 text-white shadow-lg shadow-amber-100' : 'text-gray-400'}`}>نتائج التصنيف</button>
-              <button onClick={() => setShowAddUser(!showAddUser)} className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-black border border-indigo-100">إضافة شركة</button>
-              <button onClick={logout} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><LogOut className="w-5 h-5" /></button>
+            <div>
+              <h1 className="text-sm font-black text-indigo-950 leading-tight">نظام إدارة المعايير</h1>
+              <p className="text-[9px] font-bold text-gray-400 mt-1">جامعة بابل - 2026</p>
             </div>
           </div>
-        </header>
 
-        <main className="max-w-7xl mx-auto px-6 mt-12">
+          <nav className="space-y-2">
+            <button 
+              onClick={() => { setView('list'); setIsMobileMenuOpen(false); }} 
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'list' || view === 'compare' ? 'bg-indigo-900 text-white shadow-xl shadow-indigo-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-indigo-600'}`}
+            >
+              <Building2 className="w-5 h-5" />
+              قائمة الشركات
+            </button>
+            
+            <button 
+              onClick={() => { setView('results'); setIsMobileMenuOpen(false); }} 
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'results' ? 'bg-amber-500 text-white shadow-xl shadow-amber-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-amber-600'}`}
+            >
+              <BarChart3 className="w-5 h-5" />
+              نتائج التصنيف
+            </button>
+
+            <button 
+              onClick={() => setShowAddUser(!showAddUser)} 
+              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAddUser ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+            >
+              <UserPlus className="w-5 h-5" />
+              إضافة شركة
+            </button>
+
+            <div className="pt-8 pb-4">
+              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest pr-4 mb-4">النظام والنشاطات</p>
+              
+              <button 
+                onClick={fetchData} 
+                className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+              >
+                <RefreshCcw className="w-5 h-5" />
+                تحديث البيانات
+              </button>
+
+              <button 
+                onClick={() => setShowActivities(!showActivities)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all relative ${showActivities ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+              >
+                <Bell className="w-5 h-5" />
+                <span>النشاطات الأخيرة</span>
+                {activities.length > 0 && <span className="mr-auto w-5 h-5 bg-red-500 text-white text-[9px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">{activities.length}</span>}
+              </button>
+              <button 
+                onClick={() => setShowAnnouncement(!showAnnouncement)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAnnouncement ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:bg-purple-50 hover:text-purple-600'}`}
+              >
+                <Megaphone className="w-5 h-5" />
+                لوحة الإعلانات
+              </button>
+              <button 
+                onClick={() => setShowSystemSettings(!showSystemSettings)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showSystemSettings ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:bg-rose-50 hover:text-rose-600'}`}
+              >
+                <Clock className="w-5 h-5" />
+                موعد غلق النظام
+              </button>
+            </div>
+          </nav>
+        </div>
+
+        <div className="mt-auto p-8 border-t border-gray-50 space-y-3 pb-24 lg:pb-8">
+          {JSON.parse(localStorage.getItem('currentUser') || '{}').username === 'admin' && (
+            <button 
+              onClick={() => { setShowChangePassword(true); setPwError(''); setPwSuccess(''); setPwForm({ current: '', newPass: '', confirm: '' }); }} 
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-amber-600 bg-amber-50 hover:bg-amber-500 hover:text-white transition-all"
+            >
+              <KeyRound className="w-5 h-5" />
+              كلمة المرور
+            </button>
+          )}
+          
+          <button 
+            onClick={logout} 
+            className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-red-500 bg-red-50 hover:bg-red-500 hover:text-white transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            تسجيل الخروج
+          </button>
+        </div>
+      </div>
+
+      <main className="flex-grow p-4 lg:p-12 overflow-y-auto print:hidden">
           {showAddUser && (
             <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-indigo-100 mb-10 animate-slide-down">
               <h3 className="text-lg font-black text-indigo-900 mb-6">إنشاء حساب شركة جديدة</h3>
@@ -338,21 +649,61 @@ const AdminPanel = () => {
                            </button>
                         </td>
                         <td className="px-8 py-6">
-                          <div className="font-black text-indigo-950">{c.companyName}</div>
+                          <div className="flex items-center gap-2 group">
+                            {editingName.username === c.username ? (
+                              <div className="flex items-center gap-2 w-full">
+                                <input 
+                                  autoFocus
+                                  className="p-2 border-2 border-indigo-600 rounded-lg text-sm font-black w-full outline-none"
+                                  value={editingName.name}
+                                  onChange={(e) => setEditingName({ ...editingName, name: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateName();
+                                    if (e.key === 'Escape') setEditingName({ username: '', name: '' });
+                                  }}
+                                />
+                                <button 
+                                  onClick={handleUpdateName}
+                                  disabled={isUpdatingName}
+                                  className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all shrink-0"
+                                >
+                                  <SaveIcon className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => setEditingName({ username: '', name: '' })}
+                                  className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-all shrink-0"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="font-black text-indigo-950">{c.companyName}</div>
+                                <button 
+                                  onClick={() => setEditingName({ username: c.username, name: c.companyName })}
+                                  className="p-1 text-indigo-400 hover:text-indigo-600 transition-all"
+                                  title="تعديل الاسم"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                           <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
-                          <div className="text-[8px] text-indigo-300 font-mono mt-1">ID: {c.userId || 'MISSING!'}</div>
                         </td>
                          <td className="px-8 py-6">
-                            {c.isReceived ? (
-                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
-                            ) : c.isSubmitted ? (
-                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                                <button onClick={() => setConfirmModal({ show: true, type: 'finalize', username: c.username, userId: c.userId, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })} className="text-[9px] text-indigo-600 font-bold underline hover:text-indigo-800">إرسال نهائي</button>
-                              </div>
+                            <div className="flex flex-col gap-1">
+                            {c.isLocked && (
+                              <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><Lock className="w-3 h-3" /> حساب معلّق</span>
                             )}
+                            {c.isReceived ? (
+                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
+                            ) : c.isSubmitted ? (
+                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
+                            ) : (
+                              <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black w-fit">مسودة</span>
+                            )}
+                            </div>
                          </td>
                         <td className="px-8 py-6 text-center">
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
@@ -384,6 +735,13 @@ const AdminPanel = () => {
                               <button onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: c.username, userId: c.userId, title: 'تأييد استلام العرض؟ سيؤدي هذا لقفل إمكانية التعديل للشركة.' })} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-emerald-700 transition-all">تأييد الاستلام</button>
                             )}
                             <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, userId: c.userId, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
+                            <button 
+                              onClick={() => handleToggleLock(c.username, c.isLocked)} 
+                              className={`p-2 rounded-xl transition-all ${c.isLocked ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
+                              title={c.isLocked ? 'إعادة تفعيل الحساب' : 'تعليق الحساب'}
+                            >
+                              {c.isLocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                            </button>
                             <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, userId: c.userId, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
@@ -611,19 +969,12 @@ const AdminPanel = () => {
                      <CheckCircle2 className="w-6 h-6" />
                      تأييد استلام العرض (قفل النهائي)
                    </button>
-                   <button 
-                     onClick={() => setConfirmModal({ show: true, type: 'finalize', username: selectedSubmission.username, userId: selectedSubmission.userId, title: 'هل تريد تثبيت هذا العرض كطلب نهائي نيابة عن الشركة؟' })}
-                     className="flex-1 py-5 bg-indigo-900 text-white rounded-2xl font-black hover:bg-indigo-800 transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"
-                   >
-                     <ShieldCheck className="w-6 h-6" />
-                     إرسال نهائي نيابة عن الشركة
-                   </button>
+
                 </div>
               </div>
             </div>
           )}
         </main>
-      </div>
 
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
@@ -632,6 +983,254 @@ const AdminPanel = () => {
             <div className="flex gap-4">
               <button onClick={executeDelete} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">تأكيد</button>
               <button onClick={() => setConfirmModal({ show: false })} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">تراجع</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showChangePassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center">
+                <KeyRound className="w-7 h-7 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">تغيير كلمة المرور</h3>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">كلمة المرور الحالية</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPw ? 'text' : 'password'}
+                    value={pwForm.current}
+                    onChange={(e) => setPwForm(prev => ({ ...prev, current: e.target.value }))}
+                    className="w-full p-4 pr-12 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
+                    placeholder="••••••••"
+                  />
+                  <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-all">
+                    {showCurrentPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">كلمة المرور الجديدة</label>
+                <div className="relative">
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    value={pwForm.newPass}
+                    onChange={(e) => setPwForm(prev => ({ ...prev, newPass: e.target.value }))}
+                    className="w-full p-4 pr-12 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
+                    placeholder="أدخل كلمة المرور الجديدة"
+                  />
+                  <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-all">
+                    {showNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">تأكيد كلمة المرور الجديدة</label>
+                <input
+                  type="password"
+                  value={pwForm.confirm}
+                  onChange={(e) => setPwForm(prev => ({ ...prev, confirm: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 font-bold text-gray-900 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {pwError && (
+              <div className="mt-5 bg-red-50 border border-red-100 p-4 rounded-2xl">
+                <p className="text-red-600 text-xs text-center font-black">{pwError}</p>
+              </div>
+            )}
+
+            {pwSuccess && (
+              <div className="mt-5 bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+                <p className="text-emerald-600 text-xs text-center font-black">{pwSuccess}</p>
+              </div>
+            )}
+
+            <div className="flex gap-4 mt-8">
+              <button onClick={handleChangePassword} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">حفظ كلمة المرور</button>
+              <button onClick={() => setShowChangePassword(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showActivities && (
+        <div className="fixed inset-y-0 left-0 z-[60] w-96 bg-white shadow-2xl border-r border-indigo-50 animate-slide-left flex flex-col">
+          <div className="p-8 border-b border-indigo-50 flex items-center justify-between bg-indigo-50/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                <History className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-black text-indigo-950">النشاطات الأخيرة</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={async () => {
+                  if (confirm('هل تريد مسح جميع النشاطات؟')) {
+                    await supabase.from('activity_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                    setActivities([]);
+                  }
+                }}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                title="مسح الكل"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+              <button onClick={() => setShowActivities(false)} className="p-2 hover:bg-white rounded-lg text-gray-400 transition-all"><X className="w-5 h-5" /></button>
+            </div>
+          </div>
+          <div className="flex-grow overflow-y-auto p-6 space-y-4">
+            {activities.length === 0 ? (
+              <div className="text-center py-20 opacity-20">
+                 <Bell className="w-20 h-20 mx-auto mb-4" />
+                 <p className="font-bold">لا توجد نشاطات حالياً</p>
+              </div>
+            ) : (
+              activities.map((log) => (
+                <div key={log.id} className={`p-4 rounded-2xl border transition-all hover:scale-[1.02] ${log.event_type === 'submit' ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-[9px] font-black px-2 py-1 rounded-full ${log.event_type === 'submit' ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'}`}>
+                      {log.event_type === 'submit' ? 'إرسال نهائي' : 'دخول للموقع'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-gray-400">{new Date(log.created_at).toLocaleTimeString('ar-EG')}</span>
+                      <button 
+                        onClick={() => {
+                          supabase.from('activity_logs').delete().eq('id', log.id).then();
+                          setActivities(prev => prev.filter(a => a.id !== log.id));
+                        }}
+                        className="p-1 text-gray-300 hover:text-red-500 transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs font-black text-indigo-950">
+                    {allCompanies.find(c => c.username === log.username)?.companyName || log.username}
+                  </p>
+                  <p className="text-[10px] font-bold text-gray-500 mt-1">{log.details}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="p-6 border-t border-indigo-50">
+             <button onClick={fetchData} className="w-full py-4 bg-gray-50 text-indigo-600 rounded-2xl font-black text-xs hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+               <RefreshCcw className="w-4 h-4" /> تحديث النشاطات
+             </button>
+          </div>
+        </div>
+      )}
+
+      {showAnnouncement && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center">
+                <Megaphone className="w-7 h-7 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">لوحة الإعلانات</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1">سيظهر هذا الإعلان للشركات عند دخول النظام</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">عنوان الإعلان</label>
+                <input
+                  value={announcementForm.title}
+                  onChange={(e) => setAnnouncementForm(p => ({ ...p, title: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-purple-500/30 focus:ring-4 focus:ring-purple-500/5 font-bold text-gray-900 transition-all"
+                  placeholder="مثال: مرحباً بكم في نظام جامعة بابل"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">محتوى الإعلان</label>
+                <textarea
+                  value={announcementForm.content}
+                  onChange={(e) => setAnnouncementForm(p => ({ ...p, content: e.target.value }))}
+                  rows={6}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-purple-500/30 focus:ring-4 focus:ring-purple-500/5 font-bold text-gray-900 transition-all resize-none"
+                  placeholder="اكتب نص الإعلان هنا... سيظهر للشركات كنافذة ترحيبية عند أول دخول"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button 
+                onClick={handleSaveAnnouncement} 
+                disabled={announcementSaving}
+                className="flex-1 py-4 bg-purple-600 text-white rounded-2xl font-black hover:bg-purple-700 transition-all shadow-lg shadow-purple-100 disabled:opacity-50"
+              >
+                {announcementSaving ? 'جاري الحفظ...' : 'نشر الإعلان'}
+              </button>
+              <button onClick={() => setShowAnnouncement(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSystemSettings && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center">
+                <Clock className="w-7 h-7 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">إعدادات غلق النظام</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1">تحديد موعد توقف النظام عن استقبال الطلبات</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">تاريخ ووقت الإغلاق</label>
+                <input
+                  type="datetime-local"
+                  value={systemSettingsForm.closeAt}
+                  onChange={(e) => setSystemSettingsForm(p => ({ ...p, closeAt: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-rose-500/30 focus:ring-4 focus:ring-rose-500/5 font-bold text-gray-900 transition-all"
+                />
+                <p className="text-[9px] text-gray-400 mt-2 pr-2 leading-relaxed">
+                  * سيتم منع الشركات من الدخول أو تعديل العروض تلقائياً بعد هذا الموعد.
+                  <br />
+                  * اترك الحقل فارغاً لإبقاء النظام مفتوحاً دائماً.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-10">
+              <button 
+                onClick={handleSaveSystemSettings} 
+                disabled={systemSettingsSaving}
+                className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-black hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 disabled:opacity-50"
+              >
+                {systemSettingsSaving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+              </button>
+              <button 
+                onClick={() => {
+                  setSystemSettingsForm({ closeAt: '' });
+                  handleSaveSystemSettings();
+                }} 
+                className="px-6 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black hover:bg-gray-200 transition-all"
+                title="إلغاء الموعد"
+              >
+                فتح النظام
+              </button>
+              <button onClick={() => setShowSystemSettings(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
             </div>
           </div>
         </div>

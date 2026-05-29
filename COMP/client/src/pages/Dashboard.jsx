@@ -22,6 +22,7 @@ const Dashboard = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errors, setErrors] = useState([]);
   const [showReview, setShowReview] = useState(false);
+  const [printMode, setPrintMode] = useState('blank');
   const [formData, setFormData] = useState({
     companyName: '',
     submissionDate: new Date().toISOString().split('T')[0],
@@ -397,7 +398,8 @@ const Dashboard = () => {
       const uid = sessionData?.session?.user?.id;
       if (!uid) throw new Error('No session');
 
-      const path = `${uid}/${Date.now()}-${file.name}`.replace(/\s+/g, '_');
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const path = `${uid}/${Date.now()}-${safeFileName}`;
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(path, file, { upsert: false, contentType: 'application/pdf' });
@@ -456,8 +458,14 @@ const Dashboard = () => {
     }
   };
 
-  const handleDownloadBlankForm = () => {
-    window.print();
+  const handlePrintBlank = () => {
+    setPrintMode('blank');
+    setTimeout(() => window.print(), 100);
+  };
+
+  const handlePrintFilled = () => {
+    setPrintMode('filled');
+    setTimeout(() => window.print(), 100);
   };
 
   const processFinalSubmit = async () => {
@@ -780,7 +788,11 @@ const Dashboard = () => {
     <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-arabic" dir="rtl">
       {/* Hidden Print Template */}
       <div className="hidden print:block w-full bg-white">
-        <PrintTemplate isBlank={true} />
+        {printMode === 'blank' ? (
+          <PrintTemplate isBlank={true} />
+        ) : (
+          <PrintTemplate data={{ ...formData, username: user?.username }} isBlank={false} />
+        )}
       </div>
 
       <header className="bg-white border-b sticky top-0 z-50 print:hidden">
@@ -848,7 +860,12 @@ const Dashboard = () => {
                   : 'شكراً لكم، تم استلام بيانات العرض بنجاح. يمكنك دائماً تحديث البيانات طالما لم يتم تأييد الاستلام من قبل اللجنة.'
                 }
               </p>
-              <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
+                <button onClick={handlePrintFilled} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 flex items-center justify-center gap-2">
+                   <Download className="w-5 h-5" /> تحميل العرض المكتمل (PDF)
+                </button>
+              </div>
             </div>
           ) : (
             <div className="bg-white rounded-[3rem] border shadow-sm flex flex-col min-h-[700px] overflow-hidden">
@@ -860,21 +877,34 @@ const Dashboard = () => {
                 <div className="p-10 md:p-16 flex-grow">{renderStepContent()}</div>
                 
                 <div className="p-8 md:p-12 bg-gray-50/50 border-t flex flex-col md:flex-row justify-between items-center gap-6">
-                  <div className="flex gap-4">
+                  <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
-                    {!isReceived && (
-                      <div className="flex gap-2">
-                        <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
+                    <div className="flex flex-wrap gap-2">
+                      {!isReceived && (
+                        <>
+                          <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
+                          <button 
+                            type="button" 
+                            onClick={handlePrintBlank} 
+                            title="تحميل الاستمارة فارغة للمطالعة"
+                            className="p-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm flex items-center justify-center"
+                          >
+                            <Download className="w-5 h-5" />
+                          </button>
+                        </>
+                      )}
+                      {isSubmitted && (
                         <button 
                           type="button" 
-                          onClick={handleDownloadBlankForm} 
-                          title="تحميل الاستمارة فارغة للمطالعة"
-                          className="p-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm"
+                          onClick={handlePrintFilled} 
+                          title="تحميل العرض المكتمل للشركة"
+                          className="px-6 py-4 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 shadow-sm flex items-center gap-2"
                         >
                           <Download className="w-5 h-5" />
+                          <span className="text-xs font-black">تحميل العرض المكتمل</span>
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex gap-4 w-full md:w-auto">

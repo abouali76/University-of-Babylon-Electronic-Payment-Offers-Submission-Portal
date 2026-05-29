@@ -40,12 +40,14 @@ CREATE TABLE submissions (
     "q4_3_dataOwnership" TEXT,
     q4_6_jurisdiction TEXT,
     "q4_8_contractDuration" TEXT,
+    q4_9_renewal TEXT,
+    q4_10_blacklist TEXT,
     "q5_1_extraFeatures" TEXT,
     "additionalNotes" TEXT,
     "signedBy" TEXT,
     position TEXT,
     "lastUpdated" TIMESTAMPTZ DEFAULT NOW(),
-    evaluation_score INTEGER DEFAULT 0,
+    evaluation_score NUMERIC(4,2) DEFAULT 0,
     status TEXT DEFAULT 'draft' -- 'draft' or 'final'
 );
 

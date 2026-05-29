@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock, Trophy, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -517,6 +517,22 @@ const AdminPanel = () => {
             </button>
 
             <button 
+              onClick={() => { navigate('/admin/auto-comparison'); setIsMobileMenuOpen(false); }} 
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
+            >
+              <Trophy className="w-5 h-5" />
+              التصنيف التلقائي
+            </button>
+
+            <button 
+              onClick={() => { navigate('/admin/criteria-manager'); setIsMobileMenuOpen(false); }} 
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+            >
+              <Settings className="w-5 h-5" />
+              إدارة معايير التقييم
+            </button>
+
+            <button 
               onClick={() => setShowAddUser(!showAddUser)} 
               className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAddUser ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
             >
@@ -630,7 +646,7 @@ const AdminPanel = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-right">
-                  <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase">
+                  <thead className="bg-gray-50 text-gray-600 text-sm font-black uppercase">
                     <tr>
                       <th className="px-8 py-5 w-16">#</th>
                       <th className="px-8 py-5">الشركة والممثل</th>
@@ -689,7 +705,7 @@ const AdminPanel = () => {
                               </>
                             )}
                           </div>
-                          <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
+                          <div className="text-sm font-bold text-gray-500 mt-1">{c.representative} | {c.phone}</div>
                         </td>
                          <td className="px-8 py-6">
                             <div className="flex flex-col gap-1">
@@ -1259,8 +1275,8 @@ const CompareColumn = ({ title, comp, fields, isHeader }) => {
       <div className="p-10 space-y-10">
         {fields.map((f, i) => (
           <div key={i} className="pb-6 border-b border-gray-50 last:border-0 last:pb-0">
-             <label className="text-[9px] font-black text-indigo-400 block mb-2 uppercase tracking-tighter">{isHeader ? '' : f.label}</label>
-             <div className={`font-bold text-sm leading-relaxed ${isHeader ? 'text-indigo-950 text-base' : 'text-gray-700'} ${f.isScore ? 'text-4xl text-indigo-600 font-black' : ''}`}>
+             <label className="text-sm font-black text-indigo-400 block mb-2 uppercase tracking-tighter leading-relaxed">{isHeader ? '' : f.label}</label>
+             <div className={`font-bold text-lg leading-relaxed ${isHeader ? 'text-indigo-950 text-xl' : 'text-gray-800'} ${f.isScore ? 'text-4xl text-indigo-600 font-black' : ''}`}>
                {isHeader ? f.label : getVal(comp, f.key)}
              </div>
           </div>
@@ -1293,8 +1309,8 @@ const DetailSection = ({ title, data, fields }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {fields.map(f => (
           <div key={f.key} className="bg-white border-2 border-gray-50 p-8 rounded-[2.5rem] hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-50/50 transition-all group">
-            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-4 group-hover:text-indigo-600 transition-all">{f.label}</label>
-            <p className="text-base font-bold text-gray-700 whitespace-pre-wrap leading-relaxed">{getVal(f)}</p>
+            <label className="text-base font-black text-indigo-400 uppercase tracking-widest block mb-4 group-hover:text-indigo-600 transition-all leading-relaxed">{f.label}</label>
+            <p className="text-xl font-bold text-gray-800 whitespace-pre-wrap leading-relaxed">{getVal(f)}</p>
           </div>
         ))}
       </div>

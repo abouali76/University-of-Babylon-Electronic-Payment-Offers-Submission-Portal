@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, ChevronLeft, Save, Send, LogOut, 
   CheckCircle2, AlertCircle, Building2, User, 
-  Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X
+  Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X,
+  Download, Megaphone
 } from 'lucide-react';
-import { supabase } from '../utils/supabaseClient';
+import { supabase, safeUrl, safeAnon } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 
 const Dashboard = () => {
@@ -13,13 +14,18 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isReceived, setIsReceived] = useState(false);
+  const activityLogId = useRef(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errors, setErrors] = useState([]);
   const [showReview, setShowReview] = useState(false);
+  const [announcement, setAnnouncement] = useState(null);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const [isSystemClosed, setIsSystemClosed] = useState(false);
+  const [systemCloseTime, setSystemCloseTime] = useState(null);
   const [formData, setFormData] = useState({
     companyName: '',
     submissionDate: new Date().toISOString().split('T')[0],
@@ -202,8 +208,86 @@ const Dashboard = () => {
         if (sub.status === 'final') setIsSubmitted(true);
         setIsReceived(!!sub.is_received);
       }
+
+      // Log Login Activity
+      try {
+        const { data: logData } = await supabase.from('activity_logs').insert({
+          username: username,
+          event_type: 'login',
+          details: `دخلت الشركة للعمل على الاستمارة`
+        }).select();
+        
+        if (logData && logData[0]) {
+          activityLogId.current = logData[0].id;
+        }
+      } catch (logErr) {
+        console.warn('Logging failed (table might not exist yet):', logErr);
+      }
+
+      // Fetch active announcement
+      try {
+        const { data: annData } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (annData && annData[0]) {
+          const ann = annData[0];
+          setAnnouncement(ann);
+          // Always show on entry as per user request
+          setShowAnnouncementModal(true);
+          setAnnouncementDismissed(false);
+        }
+      } catch (annErr) {
+        console.warn('Announcement fetch failed:', annErr);
+      }
+
+      // Fetch system settings
+      try {
+        const { data: sysData } = await supabase
+          .from('system_settings')
+          .select('*')
+          .eq('id', 'global')
+          .maybeSingle();
+        
+        if (sysData && sysData.close_at) {
+          const closeDate = new Date(sysData.close_at);
+          setSystemCloseTime(closeDate);
+          if (new Date() > closeDate) {
+            setIsSystemClosed(true);
+          }
+        }
+      } catch (sysErr) {
+        console.warn('System settings fetch failed:', sysErr);
+      }
     };
     boot();
+
+    // Cleanup: Delete login notification when leaving
+    const cleanup = () => {
+      if (activityLogId.current) {
+        // Use native fetch with keepalive to ensure it finishes even on tab close
+        const url = `${safeUrl}/rest/v1/activity_logs?id=eq.${activityLogId.current}`;
+        fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'apikey': safeAnon,
+            'Authorization': `Bearer ${safeAnon}`,
+            'Content-Type': 'application/json'
+          },
+          keepalive: true
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', cleanup);
+
+    return () => {
+      window.removeEventListener('beforeunload', cleanup);
+      cleanup();
+    };
   }, [navigate]);
 
   const fromDbPayload = (dbData) => {
@@ -262,10 +346,15 @@ const Dashboard = () => {
 
   const toDbPayload = (data) => {
     const payload = {};
+    // Fields to exclude from the company's update payload
+    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id'];
+    
     Object.keys(data).forEach(key => {
       // Convert to lowercase by default to match most DB setups
       let dbKey = key.toLowerCase();
       
+      if (exclude.includes(dbKey)) return;
+
       // Specifically handle underscore cases
       if (dbKey === 'documenturl') dbKey = 'document_url';
       
@@ -304,7 +393,7 @@ const Dashboard = () => {
   }, []);
 
   const handleInputChange = (e) => {
-    if (isReceived) return;
+    if (isReceived || isSystemClosed) return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors.includes(name)) {
@@ -336,7 +425,7 @@ const Dashboard = () => {
   };
 
   const handleFileUpload = async (e) => {
-    if (isReceived) return;
+    if (isReceived || isSystemClosed) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -368,46 +457,9 @@ const Dashboard = () => {
     }
   };
 
-  const saveDraft = async () => {
-    try {
-      const dbFields = toDbPayload(formData);
-      
-      const payload = {
-        ...dbFields,
-        user_id: user.userId || user.id,
-        username: user.username,
-        status: 'draft',
-        last_updated: new Date().toISOString()
-      };
 
-      // Ensure we update the existing record and check if it's locked
-      const { data: existing } = await supabase
-        .from('submissions')
-        .select('id, is_received')
-        .eq('username', (user.username || '').toLowerCase().trim())
-        .maybeSingle();
-      
-      if (existing?.is_received) {
-        alert('لا يمكن حفظ المسودة: لقد تم تأييد استلام العرض من قبل اللجنة وقفل التعديل.');
-        setIsReceived(true);
-        return;
-      }
-
-      if (existing?.id) {
-        payload.id = existing.id;
-      }
-
-      const { error } = await supabase
-        .from('submissions')
-        .upsert(payload);
-
-      if (error) throw error;
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    } catch (err) {
-      console.error('Error saving draft:', err);
-      alert(`فشل حفظ المسودة: ${err.message || 'خطأ غير معروف'}`);
-    }
+  const handleDownloadBlankForm = () => {
+    window.print();
   };
 
   const processFinalSubmit = async () => {
@@ -447,6 +499,18 @@ const Dashboard = () => {
         .upsert(payload);
 
       if (error) throw error;
+      
+      // Log Submission Activity
+      try {
+        await supabase.from('activity_logs').insert({
+          username: user.username,
+          event_type: 'submit',
+          details: `قامت الشركة بإرسال العرض النهائي بنجاح`
+        });
+      } catch (logErr) {
+        console.warn('Logging failed:', logErr);
+      }
+
       setIsSubmitted(true);
       setShowSuccess(true);
     } catch (err) {
@@ -459,7 +523,7 @@ const Dashboard = () => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (isSubmitted && isReceived) return;
+    if ((isSubmitted && isReceived) || isSystemClosed) return;
 
     if (!formData.signedBy || !formData.position) {
       alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
@@ -520,7 +584,7 @@ const Dashboard = () => {
   };
 
   const renderStepContent = () => {
-    const isLocked = isReceived;
+    const isLocked = isReceived || isSystemClosed;
     const inputProps = (name) => ({ 
       name,
       onChange: handleInputChange, 
@@ -716,10 +780,21 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-arabic" dir="rtl">
-      <header className="bg-white border-b sticky top-0 z-50">
+      {/* Hidden Print Template */}
+      <div className="hidden print:block w-full bg-white">
+        <PrintTemplate isBlank={true} />
+      </div>
+
+      <header className="bg-white border-b sticky top-0 z-50 print:hidden">
         {isReceived && (
           <div className="bg-red-600 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest">
             تم تأييد الاستلام - هذا العرض مقفل للمراجعة النهائية ولا يمكن تعديله
+          </div>
+        )}
+        {isSystemClosed && (
+          <div className="bg-rose-600 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            انتهت الفترة المحددة للتقديم - النظام مغلق حالياً ولا يمكن تعديل أو إرسال العروض
           </div>
         )}
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -740,7 +815,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="flex-grow flex max-w-7xl mx-auto w-full p-6 md:p-10 gap-10">
+      <div className="flex-grow flex max-w-7xl mx-auto w-full p-6 md:p-10 gap-10 print:hidden">
         <aside className="hidden lg:flex flex-col w-72 shrink-0">
           <div className="bg-white rounded-[2.5rem] border shadow-sm p-4 sticky top-28">
             <p className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">أقسام الاستمارة</p>
@@ -796,7 +871,17 @@ const Dashboard = () => {
                   <div className="flex gap-4">
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
                     {!isReceived && (
-                      <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
+                      <div className="flex gap-2">
+                        <button 
+                          type="button" 
+                          onClick={handleDownloadBlankForm} 
+                          title="تحميل الاستمارة فارغة للمطالعة"
+                          className="px-6 py-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm flex items-center gap-2"
+                        >
+                          <Download className="w-5 h-5" />
+                          <span className="text-xs font-black">تحميل الاستمارة فارغة (للاطلاع)</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                   
@@ -806,7 +891,7 @@ const Dashboard = () => {
                     ) : currentStep === 8 ? (
                       <button type="button" onClick={() => { if(validateStep(8)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
                     ) : (
-                      !isReceived && (
+                      (!isReceived && !isSystemClosed) && (
                         <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-16 py-5 bg-blue-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-100 hover:bg-blue-800 transition-all">
                           {isSubmitting ? 'جاري الإرسال...' : isSubmitted ? 'تحديث العرض المرسل' : 'إرسال العرض نهائياً'}
                           <Send className="w-5 h-5" />
@@ -840,6 +925,55 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && announcement && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-blue-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[3rem] p-0 max-w-lg w-full shadow-2xl animate-scale-in overflow-hidden">
+            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 p-10 text-white text-center relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white rounded-full"></div>
+              </div>
+              <div className="relative z-10">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-white/20">
+                  <Megaphone className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-black leading-tight">{announcement.title || 'إعلان هام'}</h2>
+              </div>
+            </div>
+            <div className="p-10">
+              <div className="text-gray-700 font-bold text-sm leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">
+                {announcement.content}
+              </div>
+              <button 
+                onClick={() => {
+                  setShowAnnouncementModal(false);
+                  setAnnouncementDismissed(true);
+                  localStorage.setItem('dismissed_announcement_id', announcement.id);
+                }}
+                className="w-full mt-8 py-4 bg-indigo-950 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-900 transition-all"
+              >
+                تم الاطلاع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Announcement Sidebar Reminder */}
+      {announcementDismissed && announcement && !showAnnouncementModal && (
+        <button
+          onClick={() => setShowAnnouncementModal(true)}
+          className="fixed bottom-6 left-6 z-[90] bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl shadow-purple-200 hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-3 group print:hidden"
+        >
+          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+            <Megaphone className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black">إعلان هام</span>
+          <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+        </button>
       )}
     </div>
   );
