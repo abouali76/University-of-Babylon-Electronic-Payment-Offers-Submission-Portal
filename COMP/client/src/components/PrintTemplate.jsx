@@ -61,7 +61,7 @@ const PrintTemplate = ({ data, isBlank = false }) => {
       display: 'flex',
       borderBottom: '1px solid #f1f5f9',
       paddingBottom: '8px',
-      fontSize: '12.5px',
+      fontSize: '15px',
       marginBottom: '8px'
     },
     questionBox: {
@@ -231,8 +231,8 @@ const InfoRow = ({ label, value, styles }) => (
 
 const QuestionBox = ({ label, value, styles, isBlank }) => (
   <div style={styles.questionBox}>
-    <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '8px', fontSize: '13.5px', lineHeight: '1.6' }}>{label}</p>
-    <p style={{ lineHeight: '1.8', fontSize: '13px', color: '#334155', whiteSpace: 'pre-wrap' }}>
+    <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '10px', fontSize: '16px', lineHeight: '1.6' }}>{label}</p>
+    <p style={{ lineHeight: '1.8', fontSize: '15px', color: '#1e293b', whiteSpace: 'pre-wrap', fontWeight: 'bold' }}>
       {isBlank ? '' : (value || 'لم يتم تقديم إجابة.')}
     </p>
     {isBlank && <div style={{ height: '40px' }}></div>}

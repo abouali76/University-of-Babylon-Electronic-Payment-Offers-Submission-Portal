@@ -59,6 +59,34 @@ const Login = () => {
 
       if (authError) throw authError;
 
+      // Check if system is closed
+      const { data: sysData } = await supabase
+        .from('system_settings')
+        .select('close_at')
+        .eq('id', 'global')
+        .maybeSingle();
+      
+      if (sysData?.close_at) {
+        const closeDate = new Date(sysData.close_at);
+        if (new Date() > closeDate) {
+          await supabase.auth.signOut();
+          setError('انتهت الفترة المحددة للتقديم. تم غلق النظام تلقائياً.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Check if account is locked by admin
+      const { data: lockData } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'check_lock', username: String(username).trim() }
+      });
+      if (lockData?.locked) {
+        await supabase.auth.signOut();
+        setError('تم تعليق حسابكم من قبل الإدارة. يرجى التواصل مع مسؤول النظام.');
+        setLoading(false);
+        return;
+      }
+
       await supabase.rpc('set_config', {
         setting: 'app.current_user',
         value: String(username).trim(),

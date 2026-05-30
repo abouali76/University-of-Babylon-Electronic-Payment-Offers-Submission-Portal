@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronLeft, Save, Send, LogOut, 
   CheckCircle2, AlertCircle, Building2, User, 
   Phone, Mail, FileCheck, ShieldCheck, HelpCircle, ArrowRight, X,
-  Download
+  Download, Megaphone
 } from 'lucide-react';
 import { supabase, safeUrl, safeAnon } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -14,7 +14,6 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isReceived, setIsReceived] = useState(false);
   const activityLogId = useRef(null);
@@ -22,6 +21,13 @@ const Dashboard = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errors, setErrors] = useState([]);
   const [showReview, setShowReview] = useState(false);
+  const [announcement, setAnnouncement] = useState(null);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const [isSystemClosed, setIsSystemClosed] = useState(false);
+  const [systemCloseTime, setSystemCloseTime] = useState(null);
+  const [criteria, setCriteria] = useState([]);
+  const [evaluationAnswers, setEvaluationAnswers] = useState({});
   const [printMode, setPrintMode] = useState('blank');
   const [formData, setFormData] = useState({
     companyName: '',
@@ -89,7 +95,8 @@ const Dashboard = () => {
     { id: 6, title: 'الالتزامات القانونية' },
     { id: 7, title: 'الخدمات الإضافية والميزات' },
     { id: 8, title: 'المرفقات والملاحظات' },
-    { id: 9, title: 'المصادقة والتوقيع النهائي' }
+    { id: 9, title: 'المصادقة والتوقيع النهائي' },
+    { id: 10, title: 'استمارة التقييم التلقائي' }
   ];
 
   const STEP_FIELDS = {
@@ -101,7 +108,8 @@ const Dashboard = () => {
     6: ['q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal', 'q4_10_blacklist'],
     7: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_posUpdates', 'q5_6_foreignPayments', 'q5_7_complaints', 'q5_8_socialResp'],
     8: ['documentUrl'],
-    9: ['signedBy', 'position']
+    9: ['signedBy', 'position'],
+    10: [] // Answers handled separately
   };
 
   const FIELD_LABELS = {
@@ -219,6 +227,69 @@ const Dashboard = () => {
         }
       } catch (logErr) {
         console.warn('Logging failed (table might not exist yet):', logErr);
+      }
+
+      // Fetch active announcement
+      try {
+        const { data: annData } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (annData && annData[0]) {
+          const ann = annData[0];
+          setAnnouncement(ann);
+          // Always show on entry as per user request
+          setShowAnnouncementModal(true);
+          setAnnouncementDismissed(false);
+        }
+      } catch (annErr) {
+        console.warn('Announcement fetch failed:', annErr);
+      }
+
+      // Fetch system settings
+      try {
+        const { data: sysData } = await supabase
+          .from('system_settings')
+          .select('*')
+          .eq('id', 'global')
+          .maybeSingle();
+        
+        if (sysData && sysData.close_at) {
+          const closeDate = new Date(sysData.close_at);
+          setSystemCloseTime(closeDate);
+          if (new Date() > closeDate) {
+            setIsSystemClosed(true);
+          }
+        }
+      } catch (sysErr) {
+        console.warn('System settings fetch failed:', sysErr);
+      }
+
+      // Fetch evaluation criteria
+      try {
+        const { data: critData } = await supabase
+          .from('evaluation_criteria')
+          .select('*')
+          .order('display_order', { ascending: true });
+        setCriteria(critData || []);
+
+        if (sub?.id) {
+          const { data: ansData } = await supabase
+            .from('company_answers')
+            .select('*')
+            .eq('submission_id', sub.id);
+          
+          if (ansData) {
+            const ansMap = {};
+            ansData.forEach(a => { ansMap[a.criterion_id] = a.answer_value; });
+            setEvaluationAnswers(ansMap);
+          }
+        }
+      } catch (critErr) {
+        console.warn('Criteria fetch failed:', critErr);
       }
     };
     boot();
@@ -351,7 +422,7 @@ const Dashboard = () => {
   }, []);
 
   const handleInputChange = (e) => {
-    if (isReceived) return;
+    if (isReceived || isSystemClosed) return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors.includes(name)) {
@@ -383,7 +454,7 @@ const Dashboard = () => {
   };
 
   const handleFileUpload = async (e) => {
-    if (isReceived) return;
+    if (isReceived || isSystemClosed) return;
     const file = e.target.files[0];
     if (!file) return;
 
@@ -416,47 +487,6 @@ const Dashboard = () => {
     }
   };
 
-  const saveDraft = async () => {
-    try {
-      const dbFields = toDbPayload(formData);
-      
-      const payload = {
-        ...dbFields,
-        user_id: user.userId || user.id,
-        username: user.username,
-        status: 'draft',
-        last_updated: new Date().toISOString()
-      };
-
-      // Ensure we update the existing record and check if it's locked
-      const { data: existing } = await supabase
-        .from('submissions')
-        .select('id, is_received')
-        .eq('username', (user.username || '').toLowerCase().trim())
-        .maybeSingle();
-      
-      if (existing?.is_received) {
-        alert('لا يمكن حفظ المسودة: لقد تم تأييد استلام العرض من قبل اللجنة وقفل التعديل.');
-        setIsReceived(true);
-        return;
-      }
-
-      if (existing?.id) {
-        payload.id = existing.id;
-      }
-
-      const { error } = await supabase
-        .from('submissions')
-        .upsert(payload);
-
-      if (error) throw error;
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    } catch (err) {
-      console.error('Error saving draft:', err);
-      alert(`فشل حفظ المسودة: ${err.message || 'خطأ غير معروف'}`);
-    }
-  };
 
   const handlePrintBlank = () => {
     setPrintMode('blank');
@@ -469,6 +499,16 @@ const Dashboard = () => {
   };
 
   const processFinalSubmit = async () => {
+    // Check if all criteria are answered if any exist
+    if (criteria.length > 0) {
+      const unanswered = criteria.filter(c => !evaluationAnswers[c.id]);
+      if (unanswered.length > 0) {
+        alert('يرجى الإجابة على جميع أسئلة استمارة التقييم التلقائي في الخطوة الأخيرة.');
+        setCurrentStep(10);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setShowConfirmModal(false);
     try {
@@ -496,15 +536,48 @@ const Dashboard = () => {
         return;
       }
 
-      if (existing?.id) {
-        payload.id = existing.id;
+      let submissionId = existing?.id;
+      if (submissionId) {
+        payload.id = submissionId;
       }
 
-      const { error } = await supabase
+      const { data: upsertData, error } = await supabase
         .from('submissions')
-        .upsert(payload);
+        .upsert(payload)
+        .select();
 
       if (error) throw error;
+      submissionId = upsertData[0].id;
+
+      // Save evaluation answers
+      if (criteria.length > 0) {
+        const answerPayloads = Object.entries(evaluationAnswers).map(([critId, val]) => ({
+          submission_id: submissionId,
+          criterion_id: critId,
+          answer_value: val
+        }));
+
+        const { error: ansError } = await supabase
+          .from('company_answers')
+          .upsert(answerPayloads, { onConflict: 'submission_id,criterion_id' });
+        
+        if (ansError) console.error('Failed to save answers:', ansError);
+
+        // Trigger auto-evaluation edge function
+        try {
+          await supabase.functions.invoke('auto-evaluate', {
+            body: { submissionId }
+          });
+        } catch (evalErr) {
+          console.error('Auto-evaluation trigger failed:', evalErr);
+          // Don't block submission if evaluation fails, just log it
+          await supabase.from('activity_logs').insert({
+            username: user.username,
+            event_type: 'error',
+            details: `فشل التقييم التلقائي: ${evalErr.message}`
+          });
+        }
+      }
       
       // Log Submission Activity
       try {
@@ -529,7 +602,7 @@ const Dashboard = () => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (isSubmitted && isReceived) return;
+    if ((isSubmitted && isReceived) || isSystemClosed) return;
 
     if (!formData.signedBy || !formData.position) {
       alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
@@ -559,12 +632,12 @@ const Dashboard = () => {
             <h4 className="text-sm font-black text-blue-900 bg-blue-50 p-2 rounded-lg">{s.title}</h4>
             <div className="grid grid-cols-1 gap-3">
               {STEP_FIELDS[s.id]?.map(f => (
-                <div key={f} className="flex justify-between items-start gap-4 p-3 bg-white border rounded-xl text-xs">
-                  <span className="font-bold text-gray-400 shrink-0 w-1/3">
+                <div key={f} className="flex justify-between items-start gap-4 p-4 bg-white border rounded-xl text-base">
+                  <span className="font-bold text-gray-700 shrink-0 w-1/3">
                     {/* Logic to find label for field f */}
                     {findLabelForField(f)}
                   </span>
-                  <span className="font-black text-gray-800 text-left w-2/3">{formData[f] || '---'}</span>
+                  <span className="font-black text-gray-900 text-left w-2/3 leading-relaxed">{formData[f] || '---'}</span>
                 </div>
               ))}
             </div>
@@ -590,7 +663,7 @@ const Dashboard = () => {
   };
 
   const renderStepContent = () => {
-    const isLocked = isReceived;
+    const isLocked = isReceived || isSystemClosed;
     const inputProps = (name) => ({ 
       name,
       onChange: handleInputChange, 
@@ -778,6 +851,50 @@ const Dashboard = () => {
             </div>
           </div>
         );
+      case 10:
+        return (
+          <div className="space-y-8 animate-fade-in">
+            <SectionHeader title="عاشراً: استمارة المعايير (التقييم التلقائي)" />
+            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex gap-4 mb-6">
+              <Info className="w-6 h-6 text-indigo-600 shrink-0" />
+              <p className="text-xs font-bold text-indigo-900 leading-relaxed">
+                يرجى الإجابة بدقة على هذه الأسئلة. هذه البيانات ستستخدم للمقارنة التلقائية بين الشركات وتحديد الأفضلية التقنية والمالية.
+              </p>
+            </div>
+            <div className="space-y-4">
+              {criteria.map((c) => (
+                <div key={c.id} className="p-6 bg-white border-2 border-gray-50 rounded-3xl shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-2 mb-2">
+                         <h4 className="font-black text-indigo-950 text-sm">{c.question_text}</h4>
+                         {c.is_mandatory && <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-1 rounded-lg">إلزامي</span>}
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-400">الفئة: {c.category === 'Technical' ? 'فني' : 'مالي'}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {['accept', 'provide', 'reject'].map((opt) => (
+                        <button
+                          key={opt}
+                          disabled={isLocked}
+                          onClick={() => setEvaluationAnswers(prev => ({ ...prev, [c.id]: opt }))}
+                          className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border-2 ${
+                            evaluationAnswers[c.id] === opt 
+                              ? opt === 'accept' ? 'bg-emerald-600 border-emerald-600 text-white' : opt === 'provide' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-red-600 border-red-600 text-white'
+                              : 'bg-white border-gray-100 text-gray-400 hover:border-indigo-100'
+                          }`}
+                        >
+                          {opt === 'accept' ? 'نعم / قبول' : opt === 'provide' ? 'توفير المستلزمات' : 'لا / رفض'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {criteria.length === 0 && <div className="text-center py-20 text-gray-300 font-bold">لا توجد معايير مضافة حالياً</div>}
+            </div>
+          </div>
+        );
       default: return null;
     }
   };
@@ -799,6 +916,12 @@ const Dashboard = () => {
         {isReceived && (
           <div className="bg-red-600 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest">
             تم تأييد الاستلام - هذا العرض مقفل للمراجعة النهائية ولا يمكن تعديله
+          </div>
+        )}
+        {isSystemClosed && (
+          <div className="bg-rose-600 text-white text-center py-2 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            انتهت الفترة المحددة للتقديم - النظام مغلق حالياً ولا يمكن تعديل أو إرسال العروض
           </div>
         )}
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -881,17 +1004,15 @@ const Dashboard = () => {
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
                     <div className="flex flex-wrap gap-2">
                       {!isReceived && (
-                        <>
-                          <button type="button" onClick={saveDraft} className="px-10 py-4 bg-white border border-blue-900 text-blue-900 rounded-2xl font-black hover:bg-blue-50 transition-all">{isSaved ? 'تم الحفظ ✓' : 'حفظ كمسودة'}</button>
-                          <button 
-                            type="button" 
-                            onClick={handlePrintBlank} 
-                            title="تحميل الاستمارة فارغة للمطالعة"
-                            className="p-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm flex items-center justify-center"
-                          >
-                            <Download className="w-5 h-5" />
-                          </button>
-                        </>
+                        <button 
+                          type="button" 
+                          onClick={handlePrintBlank} 
+                          title="تحميل الاستمارة فارغة للمطالعة"
+                          className="px-6 py-4 bg-blue-50 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition-all border border-blue-100 shadow-sm flex items-center gap-2"
+                        >
+                          <Download className="w-5 h-5" />
+                          <span className="text-xs font-black hidden lg:inline">تحميل فارغة (للاطلاع)</span>
+                        </button>
                       )}
                       {isSubmitted && (
                         <button 
@@ -913,7 +1034,7 @@ const Dashboard = () => {
                     ) : currentStep === 8 ? (
                       <button type="button" onClick={() => { if(validateStep(8)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
                     ) : (
-                      !isReceived && (
+                      (!isReceived && !isSystemClosed) && (
                         <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-16 py-5 bg-blue-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-100 hover:bg-blue-800 transition-all">
                           {isSubmitting ? 'جاري الإرسال...' : isSubmitted ? 'تحديث العرض المرسل' : 'إرسال العرض نهائياً'}
                           <Send className="w-5 h-5" />
@@ -948,6 +1069,55 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && announcement && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-blue-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[3rem] p-0 max-w-lg w-full shadow-2xl animate-scale-in overflow-hidden">
+            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 p-10 text-white text-center relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white rounded-full"></div>
+              </div>
+              <div className="relative z-10">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-white/20">
+                  <Megaphone className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-black leading-tight">{announcement.title || 'إعلان هام'}</h2>
+              </div>
+            </div>
+            <div className="p-10">
+              <div className="text-gray-700 font-bold text-sm leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">
+                {announcement.content}
+              </div>
+              <button 
+                onClick={() => {
+                  setShowAnnouncementModal(false);
+                  setAnnouncementDismissed(true);
+                  localStorage.setItem('dismissed_announcement_id', announcement.id);
+                }}
+                className="w-full mt-8 py-4 bg-indigo-950 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-900 transition-all"
+              >
+                تم الاطلاع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Announcement Sidebar Reminder */}
+      {announcementDismissed && announcement && !showAnnouncementModal && (
+        <button
+          onClick={() => setShowAnnouncementModal(true)}
+          className="fixed bottom-6 left-6 z-[90] bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl shadow-purple-200 hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-3 group print:hidden"
+        >
+          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+            <Megaphone className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black">إعلان هام</span>
+          <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+        </button>
+      )}
     </div>
   );
 };
@@ -962,7 +1132,7 @@ const SectionHeader = ({ title }) => (
 const InputField = ({ label, name, value, onChange, type = 'text', disabled, error }) => (
   <div className="space-y-2">
     <div className="flex justify-between items-center pr-2">
-      <label className={`text-[11px] font-black uppercase tracking-widest block ${error ? 'text-red-500' : 'text-gray-400'}`}>{label}</label>
+      <label className={`text-sm font-black uppercase tracking-widest block ${error ? 'text-red-500' : 'text-gray-600'}`}>{label}</label>
       {error && <span className="text-[9px] text-red-500 font-black animate-pulse">يجب الإجابة</span>}
     </div>
     <input 
@@ -980,15 +1150,15 @@ const InputField = ({ label, name, value, onChange, type = 'text', disabled, err
 const QuestionBox = ({ id, label, value, onChange, disabled, error }) => (
   <div className={`p-8 rounded-[2.5rem] border-2 transition-all group shadow-sm ${error ? 'bg-red-50/50 border-red-200' : 'bg-gray-50/30 border-transparent hover:border-blue-50 hover:bg-white'}`}>
     <div className="flex justify-between items-start mb-4">
-      <label className={`block text-sm font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
-      {error && <span className="text-[10px] bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
+      <label className={`block text-lg font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
+      {error && <span className="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
     </div>
     <textarea 
       name={id} 
       value={value} 
       onChange={onChange} 
       disabled={disabled}
-      className={`w-full h-40 p-6 rounded-2xl border-2 focus:ring-4 outline-none font-bold transition-all text-sm bg-white ${error ? 'border-red-200 focus:border-red-500 ring-red-50' : 'border-gray-100 focus:border-blue-900 ring-blue-50'}`} 
+      className={`w-full h-40 p-6 rounded-2xl border-2 focus:ring-4 outline-none font-bold transition-all text-base leading-relaxed bg-white ${error ? 'border-red-200 focus:border-red-500 ring-red-50' : 'border-gray-100 focus:border-blue-900 ring-blue-50'}`} 
     />
   </div>
 );

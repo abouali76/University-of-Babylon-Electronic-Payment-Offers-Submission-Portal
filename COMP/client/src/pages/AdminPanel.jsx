@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock, Trophy, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
@@ -24,6 +24,14 @@ const AdminPanel = () => {
   const [activities, setActivities] = useState([]);
   const [showActivities, setShowActivities] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [editingName, setEditingName] = useState({ username: '', name: '' });
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [announcementForm, setAnnouncementForm] = useState({ title: '', content: '' });
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
+  const [showSystemSettings, setShowSystemSettings] = useState(false);
+  const [systemSettingsForm, setSystemSettingsForm] = useState({ closeAt: '' });
+  const [systemSettingsSaving, setSystemSettingsSaving] = useState(false);
 
   const normalizePassword = (p) => {
     const raw = String(p || '');
@@ -93,7 +101,7 @@ const AdminPanel = () => {
 
       const usersResult = await supabase
         .from('users')
-        .select('id, username, name, role, created_at')
+        .select('id, username, name, role, created_at, is_locked')
         .eq('role', 'company')
         .order('created_at', { ascending: false });
       
@@ -125,6 +133,32 @@ const AdminPanel = () => {
       setDynamicUsers(usersData);
       setSubmissions(subsData);
       setActivities(logsData);
+
+      // Fetch current announcement
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (annData && annData[0]) {
+        setAnnouncementForm({ title: annData[0].title || '', content: annData[0].content || '' });
+      }
+
+      // Fetch system settings
+      const { data: sysData } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('id', 'global')
+        .maybeSingle();
+      if (sysData && sysData.close_at) {
+        // Convert to datetime-local format (YYYY-MM-DDTHH:mm)
+        const date = new Date(sysData.close_at);
+        const localDateTime = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        setSystemSettingsForm({ closeAt: localDateTime });
+      } else {
+        setSystemSettingsForm({ closeAt: '' });
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       alert(`خطأ غير متوقع: ${err.message}`);
@@ -237,6 +271,83 @@ const AdminPanel = () => {
     }
   };
 
+  const handleUpdateName = async () => {
+    if (!editingName.username || !editingName.name.trim()) return;
+    
+    setIsUpdatingName(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { 
+          action: 'update_name', 
+          username: editingName.username, 
+          newName: editingName.name.trim() 
+        }
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+
+      await fetchData();
+      setEditingName({ username: '', name: '' });
+      alert('تم تحديث اسم الشركة بنجاح.');
+    } catch (err) {
+      console.error('Error updating name:', err);
+      alert(`فشل تحديث الاسم: ${err.message}`);
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
+
+  const handleToggleLock = async (username, currentLocked) => {
+    const newLocked = !currentLocked;
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'toggle_lock', username, locked: newLocked }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert(newLocked ? 'تم تعليق حساب الشركة بنجاح.' : 'تم إعادة تفعيل حساب الشركة.');
+      await fetchData();
+    } catch (err) {
+      alert(`فشل العملية: ${err.message}`);
+    }
+  };
+
+  const handleSaveAnnouncement = async () => {
+    setAnnouncementSaving(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_announcement', title: announcementForm.title, content: announcementForm.content, is_active: true }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert('تم حفظ الإعلان بنجاح. سيظهر للشركات عند الدخول.');
+      setShowAnnouncement(false);
+    } catch (err) {
+      alert(`فشل حفظ الإعلان: ${err.message}`);
+    } finally {
+      setAnnouncementSaving(false);
+    }
+  };
+  const handleSaveSystemSettings = async () => {
+    setSystemSettingsSaving(true);
+    try {
+      const closeAt = systemSettingsForm.closeAt ? new Date(systemSettingsForm.closeAt).toISOString() : null;
+      const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+        body: { action: 'update_system_settings', closeAt }
+      });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      alert('تم تحديث موعد غلق النظام بنجاح.');
+      setShowSystemSettings(false);
+      await fetchData();
+    } catch (err) {
+      alert(`فشل التحديث: ${err.message}`);
+    } finally {
+      setSystemSettingsSaving(false);
+    }
+  };
+
   const logout = () => {
     supabase.auth.signOut().catch(() => {});
     localStorage.removeItem('currentUser');
@@ -297,11 +408,12 @@ const AdminPanel = () => {
       lastUpdated: submission.last_updated || submission.lastupdated,
       documentUrl: submission.document_path || submission.document_url,
       username: u.username,
-      companyName: (submission.data && submission.data.companyName) || submission.companyName || u.name || u.username,
+      companyName: (submission.data && submission.data.companyName) || submission.companyName || submission.companyname || u.name || u.username,
       representative: (submission.data && submission.data.representativeName) || submission.representativeName || submission.representativename || '---',
       phone: (submission.data && submission.data.phone) || submission.phone || '---',
       isSubmitted: submission.status === 'final',
-      isReceived: !!submission.is_received
+      isReceived: !!submission.is_received,
+      isLocked: !!u.is_locked
     };
   });
 
@@ -314,10 +426,6 @@ const AdminPanel = () => {
     if (selectedForCompare.includes(username)) {
       setSelectedForCompare(prev => prev.filter(u => u !== username));
     } else {
-      if (selectedForCompare.length >= 4) {
-        alert('يمكنك مقارنة 4 شركات كحد أقصى');
-        return;
-      }
       setSelectedForCompare(prev => [...prev, username]);
     }
   };
@@ -409,6 +517,22 @@ const AdminPanel = () => {
             </button>
 
             <button 
+              onClick={() => { navigate('/admin/auto-comparison'); setIsMobileMenuOpen(false); }} 
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
+            >
+              <Trophy className="w-5 h-5" />
+              التصنيف التلقائي
+            </button>
+
+            <button 
+              onClick={() => { navigate('/admin/criteria-manager'); setIsMobileMenuOpen(false); }} 
+              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+            >
+              <Settings className="w-5 h-5" />
+              إدارة معايير التقييم
+            </button>
+
+            <button 
               onClick={() => setShowAddUser(!showAddUser)} 
               className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAddUser ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
             >
@@ -434,6 +558,20 @@ const AdminPanel = () => {
                 <Bell className="w-5 h-5" />
                 <span>النشاطات الأخيرة</span>
                 {activities.length > 0 && <span className="mr-auto w-5 h-5 bg-red-500 text-white text-[9px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">{activities.length}</span>}
+              </button>
+              <button 
+                onClick={() => setShowAnnouncement(!showAnnouncement)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showAnnouncement ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:bg-purple-50 hover:text-purple-600'}`}
+              >
+                <Megaphone className="w-5 h-5" />
+                لوحة الإعلانات
+              </button>
+              <button 
+                onClick={() => setShowSystemSettings(!showSystemSettings)} 
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${showSystemSettings ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:bg-rose-50 hover:text-rose-600'}`}
+              >
+                <Clock className="w-5 h-5" />
+                موعد غلق النظام
               </button>
             </div>
           </nav>
@@ -508,7 +646,7 @@ const AdminPanel = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-right">
-                  <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase">
+                  <thead className="bg-gray-50 text-gray-600 text-sm font-black uppercase">
                     <tr>
                       <th className="px-8 py-5 w-16">#</th>
                       <th className="px-8 py-5">الشركة والممثل</th>
@@ -527,19 +665,61 @@ const AdminPanel = () => {
                            </button>
                         </td>
                         <td className="px-8 py-6">
-                          <div className="font-black text-indigo-950">{c.companyName}</div>
-                          <div className="text-[10px] font-bold text-gray-400">{c.representative} | {c.phone}</div>
+                          <div className="flex items-center gap-2 group">
+                            {editingName.username === c.username ? (
+                              <div className="flex items-center gap-2 w-full">
+                                <input 
+                                  autoFocus
+                                  className="p-2 border-2 border-indigo-600 rounded-lg text-sm font-black w-full outline-none"
+                                  value={editingName.name}
+                                  onChange={(e) => setEditingName({ ...editingName, name: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateName();
+                                    if (e.key === 'Escape') setEditingName({ username: '', name: '' });
+                                  }}
+                                />
+                                <button 
+                                  onClick={handleUpdateName}
+                                  disabled={isUpdatingName}
+                                  className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all shrink-0"
+                                >
+                                  <SaveIcon className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => setEditingName({ username: '', name: '' })}
+                                  className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 transition-all shrink-0"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="font-black text-indigo-950">{c.companyName}</div>
+                                <button 
+                                  onClick={() => setEditingName({ username: c.username, name: c.companyName })}
+                                  className="p-1 text-indigo-400 hover:text-indigo-600 transition-all"
+                                  title="تعديل الاسم"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          <div className="text-sm font-bold text-gray-500 mt-1">{c.representative} | {c.phone}</div>
                         </td>
                          <td className="px-8 py-6">
-                            {c.isReceived ? (
-                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
-                            ) : c.isSubmitted ? (
-                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black">مسودة</span>
-                              </div>
+                            <div className="flex flex-col gap-1">
+                            {c.isLocked && (
+                              <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><Lock className="w-3 h-3" /> حساب معلّق</span>
                             )}
+                            {c.isReceived ? (
+                              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><CheckCircle2 className="w-3 h-3" /> تم تأييد الاستلام</span>
+                            ) : c.isSubmitted ? (
+                              <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit"><ShieldCheck className="w-3 h-3" /> تم الإرسال</span>
+                            ) : (
+                              <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black w-fit">مسودة</span>
+                            )}
+                            </div>
                          </td>
                         <td className="px-8 py-6 text-center">
                           {c.documentUrl ? <a href={supabase.storage.from('documents').getPublicUrl(c.documentUrl).data.publicUrl} target="_blank" rel="noreferrer" className="text-indigo-600"><FileText className="mx-auto" /></a> : '---'}
@@ -571,6 +751,13 @@ const AdminPanel = () => {
                               <button onClick={() => setConfirmModal({ show: true, type: 'confirm_receipt', username: c.username, userId: c.userId, title: 'تأييد استلام العرض؟ سيؤدي هذا لقفل إمكانية التعديل للشركة.' })} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black hover:bg-emerald-700 transition-all">تأييد الاستلام</button>
                             )}
                             <button onClick={() => setConfirmModal({ show: true, type: 'reset', username: c.username, userId: c.userId, title: 'تصفير العرض؟ سيتم مسح الإجابات والمرفقات لهذه الشركة.' })} className="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[9px] font-black hover:bg-amber-100 transition-all">تصفير</button>
+                            <button 
+                              onClick={() => handleToggleLock(c.username, c.isLocked)} 
+                              className={`p-2 rounded-xl transition-all ${c.isLocked ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' : 'bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white'}`}
+                              title={c.isLocked ? 'إعادة تفعيل الحساب' : 'تعليق الحساب'}
+                            >
+                              {c.isLocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                            </button>
                             <button onClick={() => setConfirmModal({ show: true, type: 'delete', username: c.username, userId: c.userId, title: 'حذف الحساب نهائياً؟' })} className="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
@@ -945,7 +1132,9 @@ const AdminPanel = () => {
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs font-black text-indigo-950">{log.username}</p>
+                  <p className="text-xs font-black text-indigo-950">
+                    {allCompanies.find(c => c.username === log.username)?.companyName || log.username}
+                  </p>
                   <p className="text-[10px] font-bold text-gray-500 mt-1">{log.details}</p>
                 </div>
               ))
@@ -955,6 +1144,110 @@ const AdminPanel = () => {
              <button onClick={fetchData} className="w-full py-4 bg-gray-50 text-indigo-600 rounded-2xl font-black text-xs hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
                <RefreshCcw className="w-4 h-4" /> تحديث النشاطات
              </button>
+          </div>
+        </div>
+      )}
+
+      {showAnnouncement && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center">
+                <Megaphone className="w-7 h-7 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">لوحة الإعلانات</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1">سيظهر هذا الإعلان للشركات عند دخول النظام</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">عنوان الإعلان</label>
+                <input
+                  value={announcementForm.title}
+                  onChange={(e) => setAnnouncementForm(p => ({ ...p, title: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-purple-500/30 focus:ring-4 focus:ring-purple-500/5 font-bold text-gray-900 transition-all"
+                  placeholder="مثال: مرحباً بكم في نظام جامعة بابل"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">محتوى الإعلان</label>
+                <textarea
+                  value={announcementForm.content}
+                  onChange={(e) => setAnnouncementForm(p => ({ ...p, content: e.target.value }))}
+                  rows={6}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-purple-500/30 focus:ring-4 focus:ring-purple-500/5 font-bold text-gray-900 transition-all resize-none"
+                  placeholder="اكتب نص الإعلان هنا... سيظهر للشركات كنافذة ترحيبية عند أول دخول"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button 
+                onClick={handleSaveAnnouncement} 
+                disabled={announcementSaving}
+                className="flex-1 py-4 bg-purple-600 text-white rounded-2xl font-black hover:bg-purple-700 transition-all shadow-lg shadow-purple-100 disabled:opacity-50"
+              >
+                {announcementSaving ? 'جاري الحفظ...' : 'نشر الإعلان'}
+              </button>
+              <button onClick={() => setShowAnnouncement(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSystemSettings && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-indigo-950/60 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center">
+                <Clock className="w-7 h-7 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">إعدادات غلق النظام</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1">تحديد موعد توقف النظام عن استقبال الطلبات</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block pr-2">تاريخ ووقت الإغلاق</label>
+                <input
+                  type="datetime-local"
+                  value={systemSettingsForm.closeAt}
+                  onChange={(e) => setSystemSettingsForm(p => ({ ...p, closeAt: e.target.value }))}
+                  className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-rose-500/30 focus:ring-4 focus:ring-rose-500/5 font-bold text-gray-900 transition-all"
+                />
+                <p className="text-[9px] text-gray-400 mt-2 pr-2 leading-relaxed">
+                  * سيتم منع الشركات من الدخول أو تعديل العروض تلقائياً بعد هذا الموعد.
+                  <br />
+                  * اترك الحقل فارغاً لإبقاء النظام مفتوحاً دائماً.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-10">
+              <button 
+                onClick={handleSaveSystemSettings} 
+                disabled={systemSettingsSaving}
+                className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-black hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 disabled:opacity-50"
+              >
+                {systemSettingsSaving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+              </button>
+              <button 
+                onClick={() => {
+                  setSystemSettingsForm({ closeAt: '' });
+                  handleSaveSystemSettings();
+                }} 
+                className="px-6 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black hover:bg-gray-200 transition-all"
+                title="إلغاء الموعد"
+              >
+                فتح النظام
+              </button>
+              <button onClick={() => setShowSystemSettings(false)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all">إلغاء</button>
+            </div>
           </div>
         </div>
       )}
@@ -982,8 +1275,8 @@ const CompareColumn = ({ title, comp, fields, isHeader }) => {
       <div className="p-10 space-y-10">
         {fields.map((f, i) => (
           <div key={i} className="pb-6 border-b border-gray-50 last:border-0 last:pb-0">
-             <label className="text-[9px] font-black text-indigo-400 block mb-2 uppercase tracking-tighter">{isHeader ? '' : f.label}</label>
-             <div className={`font-bold text-sm leading-relaxed ${isHeader ? 'text-indigo-950 text-base' : 'text-gray-700'} ${f.isScore ? 'text-4xl text-indigo-600 font-black' : ''}`}>
+             <label className="text-sm font-black text-indigo-400 block mb-2 uppercase tracking-tighter leading-relaxed">{isHeader ? '' : f.label}</label>
+             <div className={`font-bold text-lg leading-relaxed ${isHeader ? 'text-indigo-950 text-xl' : 'text-gray-800'} ${f.isScore ? 'text-4xl text-indigo-600 font-black' : ''}`}>
                {isHeader ? f.label : getVal(comp, f.key)}
              </div>
           </div>
@@ -1016,8 +1309,8 @@ const DetailSection = ({ title, data, fields }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {fields.map(f => (
           <div key={f.key} className="bg-white border-2 border-gray-50 p-8 rounded-[2.5rem] hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-50/50 transition-all group">
-            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-4 group-hover:text-indigo-600 transition-all">{f.label}</label>
-            <p className="text-base font-bold text-gray-700 whitespace-pre-wrap leading-relaxed">{getVal(f)}</p>
+            <label className="text-base font-black text-indigo-400 uppercase tracking-widest block mb-4 group-hover:text-indigo-600 transition-all leading-relaxed">{f.label}</label>
+            <p className="text-xl font-bold text-gray-800 whitespace-pre-wrap leading-relaxed">{getVal(f)}</p>
           </div>
         ))}
       </div>
