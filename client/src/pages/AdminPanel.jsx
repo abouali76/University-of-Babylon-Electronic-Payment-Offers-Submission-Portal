@@ -427,17 +427,10 @@ const AdminPanel = () => {
     if (!loading && allCompanies.length > 0) {
       const target = searchParams.get('company');
       if (target) {
-        const comp = allCompanies.find(c =>
-          c.username === target ||
-          c.companyName === target ||
-          c.id === target ||
-          c.userId === target
-        );
-        if (comp) {
-          setSelectedSubmission(comp);
-          setView('details');
-          setSearchParams({}, { replace: true });
-        }
+        // Just filter the list to show that company - don't open details
+        setSearchTerm(target);
+        setView('list');
+        setSearchParams({}, { replace: true });
       }
     }
   }, [loading, searchParams, allCompanies]);

@@ -450,28 +450,6 @@ const QuestionComparison = () => {
         </div>
       </div>
 
-      {/* Companies Legend */}
-      {filteredCompanies.length > 0 && (
-        <div className="max-w-[1800px] mx-auto px-6 pb-4 pt-0 print:hidden">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest">دليل الألوان - الشركات المقارنة</p>
-            <div className="flex flex-wrap gap-3">
-              {filteredCompanies.map((c, idx) => (
-                <button 
-                  key={c.id || idx} 
-                  onClick={() => navigate(`/admin?company=${encodeURIComponent(c.username || c.companyName || c.id)}`)}
-                  className="flex items-center gap-2 bg-gray-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-gray-100 hover:border-indigo-200 transition-all cursor-pointer text-right group"
-                  title="الذهاب إلى تفاصيل الشركة"
-                >
-                  <div className="w-3 h-3 rounded-full shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                  <span className="text-xs font-black text-gray-700 group-hover:text-indigo-900 transition-colors">{c.companyName}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* No data */}
       {filteredCompanies.length === 0 && !loading && (
         <div className="max-w-4xl mx-auto px-6 py-32 text-center">
@@ -511,14 +489,10 @@ const QuestionComparison = () => {
                       </th>
                       {filteredCompanies.map((c, idx) => (
                         <th key={c.id || idx} className="px-4 py-4 text-sm font-black min-w-[250px]" style={{ color: COLORS[idx % COLORS.length] }}>
-                          <button 
-                            onClick={() => navigate(`/admin?company=${encodeURIComponent(c.username || c.companyName || c.id)}`)}
-                            className="flex items-center gap-2 hover:opacity-75 transition-opacity cursor-pointer group text-right w-full"
-                            title="الذهاب إلى تفاصيل الشركة"
-                          >
-                            <div className="w-2 h-2 rounded-full shrink-0 group-hover:scale-125 transition-transform" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                            <span className="group-hover:underline decoration-2 underline-offset-4">{c.companyName}</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                            <span>{c.companyName}</span>
+                          </div>
                         </th>
                       ))}
                     </tr>
