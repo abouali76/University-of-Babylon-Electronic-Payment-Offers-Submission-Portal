@@ -513,11 +513,12 @@ const Dashboard = () => {
     setShowConfirmModal(false);
     try {
       const dbFields = toDbPayload(formData);
+      const normalizedUsername = (user.user_metadata?.username || user.username || '').toLowerCase().trim();
 
       const payload = {
         ...dbFields,
         user_id: user.userId || user.id,
-        username: user.username,
+        username: normalizedUsername,
         status: 'final',
         last_updated: new Date().toISOString()
       };
@@ -572,7 +573,7 @@ const Dashboard = () => {
           console.error('Auto-evaluation trigger failed:', evalErr);
           // Don't block submission if evaluation fails, just log it
           await supabase.from('activity_logs').insert({
-            username: user.username,
+            username: normalizedUsername,
             event_type: 'error',
             details: `فشل التقييم التلقائي: ${evalErr.message}`
           });
@@ -582,7 +583,7 @@ const Dashboard = () => {
       // Log Submission Activity
       try {
         await supabase.from('activity_logs').insert({
-          username: user.username,
+          username: normalizedUsername,
           event_type: 'submit',
           details: `قامت الشركة بإرسال العرض النهائي بنجاح`
         });
