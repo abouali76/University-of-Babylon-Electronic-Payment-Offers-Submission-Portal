@@ -146,14 +146,11 @@ const QuestionComparison = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openSections, setOpenSections] = useState({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
 
-  // AI Analysis State
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  // Analysis State
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [analysisResult, setAnalysisResult] = useState('');
   const [analyzingQuestion, setAnalyzingQuestion] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [tempApiKey, setTempApiKey] = useState('');
 
   useEffect(() => {
     fetchCompanies();
@@ -202,110 +199,125 @@ const QuestionComparison = () => {
     }, 300);
   };
 
-  // AI Analysis Logic
-  const handleSaveApiKey = () => {
-    localStorage.setItem('gemini_api_key', tempApiKey);
-    setApiKey(tempApiKey);
-    setIsApiKeyModalOpen(false);
-    if (analyzingQuestion) {
-      runAnalysis(analyzingQuestion.isComprehensive ? null : analyzingQuestion, tempApiKey, analyzingQuestion.isComprehensive);
-    }
-  };
-
+  // Local Heuristic Analysis Logic
   const handleAnalyzeClick = (question, isComprehensive = false) => {
     setAnalyzingQuestion(isComprehensive ? { label: 'التقييم الشامل لجميع الأقسام', isComprehensive: true } : question);
-    if (!apiKey) {
-      setTempApiKey('');
-      setIsApiKeyModalOpen(true);
-    } else {
-      runAnalysis(isComprehensive ? null : question, apiKey, isComprehensive);
-    }
+    runAnalysis(isComprehensive ? null : question, isComprehensive);
   };
 
-  const runAnalysis = async (question, currentApiKey, isComprehensive = false) => {
+  const runAnalysis = async (question, isComprehensive = false) => {
     setIsAnalysisModalOpen(true);
     setIsAnalyzing(true);
     setAnalysisResult('');
 
-    let prompt = '';
-    let modalTitle = '';
+    // Simulate analysis time for UX
+    setTimeout(() => {
+      let markdown = '';
+      if (isComprehensive) {
+        let globalScores = {};
+        filteredCompanies.forEach(c => {
+          globalScores[c.companyName] = { score: 0, answersCount: 0, strengths: [], weaknesses: [] };
+        });
 
-    if (isComprehensive) {
-      setAnalyzingQuestion({ label: 'التقييم الشامل لجميع الأقسام والأسئلة' });
-      modalTitle = 'التقييم الشامل لعروض الشركات';
-      
-      let allData = '';
-      SECTIONS.forEach(section => {
-        allData += `\n\n--- قسم: ${section.title} ---\n`;
-        section.questions.forEach(q => {
-          allData += `\nسؤال: ${q.label}\n`;
-          filteredCompanies.forEach(c => {
-            const val = getValue(c, q);
-            allData += `  - شركة ${c.companyName}: ${val || 'لم يتم تقديم إجابة'}\n`;
+        SECTIONS.forEach(section => {
+          section.questions.forEach(q => {
+            filteredCompanies.forEach(c => {
+              const val = getValue(c, q) || '';
+              const t = val.toLowerCase();
+              if (val && val !== 'لم يتم تقديم إجابة' && val.trim() !== '') {
+                globalScores[c.companyName].answersCount++;
+                
+                let qScore = 0;
+                const positiveKw = ['نعم', 'متوفر', 'مجانا', 'فوري', '24/7', 'متكامل', 'يوجد', 'نلتزم', 'مجانية', 'كافة', 'مفتوح', 'دينار', 'دولار', 'متاح', 'يومي', 'مركزي'];
+                positiveKw.forEach(kw => { if (t.includes(kw)) qScore += 2; });
+                
+                const negativeKw = ['لا', 'غير متوفر', 'قيد التطوير', 'لاحقا', 'كلا', 'غير ممكن'];
+                negativeKw.forEach(kw => { if (t.includes(kw)) qScore -= 3; });
+                
+                qScore += Math.min(2, Math.floor(val.length / 50));
+
+                globalScores[c.companyName].score += qScore;
+                
+                if (qScore >= 2 && globalScores[c.companyName].strengths.length < 5) {
+                  if (!globalScores[c.companyName].strengths.includes(q.label)) globalScores[c.companyName].strengths.push(q.label);
+                } else if (qScore < 0 && globalScores[c.companyName].weaknesses.length < 5) {
+                  if (!globalScores[c.companyName].weaknesses.includes(q.label)) globalScores[c.companyName].weaknesses.push(q.label);
+                }
+              }
+            });
           });
         });
-      });
 
-      prompt = `أنت رئيس لجنة تقييم فنية ومالية لمناقصات الدفع الإلكتروني.
-إليك البيانات الكاملة لجميع الشركات المتقدمة مفصلة حسب الأقسام والأسئلة:
-${allData}
+        const sorted = Object.keys(globalScores).map(name => ({
+          name,
+          ...globalScores[name]
+        })).sort((a, b) => b.score - a.score);
 
-المطلوب منك إجراء تقييم شامل ومعمق:
-1. تقديم ملخص تنفيذي يبرز أقوى وأضعف الشركات بشكل عام.
-2. تقييم كل شركة على حدة بناءً على الجوانب (المالية، الفنية، والأمنية).
-3. الترتيب النهائي للشركات من الأفضل للأسوأ مع التوصية بالشركة الفائزة ومبررات الاختيار.
-يرجى تنسيق الإجابة باستخدام Markdown بشكل واضح.`;
+        markdown = `### التقييم الشامل المبرمج لعروض الشركات\n\n`;
+        markdown += `*يعتمد هذا التقييم التلقائي على خوارزمية محلية لتحليل الكلمات المفتاحية وطول وتفصيل الإجابات عبر جميع الأقسام.*\n\n`;
+        
+        markdown += `#### 🏆 الترتيب النهائي:\n`;
+        sorted.forEach((c, idx) => {
+          markdown += `${idx + 1}. **${c.name}** (مؤشر التقييم: ${c.score} نقطة)\n`;
+        });
 
-    } else {
-      modalTitle = question.label;
-      const answersText = filteredCompanies.map(c => {
-        const val = getValue(c, question);
-        return `شركة ${c.companyName}: ${val || 'لم يتم تقديم إجابة'}`;
-      }).join('\n\n');
+        markdown += `\n#### 📊 تفاصيل الأداء:\n`;
+        sorted.forEach(c => {
+          markdown += `- **${c.name}:** أجابت على ${c.answersCount} سؤالاً.\n`;
+          if (c.strengths.length > 0) markdown += `  - **نقاط القوة:** تميزت في (${c.strengths.join('، ')}).\n`;
+          if (c.weaknesses.length > 0) markdown += `  - **ملاحظات:** إجابات ضعيفة أو غير مكتملة في (${c.weaknesses.join('، ')}).\n`;
+        });
 
-      prompt = `أنت خبير فني ومالي في تقييم العروض للمناقصات. 
-السؤال المطروح على الشركات هو: "${question.label}"
-
-إليك إجابات الشركات:
-${answersText}
-
-المطلوب منك بدقة:
-1. تحليل مدى تطابق إجابة كل شركة مع السؤال.
-2. استخراج الإمكانيات المجهزة من قبل كل شركة.
-3. ترتيب الشركات من الأفضل إلى الأسوأ لهذا السؤال المعين، مع ذكر مبرر مقنع للترتيب.
-يرجى تنسيق الإجابة باستخدام Markdown بشكل واضح. لا تقم بتأليف أي معلومات غير موجودة في إجابات الشركات.`;
-    }
-
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${currentApiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.2 }
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        if (data.error.code === 400 && data.error.message.includes('API key not valid')) {
-            localStorage.removeItem('gemini_api_key');
-            setApiKey('');
-            setAnalysisResult('❌ مفتاح API غير صالح. يرجى إعادة إدخال مفتاح صحيح.');
-        } else {
-            setAnalysisResult(`❌ حدث خطأ أثناء التحليل: ${data.error.message}`);
-        }
-      } else if (data.candidates && data.candidates[0].content.parts[0].text) {
-        setAnalysisResult(data.candidates[0].content.parts[0].text);
       } else {
-        setAnalysisResult('❌ لم يتم إرجاع أي تحليل.');
+        const scoredCompanies = filteredCompanies.map(c => {
+          let score = 0;
+          const val = getValue(c, question) || '';
+          const t = val.toLowerCase();
+          
+          if (!val || val === 'لم يتم تقديم إجابة' || val.trim() === '') {
+            return { ...c, score: -999, status: 'لم تقدم إجابة', capabilities: 'لا توجد بيانات' };
+          }
+
+          const positiveKw = ['نعم', 'متوفر', 'مجانا', 'فوري', '24/7', 'متكامل', 'يوجد', 'نلتزم', 'مجانية', 'مفتوح', 'كافة', 'متاح', 'يومي', 'مركزي'];
+          positiveKw.forEach(kw => { if (t.includes(kw)) score += 10; });
+
+          const negativeKw = ['لا', 'غير متوفر', 'قيد التطوير', 'لاحقا', 'كلا', 'غير ممكن'];
+          negativeKw.forEach(kw => { if (t.includes(kw)) score -= 15; });
+
+          score += Math.min(5, Math.floor(val.length / 20));
+
+          return { 
+            ...c, 
+            score, 
+            status: score >= 10 ? 'ممتاز' : score >= 0 ? 'جيد/مقبول' : 'ضعيف',
+            capabilities: val
+          };
+        });
+
+        scoredCompanies.sort((a, b) => b.score - a.score);
+
+        markdown = `### تحليل إجابات الشركات: ${question.label}\n\n`;
+        markdown += `#### 🔍 تطابق الإجابات والإمكانيات المجهزة:\n`;
+        scoredCompanies.forEach(c => {
+          markdown += `- **شركة ${c.companyName}:** ${c.capabilities} *(التقييم: ${c.status})*\n`;
+        });
+
+        markdown += `\n#### 🏆 ترتيب الشركات (من الأفضل للأسوأ):\n`;
+        let rank = 1;
+        scoredCompanies.forEach((c) => {
+          if (c.score === -999) {
+              markdown += `- **${c.companyName}** - لم تقدم إجابة كافية للتقييم.\n`;
+          } else {
+              const reason = c.score >= 10 ? 'قدمت إجابة شاملة تتوافق مع المتطلبات' : c.score >= 0 ? 'وفرت الحد الأدنى من المتطلبات' : 'إجابتها لا تلبي الطموح أو سلبية';
+              markdown += `${rank}. **${c.companyName}** - ${reason}.\n`;
+              rank++;
+          }
+        });
       }
-    } catch (err) {
-      setAnalysisResult(`❌ حدث خطأ في الاتصال: ${err.message}`);
-    } finally {
+
+      setAnalysisResult(markdown);
       setIsAnalyzing(false);
-    }
+    }, 800);
   };
 
   if (loading) return (
@@ -630,59 +642,7 @@ ${answersText}
         }
       `}</style>
 
-      {/* API Key Modal */}
-      {isApiKeyModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" dir="rtl">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
-                  <Key className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-black text-indigo-950">إعداد مفتاح الذكاء الاصطناعي</h3>
-                  <p className="text-xs font-bold text-gray-500 mt-0.5">Google Gemini API Key</p>
-                </div>
-              </div>
-              <button onClick={() => setIsApiKeyModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              <p className="text-sm font-bold text-gray-600 mb-4 leading-relaxed">
-                لكي يتمكن النظام من قراءة وتحليل الإجابات تلقائياً، يرجى إدخال مفتاح API الخاص بك من Google Gemini. 
-                سيتم حفظ المفتاح في متصفحك فقط للحفاظ على خصوصية بياناتك.
-              </p>
-              
-              <input
-                type="password"
-                value={tempApiKey}
-                onChange={(e) => setTempApiKey(e.target.value)}
-                placeholder="أدخل مفتاح API هنا..."
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 font-mono text-sm outline-none focus:border-indigo-600 transition-colors mb-4"
-                dir="ltr"
-              />
-              
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setIsApiKeyModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-sm font-black text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                  إلغاء
-                </button>
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={!tempApiKey.trim()}
-                  className="px-5 py-2.5 rounded-xl text-sm font-black bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                >
-                  حفظ ومتابعة
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* API Key Modal Removed */}
 
       {/* Analysis Modal */}
       {isAnalysisModalOpen && (
@@ -728,16 +688,9 @@ ${answersText}
               )}
             </div>
             
-            <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex justify-between items-center">
-              <button 
-                onClick={() => { setIsApiKeyModalOpen(true); setIsAnalysisModalOpen(false); }}
-                className="text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors flex items-center gap-1"
-              >
-                <Key className="w-3 h-3" />
-                تغيير مفتاح API
-              </button>
+            <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex justify-end items-center">
               <p className="text-xs font-bold text-gray-400">
-                هذا التحليل تم إنشاؤه بواسطة الذكاء الاصطناعي بناءً على الإجابات المدخلة
+                هذا التحليل تم إنشاؤه مبرمجياً وتلقائياً لغرض مساعدة لجنة التقييم.
               </p>
             </div>
           </div>
