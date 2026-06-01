@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Building2, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { exportToPdf } from '../utils/exportPdf';
 
 // جميع أقسام الأسئلة مع مفاتيح البيانات
 const SECTIONS = [
@@ -182,7 +183,19 @@ const QuestionComparison = () => {
 
   const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const handlePrint = () => window.print();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handlePrint = async () => {
+    setIsExporting(true);
+    // Expand all sections before printing to ensure everything is visible
+    setOpenSections({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
+    
+    // Give state time to update and DOM to render
+    setTimeout(async () => {
+      await exportToPdf('comparison-print-area', 'مقارنة-الشركات-المتقدمة.pdf');
+      setIsExporting(false);
+    }, 500);
+  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50" dir="rtl">
@@ -225,9 +238,10 @@ const QuestionComparison = () => {
             </div>
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all"
+              disabled={isExporting}
+              className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all disabled:opacity-50"
             >
-              <Download className="w-4 h-4" />
+              {isExporting ? <span className="animate-spin">⌛</span> : <Download className="w-4 h-4" />}
               طباعة / PDF
             </button>
           </div>
@@ -260,8 +274,8 @@ const QuestionComparison = () => {
         </div>
       )}
 
-      {/* Sections */}
-      <div className="max-w-[1800px] mx-auto px-6 pb-20 space-y-4">
+      {/* Sections Area - Wrap with ID for PDF Export */}
+      <div id="comparison-print-area" className="max-w-[1800px] mx-auto px-6 pb-20 space-y-4 bg-slate-50 pt-4" style={{ direction: 'rtl', fontFamily: 'Arial, sans-serif' }}>
         {SECTIONS.map(section => (
           <div key={section.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Section Header */}
