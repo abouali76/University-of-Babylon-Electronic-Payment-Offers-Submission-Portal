@@ -511,10 +511,14 @@ const QuestionComparison = () => {
                       </th>
                       {filteredCompanies.map((c, idx) => (
                         <th key={c.id || idx} className="px-4 py-4 text-sm font-black min-w-[250px]" style={{ color: COLORS[idx % COLORS.length] }}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                            {c.companyName}
-                          </div>
+                          <button 
+                            onClick={() => navigate('/admin', { state: { selectedCompanyUsername: c.username } })}
+                            className="flex items-center gap-2 hover:opacity-75 transition-opacity cursor-pointer group text-right w-full"
+                            title="الذهاب إلى تفاصيل الشركة"
+                          >
+                            <div className="w-2 h-2 rounded-full shrink-0 group-hover:scale-125 transition-transform" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                            <span className="group-hover:underline decoration-2 underline-offset-4">{c.companyName}</span>
+                          </button>
                         </th>
                       ))}
                     </tr>
