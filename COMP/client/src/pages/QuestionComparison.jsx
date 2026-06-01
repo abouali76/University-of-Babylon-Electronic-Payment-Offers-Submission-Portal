@@ -581,10 +581,11 @@ const QuestionComparison = () => {
           }
           
           body { 
-            font-size: 8px !important; 
+            font-size: 16px !important; 
             font-family: 'Arial', 'Tahoma', sans-serif !important;
             direction: rtl !important;
             background: white !important;
+            font-weight: bold !important;
           }
           
           /* Hide non-printable elements */
@@ -614,7 +615,8 @@ const QuestionComparison = () => {
             background: #f0f0f0 !important;
           }
           #comparison-print-area button h2 {
-            font-size: 11px !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
             color: #000 !important;
           }
           
@@ -631,7 +633,8 @@ const QuestionComparison = () => {
             border-collapse: collapse !important;
             table-layout: fixed !important;
             page-break-inside: auto !important;
-            font-size: 8px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
           }
 
           /* Header row */
@@ -641,7 +644,7 @@ const QuestionComparison = () => {
           thead th {
             position: static !important;
             padding: 5px 6px !important;
-            font-size: 8px !important;
+            font-size: 16px !important;
             font-weight: 900 !important;
             color: #000 !important;
             border: 1px solid #999 !important;
@@ -661,8 +664,8 @@ const QuestionComparison = () => {
           tbody td {
             position: static !important;
             padding: 4px 5px !important;
-            font-size: 7.5px !important;
-            font-weight: 600 !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
             color: #1a1a1a !important;
             border: 1px solid #bbb !important;
             text-align: right !important;
@@ -677,7 +680,7 @@ const QuestionComparison = () => {
             min-width: 0 !important;
             background: #f5f5f5 !important;
             font-weight: 900 !important;
-            font-size: 8px !important;
+            font-size: 16px !important;
           }
           
           /* Alternating row colors */
@@ -696,7 +699,8 @@ const QuestionComparison = () => {
             background: transparent !important;
             border: none !important;
             border-right: 2px solid #666 !important;
-            font-size: 7.5px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
           }
           
           /* Row breaks */
