@@ -139,12 +139,20 @@ const getValue = (company, question) => {
 
 const COLORS = ['#6366f1', '#059669', '#d97706', '#dc2626', '#0ea5e9', '#7c3aed', '#0d9488', '#f59e0b'];
 
+const CATEGORIES = [
+  { id: 'all', label: 'الكل' },
+  { id: 'financial', label: 'الجانب المالي', sections: ['financial'] },
+  { id: 'technical', label: 'الجانب الفني والأمني', sections: ['technical', 'security', 'guarantees'] },
+  { id: 'legal', label: 'الجانب القانوني والإداري', sections: ['general', 'legal', 'extra'] }
+];
+
 const QuestionComparison = () => {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [openSections, setOpenSections] = useState({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
+  const [activeCategory, setActiveCategory] = useState('all');
 
   // Analysis State
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
@@ -186,6 +194,10 @@ const QuestionComparison = () => {
   const filteredCompanies = companies.filter(c =>
     (c.companyName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const visibleSections = activeCategory === 'all' 
+    ? SECTIONS 
+    : SECTIONS.filter(sec => CATEGORIES.find(c => c.id === activeCategory)?.sections.includes(sec.id));
 
   const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -257,7 +269,7 @@ const QuestionComparison = () => {
           globalScores[c.companyName] = { score: 0, answersCount: 0, strengths: [], weaknesses: [] };
         });
 
-        SECTIONS.forEach(section => {
+        visibleSections.forEach(section => {
           section.questions.forEach(q => {
             filteredCompanies.forEach(c => {
               const val = getValue(c, q) || '';
@@ -419,9 +431,28 @@ const QuestionComparison = () => {
         </div>
       </div>
 
+      {/* Categories / Specialties Filter */}
+      <div className="max-w-[1800px] mx-auto px-6 py-4 print:hidden flex justify-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex gap-2 overflow-x-auto">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`px-5 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${
+                activeCategory === cat.id 
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-indigo-900'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Companies Legend */}
       {filteredCompanies.length > 0 && (
-        <div className="max-w-[1800px] mx-auto px-6 py-4 print:hidden">
+        <div className="max-w-[1800px] mx-auto px-6 pb-4 pt-0 print:hidden">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <p className="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest">دليل الألوان - الشركات المقارنة</p>
             <div className="flex flex-wrap gap-3">
