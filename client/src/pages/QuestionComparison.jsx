@@ -350,23 +350,145 @@ const QuestionComparison = () => {
       {/* Print styles */}
       <style>{`
         @media print {
-          @page { size: landscape; margin: 10mm; }
-          body { font-size: 10px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { 
+            size: A4 landscape; 
+            margin: 8mm; 
+          }
+          
+          /* Reset everything */
+          * { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          body { 
+            font-size: 8px !important; 
+            font-family: 'Arial', 'Tahoma', sans-serif !important;
+            direction: rtl !important;
+            background: white !important;
+          }
+          
+          /* Hide non-printable elements */
           .print\\:hidden { display: none !important; }
           .print\\:pointer-events-none { pointer-events: none !important; }
+          nav, header, .sticky { position: static !important; }
+
+          /* Container */
+          #comparison-print-area {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            background: white !important;
+          }
+          #comparison-print-area > div {
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin-bottom: 12px !important;
+            border: 1px solid #333 !important;
+            page-break-inside: avoid;
+          }
+
+          /* Section headers */
+          #comparison-print-area button {
+            padding: 6px 10px !important;
+            border-bottom: 2px solid #333 !important;
+            background: #f0f0f0 !important;
+          }
+          #comparison-print-area button h2 {
+            font-size: 11px !important;
+            color: #000 !important;
+          }
           
-          /* Force table to fit or shrink */
-          table { width: 100% !important; max-width: 100% !important; min-width: auto !important; page-break-inside: auto; table-layout: fixed; }
-          th, td { padding: 4px !important; font-size: 9px !important; word-break: break-word; position: static !important; }
-          tr { page-break-inside: avoid; page-break-after: auto; }
+          /* Table container */
+          .overflow-x-auto { 
+            overflow: visible !important; 
+          }
+
+          /* TABLE - strict formatting */
+          table { 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            min-width: 0 !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            page-break-inside: auto !important;
+            font-size: 8px !important;
+          }
+
+          /* Header row */
+          thead tr {
+            background: #e8e8e8 !important;
+          }
+          thead th {
+            position: static !important;
+            padding: 5px 6px !important;
+            font-size: 8px !important;
+            font-weight: 900 !important;
+            color: #000 !important;
+            border: 1px solid #999 !important;
+            text-align: right !important;
+            vertical-align: middle !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+          }
+          /* First column (question) gets more width */
+          thead th:first-child {
+            width: 22% !important;
+            min-width: 0 !important;
+            background: #d9d9d9 !important;
+          }
+
+          /* Body cells */
+          tbody td {
+            position: static !important;
+            padding: 4px 5px !important;
+            font-size: 7.5px !important;
+            font-weight: 600 !important;
+            color: #1a1a1a !important;
+            border: 1px solid #bbb !important;
+            text-align: right !important;
+            vertical-align: top !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            line-height: 1.4 !important;
+          }
+          /* Question column styling */
+          tbody td:first-child {
+            width: 22% !important;
+            min-width: 0 !important;
+            background: #f5f5f5 !important;
+            font-weight: 900 !important;
+            font-size: 8px !important;
+          }
           
-          /* Hide shadows and borders for cleaner print */
-          .shadow-sm { box-shadow: none !important; }
-          .border { border-color: #eee !important; }
+          /* Alternating row colors */
+          tbody tr:nth-child(even) {
+            background: #fafafa !important;
+          }
+          tbody tr:nth-child(odd) {
+            background: #ffffff !important;
+          }
           
-          /* Remove overflow to print full height */
-          .overflow-x-auto, .overflow-hidden { overflow: visible !important; }
-          #comparison-print-area { padding-bottom: 0 !important; }
+          /* Answer boxes inside cells */
+          tbody td div {
+            padding: 2px !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            border-right: 2px solid #666 !important;
+            font-size: 7.5px !important;
+          }
+          
+          /* Row breaks */
+          tr { 
+            page-break-inside: avoid !important; 
+          }
+          
+          /* Remove all shadows and rounded corners */
+          .shadow-sm, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+          .rounded-2xl, .rounded-xl, .rounded-lg, .rounded-full { border-radius: 0 !important; }
         }
       `}</style>
     </div>
