@@ -189,6 +189,44 @@ const QuestionComparison = () => {
 
   const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
 
+  const handlePrintAnalysis = () => {
+    const printWindow = window.open('', '_blank');
+    const content = document.getElementById('analysis-markdown-content');
+    if (!content) return;
+    
+    printWindow.document.write(`
+      <html dir="rtl">
+        <head>
+          <title>طباعة التقييم</title>
+          <style>
+            body { font-family: 'Arial', sans-serif; padding: 30px; direction: rtl; color: #111; line-height: 1.6; }
+            h3 { color: #1e1b4b; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px; font-size: 18px; }
+            h4 { color: #4338ca; margin-top: 25px; margin-bottom: 15px; font-size: 16px; }
+            ul { list-style-type: none; padding-right: 0; }
+            li { padding: 10px 0; border-bottom: 1px dashed #e5e7eb; }
+            strong { color: #111827; }
+            p { margin-bottom: 10px; }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 15mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div id="print-content"></div>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.getElementById('print-content').innerHTML = content.innerHTML;
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
   const handlePrint = () => {
     // Expand all sections before printing to ensure everything is visible
     setOpenSections({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
@@ -253,8 +291,7 @@ const QuestionComparison = () => {
           ...globalScores[name]
         })).sort((a, b) => b.score - a.score);
 
-        markdown = `### التقييم الشامل المبرمج لعروض الشركات\n\n`;
-        markdown += `*يعتمد هذا التقييم التلقائي على خوارزمية محلية لتحليل الكلمات المفتاحية وطول وتفصيل الإجابات عبر جميع الأقسام.*\n\n`;
+        markdown = `### ملخص التقييم الشامل لعروض الشركات\n\n`;
         
         markdown += `#### 🏆 الترتيب النهائي:\n`;
         sorted.forEach((c, idx) => {
@@ -296,7 +333,7 @@ const QuestionComparison = () => {
 
         scoredCompanies.sort((a, b) => b.score - a.score);
 
-        markdown = `### تحليل إجابات الشركات: ${question.label}\n\n`;
+        markdown = `### تقييم إجابات الشركات: ${question.label}\n\n`;
         markdown += `#### 🔍 تطابق الإجابات والإمكانيات المجهزة:\n`;
         scoredCompanies.forEach(c => {
           markdown += `- **شركة ${c.companyName}:** ${c.capabilities} *(التقييم: ${c.status})*\n`;
@@ -654,7 +691,7 @@ const QuestionComparison = () => {
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-indigo-950 text-lg">التحليل الذكي لإجابات الشركات</h3>
+                  <h3 className="font-black text-indigo-950 text-lg">تقييم إجابات الشركات</h3>
                   <p className="text-xs font-bold text-gray-500 mt-0.5 max-w-2xl truncate">
                     {analyzingQuestion?.label}
                   </p>
@@ -681,17 +718,22 @@ const QuestionComparison = () => {
                   prose-headings:font-black prose-headings:text-indigo-950 
                   prose-p:font-bold prose-p:text-gray-700 prose-p:leading-relaxed
                   prose-strong:font-black prose-strong:text-indigo-900
-                  prose-li:font-bold prose-li:text-gray-700
                   bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                  <ReactMarkdown>{analysisResult}</ReactMarkdown>
+                  <div id="analysis-markdown-content">
+                    <ReactMarkdown>{analysisResult}</ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
             
             <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex justify-end items-center">
-              <p className="text-xs font-bold text-gray-400">
-                هذا التحليل تم إنشاؤه مبرمجياً وتلقائياً لغرض مساعدة لجنة التقييم.
-              </p>
+              <button 
+                onClick={handlePrintAnalysis}
+                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+                طباعة التقييم
+              </button>
             </div>
           </div>
         </div>
