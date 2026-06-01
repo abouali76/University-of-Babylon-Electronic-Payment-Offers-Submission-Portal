@@ -357,7 +357,7 @@ const QuestionComparison = () => {
           
           /* Force table to fit or shrink */
           table { width: 100% !important; max-width: 100% !important; min-width: auto !important; page-break-inside: auto; table-layout: fixed; }
-          th, td { padding: 4px !important; font-size: 9px !important; word-break: break-word; }
+          th, td { padding: 4px !important; font-size: 9px !important; word-break: break-word; position: static !important; }
           tr { page-break-inside: avoid; page-break-after: auto; }
           
           /* Hide shadows and borders for cleaner print */
