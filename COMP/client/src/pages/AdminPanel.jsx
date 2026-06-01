@@ -425,7 +425,13 @@ const AdminPanel = () => {
 
   useEffect(() => {
     if (!loading && location.state?.selectedCompanyUsername && allCompanies.length > 0) {
-      const comp = allCompanies.find(c => c.username === location.state.selectedCompanyUsername);
+      const target = location.state.selectedCompanyUsername;
+      const comp = allCompanies.find(c => 
+        c.username === target || 
+        c.companyName === target || 
+        c.id === target ||
+        c.userId === target
+      );
       if (comp) {
         setSelectedSubmission(comp);
         setView('details');
