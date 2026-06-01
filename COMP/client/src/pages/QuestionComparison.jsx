@@ -208,31 +208,62 @@ const QuestionComparison = () => {
     setApiKey(tempApiKey);
     setIsApiKeyModalOpen(false);
     if (analyzingQuestion) {
-      runAnalysis(analyzingQuestion, tempApiKey);
+      runAnalysis(analyzingQuestion.isComprehensive ? null : analyzingQuestion, tempApiKey, analyzingQuestion.isComprehensive);
     }
   };
 
-  const handleAnalyzeClick = (question) => {
-    setAnalyzingQuestion(question);
+  const handleAnalyzeClick = (question, isComprehensive = false) => {
+    setAnalyzingQuestion(isComprehensive ? { label: 'التقييم الشامل لجميع الأقسام', isComprehensive: true } : question);
     if (!apiKey) {
       setTempApiKey('');
       setIsApiKeyModalOpen(true);
     } else {
-      runAnalysis(question, apiKey);
+      runAnalysis(isComprehensive ? null : question, apiKey, isComprehensive);
     }
   };
 
-  const runAnalysis = async (question, currentApiKey) => {
+  const runAnalysis = async (question, currentApiKey, isComprehensive = false) => {
     setIsAnalysisModalOpen(true);
     setIsAnalyzing(true);
     setAnalysisResult('');
 
-    const answersText = filteredCompanies.map(c => {
-      const val = getValue(c, question);
-      return `شركة ${c.companyName}: ${val || 'لم يتم تقديم إجابة'}`;
-    }).join('\n\n');
+    let prompt = '';
+    let modalTitle = '';
 
-    const prompt = `أنت خبير فني ومالي في تقييم العروض للمناقصات. 
+    if (isComprehensive) {
+      setAnalyzingQuestion({ label: 'التقييم الشامل لجميع الأقسام والأسئلة' });
+      modalTitle = 'التقييم الشامل لعروض الشركات';
+      
+      let allData = '';
+      SECTIONS.forEach(section => {
+        allData += `\n\n--- قسم: ${section.title} ---\n`;
+        section.questions.forEach(q => {
+          allData += `\nسؤال: ${q.label}\n`;
+          filteredCompanies.forEach(c => {
+            const val = getValue(c, q);
+            allData += `  - شركة ${c.companyName}: ${val || 'لم يتم تقديم إجابة'}\n`;
+          });
+        });
+      });
+
+      prompt = `أنت رئيس لجنة تقييم فنية ومالية لمناقصات الدفع الإلكتروني.
+إليك البيانات الكاملة لجميع الشركات المتقدمة مفصلة حسب الأقسام والأسئلة:
+${allData}
+
+المطلوب منك إجراء تقييم شامل ومعمق:
+1. تقديم ملخص تنفيذي يبرز أقوى وأضعف الشركات بشكل عام.
+2. تقييم كل شركة على حدة بناءً على الجوانب (المالية، الفنية، والأمنية).
+3. الترتيب النهائي للشركات من الأفضل للأسوأ مع التوصية بالشركة الفائزة ومبررات الاختيار.
+يرجى تنسيق الإجابة باستخدام Markdown بشكل واضح.`;
+
+    } else {
+      modalTitle = question.label;
+      const answersText = filteredCompanies.map(c => {
+        const val = getValue(c, question);
+        return `شركة ${c.companyName}: ${val || 'لم يتم تقديم إجابة'}`;
+      }).join('\n\n');
+
+      prompt = `أنت خبير فني ومالي في تقييم العروض للمناقصات. 
 السؤال المطروح على الشركات هو: "${question.label}"
 
 إليك إجابات الشركات:
@@ -243,6 +274,7 @@ ${answersText}
 2. استخراج الإمكانيات المجهزة من قبل كل شركة.
 3. ترتيب الشركات من الأفضل إلى الأسوأ لهذا السؤال المعين، مع ذكر مبرر مقنع للترتيب.
 يرجى تنسيق الإجابة باستخدام Markdown بشكل واضح. لا تقم بتأليف أي معلومات غير موجودة في إجابات الشركات.`;
+    }
 
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${currentApiKey}`, {
@@ -305,7 +337,7 @@ ${answersText}
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative print:hidden">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
               <input
                 type="text"
@@ -315,6 +347,18 @@ ${answersText}
                 className="pr-9 pl-4 py-2 text-sm border-2 border-gray-100 rounded-xl outline-none focus:border-indigo-500 font-bold w-52 transition-all"
               />
             </div>
+            
+            {filteredCompanies.length > 0 && (
+              <button
+                onClick={() => handleAnalyzeClick(null, true)}
+                className="print:hidden flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2 rounded-xl font-black text-sm hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-200"
+                title="تقييم شامل لجميع الأسئلة والأقسام"
+              >
+                <Sparkles className="w-4 h-4" />
+                تقييم شامل
+              </button>
+            )}
+
             <button
               onClick={handlePrint}
               className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all"
