@@ -480,18 +480,18 @@ const QuestionComparison = () => {
 
             {/* Questions Table */}
             {(openSections[section.id] || true) && (
-              <div className="overflow-x-auto border-t border-gray-100">
-                <table className="w-full text-right" style={{ minWidth: `${Math.max(600, filteredCompanies.length * 280 + 260)}px` }}>
+              <div className="border-t border-gray-100">
+                <table className="w-full text-right table-fixed">
                   <thead>
                     <tr style={{ backgroundColor: section.bg }}>
                       <th className="px-5 py-4 text-sm font-black text-gray-700 w-64 sticky right-0" style={{ backgroundColor: section.bg }}>
                         السؤال
                       </th>
                       {filteredCompanies.map((c, idx) => (
-                        <th key={c.id || idx} className="px-4 py-4 text-sm font-black min-w-[250px]" style={{ color: COLORS[idx % COLORS.length] }}>
-                          <div className="flex items-center gap-2">
+                        <th key={c.id || idx} className="px-2 py-3 text-xs font-black" style={{ color: COLORS[idx % COLORS.length], width: `${Math.floor(80 / filteredCompanies.length)}%` }}>
+                          <div className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                            <span>{c.companyName}</span>
+                            <span className="truncate">{c.companyName}</span>
                           </div>
                         </th>
                       ))}
@@ -501,7 +501,7 @@ const QuestionComparison = () => {
                     {section.questions.map((q, qIdx) => (
                       <tr key={q.key} className={qIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
                         {/* Question label */}
-                        <td className="px-5 py-4 sticky right-0 z-10 border-l border-gray-100" style={{ backgroundColor: qIdx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                        <td className="px-3 py-3 sticky right-0 z-10 border-l border-gray-100" style={{ backgroundColor: qIdx % 2 === 0 ? '#ffffff' : '#f9fafb', width: '20%' }}>
                           <div className="flex flex-col gap-3">
                             <p className="text-xs font-black text-gray-700 leading-relaxed">{q.label}</p>
                             <button
@@ -518,10 +518,10 @@ const QuestionComparison = () => {
                         {filteredCompanies.map((c, idx) => {
                           const val = getValue(c, q);
                           return (
-                            <td key={c.id || idx} className="px-4 py-4 align-top border-l border-gray-50 last:border-l-0">
+                            <td key={c.id || idx} className="px-2 py-2 align-top border-l border-gray-50 last:border-l-0">
                               {val ? (
                                 <div
-                                  className="text-xs font-bold leading-relaxed p-3 rounded-xl answer-box"
+                                  className="text-[11px] font-bold leading-relaxed p-2 rounded-lg answer-box"
                                   style={{
                                     backgroundColor: `${COLORS[idx % COLORS.length]}08`,
                                     borderRight: `3px solid ${COLORS[idx % COLORS.length]}`,
