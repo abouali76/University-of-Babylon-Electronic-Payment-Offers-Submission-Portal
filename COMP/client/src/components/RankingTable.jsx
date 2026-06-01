@@ -108,7 +108,7 @@ const RankingTable = ({ submissions: initialSubmissions }) => {
                    <p className="text-[10px] font-black uppercase mb-1" style={{ color: idx === 0 ? 'rgba(255,255,255,0.4)' : '#9ca3af' }}>التقييم الفني</p>
                    <div className="flex gap-0.5">
                      {[...Array(5)].map((_, i) => (
-                       <Star key={i} className="w-3 h-3" style={{ color: (s.evaluation_score / 2) > i ? '#fbbf24' : (idx === 0 ? 'rgba(255,255,255,0.1)' : '#e5e7eb'), fill: (s.evaluation_score / 2) > i ? '#fbbf24' : 'none' }} />
+                       <Star key={i} className="w-3 h-3" style={{ color: (s.evaluation_score / 20) > i ? '#fbbf24' : (idx === 0 ? 'rgba(255,255,255,0.1)' : '#e5e7eb'), fill: (s.evaluation_score / 20) > i ? '#fbbf24' : 'none' }} />
                      ))}
                    </div>
                 </div>

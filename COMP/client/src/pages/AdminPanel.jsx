@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock, Trophy, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 import RankingTable from '../components/RankingTable';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [submissions, setSubmissions] = useState([]);
   const [dynamicUsers, setDynamicUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -239,8 +240,8 @@ const AdminPanel = () => {
 
     try {
       const scoreValue = parseFloat(newScore);
-      if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 10) {
-        alert('يرجى إدخال درجة صحيحة بين 0 و 10.');
+      if (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 100) {
+        alert('يرجى إدخال درجة صحيحة بين 0 و 100.');
         return;
       }
 
@@ -421,6 +422,17 @@ const AdminPanel = () => {
     c.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.username?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    if (!loading && location.state?.selectedCompanyUsername && allCompanies.length > 0) {
+      const comp = allCompanies.find(c => c.username === location.state.selectedCompanyUsername);
+      if (comp) {
+        setSelectedSubmission(comp);
+        setView('details');
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [loading, location.state, allCompanies, navigate]);
 
   const toggleCompare = (username) => {
     if (selectedForCompare.includes(username)) {
@@ -736,7 +748,7 @@ const AdminPanel = () => {
                           <input 
                             type="number" 
                             min="0" 
-                            max="10" 
+                            max="100" 
                             step="0.5"
                             disabled={!c.isSubmitted} 
                             defaultValue={c.evaluation_score !== undefined && c.evaluation_score !== null ? c.evaluation_score : ''} 

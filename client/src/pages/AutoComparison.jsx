@@ -21,8 +21,8 @@ const AutoComparison = () => {
       try {
         const data = await api.get('/admin/submissions'); // The local server might have its own logic for ranking
         if (data && Array.isArray(data)) {
-            // Sort by auto_score if present
-            const sorted = data.sort((a, b) => (b.auto_score || 0) - (a.auto_score || 0));
+            // Sort by evaluation_score
+            const sorted = data.sort((a, b) => (b.evaluation_score || 0) - (a.evaluation_score || 0));
             setSubmissions(sorted);
             return;
         }
@@ -34,7 +34,7 @@ const AutoComparison = () => {
         .from('submissions')
         .select('*')
         .eq('status', 'final')
-        .order('auto_score', { ascending: false });
+        .order('evaluation_score', { ascending: false });
       
       if (error) throw error;
       setSubmissions(data || []);
@@ -46,9 +46,10 @@ const AutoComparison = () => {
     }
   };
 
-  const filteredSubmissions = submissions.filter(s => 
-    (s.companyName || s.username).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSubmissions = submissions.filter(s => {
+    const name = (s.data && s.data.companyName) || s.companyName || s.companyname || s.username || '';
+    return name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   if (loading) return <div className="p-20 text-center font-black">جاري التحميل...</div>;
 
@@ -106,7 +107,7 @@ const AutoComparison = () => {
                 <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
                     <TrendingUp className="w-6 h-6" />
                 </div>
-                <div className="text-3xl font-black text-amber-600 mb-1">%{submissions.length > 0 ? (submissions.reduce((acc, curr) => acc + (curr.auto_score || 0), 0) / submissions.length).toFixed(1) : 0}</div>
+                <div className="text-3xl font-black text-amber-600 mb-1">%{submissions.length > 0 ? (submissions.reduce((acc, curr) => acc + (curr.evaluation_score || 0), 0) / submissions.length).toFixed(1) : 0}</div>
                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">متوسط النقاط</div>
             </div>
         </div>
@@ -139,8 +140,7 @@ const AutoComparison = () => {
                             <th className="px-10 py-6 text-center w-24">الترتيب</th>
                             <th className="px-10 py-6">الشركة</th>
                             <th className="px-10 py-6">حالة التأهيل</th>
-                            <th className="px-10 py-6 text-center">الدرجة التلقائية</th>
-                            <th className="px-10 py-6 text-center">التقييم البشري</th>
+                            <th className="px-10 py-6 text-center">التقييم البشري (من 100)</th>
                             <th className="px-10 py-6 text-center">التفاصيل</th>
                         </tr>
                     </thead>
@@ -153,7 +153,7 @@ const AutoComparison = () => {
                                     </div>
                                 </td>
                                 <td className="px-10 py-8">
-                                    <div className="font-black text-indigo-950 text-lg mb-1">{s.companyName || s.username}</div>
+                                    <div className="font-black text-indigo-950 text-lg mb-1">{(s.data && s.data.companyName) || s.companyName || s.companyname || s.username}</div>
                                     <div className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
                                         <TrendingUp className="w-3 h-3" />
                                         آخر تحديث: {new Date(s.last_updated || s.lastUpdated).toLocaleDateString('ar-EG')}
@@ -173,17 +173,7 @@ const AutoComparison = () => {
                                         </span>
                                     )}
                                 </td>
-                                <td className="px-10 py-8 text-center">
-                                    <div className="text-2xl font-black text-indigo-900">
-                                        {s.auto_score !== null ? `%${s.auto_score}` : '---'}
-                                    </div>
-                                    <div className="w-24 h-2 bg-gray-100 rounded-full mx-auto mt-2 overflow-hidden">
-                                        <div 
-                                            className={`h-full transition-all duration-1000 ${s.auto_rejection_reason ? 'bg-red-400' : 'bg-indigo-600'}`} 
-                                            style={{ width: `${s.auto_score}%` }}
-                                        />
-                                    </div>
-                                </td>
+
                                 <td className="px-10 py-8 text-center">
                                     <div className="flex items-center justify-center gap-1 bg-amber-50 text-amber-600 px-3 py-1 rounded-lg w-fit mx-auto font-black text-sm">
                                         <Star className="w-3 h-3 fill-current" />

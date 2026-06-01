@@ -457,10 +457,15 @@ const QuestionComparison = () => {
             <p className="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest">دليل الألوان - الشركات المقارنة</p>
             <div className="flex flex-wrap gap-3">
               {filteredCompanies.map((c, idx) => (
-                <div key={c.id || idx} className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                  <span className="text-xs font-black text-gray-700">{c.companyName}</span>
-                </div>
+                <button 
+                  key={c.id || idx} 
+                  onClick={() => navigate('/admin', { state: { selectedCompanyUsername: c.username } })}
+                  className="flex items-center gap-2 bg-gray-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-gray-100 hover:border-indigo-200 transition-all cursor-pointer text-right group"
+                  title="الذهاب إلى تفاصيل الشركة"
+                >
+                  <div className="w-3 h-3 rounded-full shrink-0 group-hover:scale-110 transition-transform" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                  <span className="text-xs font-black text-gray-700 group-hover:text-indigo-900 transition-colors">{c.companyName}</span>
+                </button>
               ))}
             </div>
           </div>
