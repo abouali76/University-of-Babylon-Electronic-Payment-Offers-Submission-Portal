@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Building2, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { ArrowRight, Building2, Search, ChevronDown, ChevronUp, Download, Sparkles, X, Key } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 // جميع أقسام الأسئلة مع مفاتيح البيانات
 const SECTIONS = [
@@ -145,6 +146,15 @@ const QuestionComparison = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openSections, setOpenSections] = useState({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
 
+  // AI Analysis State
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState('');
+  const [analyzingQuestion, setAnalyzingQuestion] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState('');
+
   useEffect(() => {
     fetchCompanies();
   }, []);
@@ -190,6 +200,80 @@ const QuestionComparison = () => {
     setTimeout(() => {
       window.print();
     }, 300);
+  };
+
+  // AI Analysis Logic
+  const handleSaveApiKey = () => {
+    localStorage.setItem('gemini_api_key', tempApiKey);
+    setApiKey(tempApiKey);
+    setIsApiKeyModalOpen(false);
+    if (analyzingQuestion) {
+      runAnalysis(analyzingQuestion, tempApiKey);
+    }
+  };
+
+  const handleAnalyzeClick = (question) => {
+    setAnalyzingQuestion(question);
+    if (!apiKey) {
+      setTempApiKey('');
+      setIsApiKeyModalOpen(true);
+    } else {
+      runAnalysis(question, apiKey);
+    }
+  };
+
+  const runAnalysis = async (question, currentApiKey) => {
+    setIsAnalysisModalOpen(true);
+    setIsAnalyzing(true);
+    setAnalysisResult('');
+
+    const answersText = filteredCompanies.map(c => {
+      const val = getValue(c, question);
+      return `شركة ${c.companyName}: ${val || 'لم يتم تقديم إجابة'}`;
+    }).join('\n\n');
+
+    const prompt = `أنت خبير فني ومالي في تقييم العروض للمناقصات. 
+السؤال المطروح على الشركات هو: "${question.label}"
+
+إليك إجابات الشركات:
+${answersText}
+
+المطلوب منك بدقة:
+1. تحليل مدى تطابق إجابة كل شركة مع السؤال.
+2. استخراج الإمكانيات المجهزة من قبل كل شركة.
+3. ترتيب الشركات من الأفضل إلى الأسوأ لهذا السؤال المعين، مع ذكر مبرر مقنع للترتيب.
+يرجى تنسيق الإجابة باستخدام Markdown بشكل واضح. لا تقم بتأليف أي معلومات غير موجودة في إجابات الشركات.`;
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${currentApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2 }
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        if (data.error.code === 400 && data.error.message.includes('API key not valid')) {
+            localStorage.removeItem('gemini_api_key');
+            setApiKey('');
+            setAnalysisResult('❌ مفتاح API غير صالح. يرجى إعادة إدخال مفتاح صحيح.');
+        } else {
+            setAnalysisResult(`❌ حدث خطأ أثناء التحليل: ${data.error.message}`);
+        }
+      } else if (data.candidates && data.candidates[0].content.parts[0].text) {
+        setAnalysisResult(data.candidates[0].content.parts[0].text);
+      } else {
+        setAnalysisResult('❌ لم يتم إرجاع أي تحليل.');
+      }
+    } catch (err) {
+      setAnalysisResult(`❌ حدث خطأ في الاتصال: ${err.message}`);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   if (loading) return (
@@ -311,7 +395,17 @@ const QuestionComparison = () => {
                       <tr key={q.key} className={qIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
                         {/* Question label */}
                         <td className="px-5 py-4 sticky right-0 z-10 border-l border-gray-100" style={{ backgroundColor: qIdx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                          <p className="text-xs font-black text-gray-700 leading-relaxed">{q.label}</p>
+                          <div className="flex flex-col gap-3">
+                            <p className="text-xs font-black text-gray-700 leading-relaxed">{q.label}</p>
+                            <button
+                              onClick={() => handleAnalyzeClick(q)}
+                              className="print:hidden self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors text-[10px] font-black border border-indigo-100 shadow-sm"
+                              title="التحليل الذكي للإجابات"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              تحليل ذكي
+                            </button>
+                          </div>
                         </td>
                         {/* Each company answer */}
                         {filteredCompanies.map((c, idx) => {
@@ -320,7 +414,7 @@ const QuestionComparison = () => {
                             <td key={c.id || idx} className="px-4 py-4 align-top border-l border-gray-50 last:border-l-0">
                               {val ? (
                                 <div
-                                  className="text-xs font-bold leading-relaxed p-3 rounded-xl"
+                                  className="text-xs font-bold leading-relaxed p-3 rounded-xl answer-box"
                                   style={{
                                     backgroundColor: `${COLORS[idx % COLORS.length]}08`,
                                     borderRight: `3px solid ${COLORS[idx % COLORS.length]}`,
@@ -471,7 +565,7 @@ const QuestionComparison = () => {
           }
           
           /* Answer boxes inside cells */
-          tbody td div {
+          tbody td div.answer-box {
             padding: 2px !important;
             margin: 0 !important;
             border-radius: 0 !important;
@@ -491,6 +585,120 @@ const QuestionComparison = () => {
           .rounded-2xl, .rounded-xl, .rounded-lg, .rounded-full { border-radius: 0 !important; }
         }
       `}</style>
+
+      {/* API Key Modal */}
+      {isApiKeyModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" dir="rtl">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-indigo-950">إعداد مفتاح الذكاء الاصطناعي</h3>
+                  <p className="text-xs font-bold text-gray-500 mt-0.5">Google Gemini API Key</p>
+                </div>
+              </div>
+              <button onClick={() => setIsApiKeyModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-sm font-bold text-gray-600 mb-4 leading-relaxed">
+                لكي يتمكن النظام من قراءة وتحليل الإجابات تلقائياً، يرجى إدخال مفتاح API الخاص بك من Google Gemini. 
+                سيتم حفظ المفتاح في متصفحك فقط للحفاظ على خصوصية بياناتك.
+              </p>
+              
+              <input
+                type="password"
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                placeholder="أدخل مفتاح API هنا..."
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 font-mono text-sm outline-none focus:border-indigo-600 transition-colors mb-4"
+                dir="ltr"
+              />
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setIsApiKeyModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl text-sm font-black text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleSaveApiKey}
+                  disabled={!tempApiKey.trim()}
+                  className="px-5 py-2.5 rounded-xl text-sm font-black bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  حفظ ومتابعة
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Modal */}
+      {isAnalysisModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col" dir="rtl">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-indigo-50/50 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-indigo-950 text-lg">التحليل الذكي لإجابات الشركات</h3>
+                  <p className="text-xs font-bold text-gray-500 mt-0.5 max-w-2xl truncate">
+                    {analyzingQuestion?.label}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setIsAnalysisModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 bg-gray-50/30">
+              {isAnalyzing ? (
+                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                    <Sparkles className="absolute inset-0 m-auto text-indigo-600 w-6 h-6 animate-pulse" />
+                  </div>
+                  <p className="font-black text-indigo-950">جاري قراءة البيانات وتحليل الإجابات...</p>
+                  <p className="text-xs font-bold text-gray-400">يتم ترتيب الشركات واستخراج الإمكانيات</p>
+                </div>
+              ) : (
+                <div className="prose prose-sm md:prose-base prose-indigo max-w-none 
+                  prose-headings:font-black prose-headings:text-indigo-950 
+                  prose-p:font-bold prose-p:text-gray-700 prose-p:leading-relaxed
+                  prose-strong:font-black prose-strong:text-indigo-900
+                  prose-li:font-bold prose-li:text-gray-700
+                  bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                  <ReactMarkdown>{analysisResult}</ReactMarkdown>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex justify-between items-center">
+              <button 
+                onClick={() => { setIsApiKeyModalOpen(true); setIsAnalysisModalOpen(false); }}
+                className="text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors flex items-center gap-1"
+              >
+                <Key className="w-3 h-3" />
+                تغيير مفتاح API
+              </button>
+              <p className="text-xs font-bold text-gray-400">
+                هذا التحليل تم إنشاؤه بواسطة الذكاء الاصطناعي بناءً على الإجابات المدخلة
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
