@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Building2, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
-import { exportToPdf } from '../utils/exportPdf';
 
 // جميع أقسام الأسئلة مع مفاتيح البيانات
 const SECTIONS = [
@@ -183,18 +182,14 @@ const QuestionComparison = () => {
 
   const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const [isExporting, setIsExporting] = useState(false);
-
-  const handlePrint = async () => {
-    setIsExporting(true);
+  const handlePrint = () => {
     // Expand all sections before printing to ensure everything is visible
     setOpenSections({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
     
-    // Give state time to update and DOM to render
-    setTimeout(async () => {
-      await exportToPdf('comparison-print-area', 'مقارنة-الشركات-المتقدمة.pdf');
-      setIsExporting(false);
-    }, 500);
+    // Give state time to update
+    setTimeout(() => {
+      window.print();
+    }, 300);
   };
 
   if (loading) return (
@@ -238,10 +233,9 @@ const QuestionComparison = () => {
             </div>
             <button
               onClick={handlePrint}
-              disabled={isExporting}
-              className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all"
             >
-              {isExporting ? <span className="animate-spin">⌛</span> : <Download className="w-4 h-4" />}
+              <Download className="w-4 h-4" />
               طباعة / PDF
             </button>
           </div>
@@ -356,10 +350,23 @@ const QuestionComparison = () => {
       {/* Print styles */}
       <style>{`
         @media print {
+          @page { size: landscape; margin: 10mm; }
+          body { font-size: 10px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print\\:hidden { display: none !important; }
-          body { font-size: 11px; }
-          table { page-break-inside: auto; }
-          tr { page-break-inside: avoid; }
+          .print\\:pointer-events-none { pointer-events: none !important; }
+          
+          /* Force table to fit or shrink */
+          table { width: 100% !important; max-width: 100% !important; min-width: auto !important; page-break-inside: auto; table-layout: fixed; }
+          th, td { padding: 4px !important; font-size: 9px !important; word-break: break-word; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+          
+          /* Hide shadows and borders for cleaner print */
+          .shadow-sm { box-shadow: none !important; }
+          .border { border-color: #eee !important; }
+          
+          /* Remove overflow to print full height */
+          .overflow-x-auto, .overflow-hidden { overflow: visible !important; }
+          #comparison-print-area { padding-bottom: 0 !important; }
         }
       `}</style>
     </div>
