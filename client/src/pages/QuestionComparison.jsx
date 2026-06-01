@@ -478,7 +478,7 @@ const QuestionComparison = () => {
 
       {/* Sections Area - Wrap with ID for PDF Export */}
       <div id="comparison-print-area" className="max-w-[1800px] mx-auto px-6 pb-20 space-y-4 bg-slate-50 pt-4" style={{ direction: 'rtl', fontFamily: 'Arial, sans-serif' }}>
-        {SECTIONS.map(section => (
+        {visibleSections.map(section => (
           <div key={section.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Section Header */}
             <button
