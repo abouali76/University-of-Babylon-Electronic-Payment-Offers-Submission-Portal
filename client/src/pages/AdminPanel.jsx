@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Download, ExternalLink, UserCheck, UserPlus, Star, BarChart3, ChevronRight, ShieldCheck, FileText, Info, Trash2, FileX, RefreshCcw, ArrowRight, LogOut, CheckSquare, Square, X, User, Phone, CheckCircle2, KeyRound, Eye, EyeOff, Bell, History, Building2, Menu, Edit3, Save as SaveIcon, Lock, Unlock, Megaphone, Clock, Trophy, Settings } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 import RankingTable from '../components/RankingTable';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [submissions, setSubmissions] = useState([]);
   const [dynamicUsers, setDynamicUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -424,21 +424,23 @@ const AdminPanel = () => {
   );
 
   useEffect(() => {
-    if (!loading && location.state?.selectedCompanyUsername && allCompanies.length > 0) {
-      const target = location.state.selectedCompanyUsername;
-      const comp = allCompanies.find(c => 
-        c.username === target || 
-        c.companyName === target || 
-        c.id === target ||
-        c.userId === target
-      );
-      if (comp) {
-        setSelectedSubmission(comp);
-        setView('details');
-        navigate(location.pathname, { replace: true, state: {} });
+    if (!loading && allCompanies.length > 0) {
+      const target = searchParams.get('company');
+      if (target) {
+        const comp = allCompanies.find(c =>
+          c.username === target ||
+          c.companyName === target ||
+          c.id === target ||
+          c.userId === target
+        );
+        if (comp) {
+          setSelectedSubmission(comp);
+          setView('details');
+          setSearchParams({}, { replace: true });
+        }
       }
     }
-  }, [loading, location.state, allCompanies, navigate]);
+  }, [loading, searchParams, allCompanies]);
 
   const toggleCompare = (username) => {
     if (selectedForCompare.includes(username)) {

@@ -459,7 +459,7 @@ const QuestionComparison = () => {
               {filteredCompanies.map((c, idx) => (
                 <button 
                   key={c.id || idx} 
-                  onClick={() => navigate('/admin', { state: { selectedCompanyUsername: c.username || c.companyName || c.id } })}
+                  onClick={() => navigate(`/admin?company=${encodeURIComponent(c.username || c.companyName || c.id)}`)}
                   className="flex items-center gap-2 bg-gray-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-gray-100 hover:border-indigo-200 transition-all cursor-pointer text-right group"
                   title="الذهاب إلى تفاصيل الشركة"
                 >
@@ -512,7 +512,7 @@ const QuestionComparison = () => {
                       {filteredCompanies.map((c, idx) => (
                         <th key={c.id || idx} className="px-4 py-4 text-sm font-black min-w-[250px]" style={{ color: COLORS[idx % COLORS.length] }}>
                           <button 
-                            onClick={() => navigate('/admin', { state: { selectedCompanyUsername: c.username || c.companyName || c.id } })}
+                            onClick={() => navigate(`/admin?company=${encodeURIComponent(c.username || c.companyName || c.id)}`)}
                             className="flex items-center gap-2 hover:opacity-75 transition-opacity cursor-pointer group text-right w-full"
                             title="الذهاب إلى تفاصيل الشركة"
                           >
