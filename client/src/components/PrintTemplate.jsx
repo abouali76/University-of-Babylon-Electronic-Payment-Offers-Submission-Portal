@@ -25,13 +25,13 @@ const PrintTemplate = ({ data, isBlank = false }) => {
 
   const styles = {
     container: {
-      width: '210mm',
-      minHeight: '297mm',
+      width: '100%',
+      minHeight: '100%',
       backgroundColor: '#ffffff',
       color: '#000000',
       direction: 'rtl',
       fontFamily: "'IBM Plex Sans Arabic', Arial, sans-serif",
-      padding: '15mm 20mm',
+      padding: '0 20mm', // Let the browser handle page margins via @page
       boxSizing: 'border-box'
     },
     header: {

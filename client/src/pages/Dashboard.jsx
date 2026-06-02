@@ -488,8 +488,6 @@ const Dashboard = () => {
   };
 
 
-  const [printOrientation, setPrintOrientation] = useState('portrait');
-
   const handlePrintBlank = () => {
     setPrintMode('blank');
     setTimeout(() => window.print(), 100);
@@ -906,7 +904,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFDFD] flex flex-col font-arabic" dir="rtl">
-      <style>{`@media print { @page { size: ${printOrientation}; margin: 15mm; } }`}</style>
       {/* Hidden Print Template */}
       <div className="hidden print:block w-full bg-white">
         {printMode === 'blank' ? (
@@ -989,19 +986,9 @@ const Dashboard = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
                 <button onClick={() => setShowSuccess(false)} className="bg-blue-900 text-white px-12 py-4 rounded-2xl font-black shadow-xl shadow-blue-100">عرض البيانات المرسلة</button>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <select 
-                    value={printOrientation} 
-                    onChange={(e) => setPrintOrientation(e.target.value)} 
-                    className="bg-white border-2 border-emerald-100 text-emerald-900 text-sm font-black rounded-2xl px-4 py-3 outline-none hover:border-emerald-300 transition-all cursor-pointer"
-                  >
-                    <option value="portrait">طباعة (عمودي)</option>
-                    <option value="landscape">طباعة (أفقي)</option>
-                  </select>
-                  <button onClick={handlePrintFilled} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 flex items-center justify-center gap-2">
-                     <Download className="w-5 h-5" /> تحميل العرض المكتمل (PDF)
-                  </button>
-                </div>
+                <button onClick={handlePrintFilled} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-emerald-100 flex items-center justify-center gap-2">
+                   <Download className="w-5 h-5" /> تحميل العرض المكتمل (PDF)
+                </button>
               </div>
             </div>
           ) : (
@@ -1016,15 +1003,7 @@ const Dashboard = () => {
                 <div className="p-8 md:p-12 bg-gray-50/50 border-t flex flex-col md:flex-row justify-between items-center gap-6">
                   <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                     <button type="button" onClick={() => setCurrentStep(p => Math.max(1, p-1))} className="px-10 py-4 bg-white border border-gray-200 rounded-2xl font-black text-gray-500 hover:bg-gray-100 transition-all">السابق</button>
-                    <div className="flex flex-wrap items-stretch gap-2">
-                      <select 
-                        value={printOrientation} 
-                        onChange={(e) => setPrintOrientation(e.target.value)} 
-                        className="bg-white border-2 border-gray-200 text-gray-700 text-xs font-black rounded-2xl px-3 outline-none hover:border-gray-300 transition-all cursor-pointer"
-                      >
-                        <option value="portrait">طباعة (عمودي)</option>
-                        <option value="landscape">طباعة (أفقي)</option>
-                      </select>
+                    <div className="flex flex-wrap gap-2">
                       {!isReceived && (
                         <button 
                           type="button" 
