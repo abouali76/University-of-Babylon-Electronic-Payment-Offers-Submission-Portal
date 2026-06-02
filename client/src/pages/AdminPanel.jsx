@@ -448,6 +448,8 @@ const AdminPanel = () => {
     setView('details');
   };
 
+  const [printOrientation, setPrintOrientation] = useState('portrait');
+
   const handlePdfExport = () => {
     window.print();
   };
@@ -456,6 +458,7 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row" dir="rtl">
+      <style>{`@media print { @page { size: ${printOrientation}; margin: 15mm; } }`}</style>
       <div className="hidden print:block w-full bg-white">
         <PrintTemplate data={selectedSubmission} />
       </div>
@@ -850,7 +853,17 @@ const AdminPanel = () => {
             <div className="space-y-8 animate-fade-in pb-20">
               <div className="flex justify-between items-center">
                 <button onClick={() => setView('list')} className="flex items-center gap-2 text-indigo-600 font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all"><ArrowRight /> العودة للشركات</button>
-                <button onClick={handlePdfExport} className="bg-indigo-950 text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2 hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-100"><Download className="w-5 h-5" /> تصدير PDF</button>
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={printOrientation} 
+                    onChange={(e) => setPrintOrientation(e.target.value)} 
+                    className="bg-white border-2 border-indigo-100 text-indigo-900 text-sm font-black rounded-2xl px-4 py-3 outline-none hover:border-indigo-300 transition-all cursor-pointer"
+                  >
+                    <option value="portrait">طباعة (عمودي)</option>
+                    <option value="landscape">طباعة (أفقي)</option>
+                  </select>
+                  <button onClick={handlePdfExport} className="bg-indigo-950 text-white px-8 py-3 rounded-2xl font-black flex items-center gap-2 hover:bg-indigo-900 transition-all shadow-xl shadow-indigo-100"><Download className="w-5 h-5" /> تصدير PDF</button>
+                </div>
               </div>
               
               <div className="bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border border-white">

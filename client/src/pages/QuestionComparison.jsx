@@ -153,6 +153,7 @@ const QuestionComparison = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openSections, setOpenSections] = useState({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
   const [activeCategory, setActiveCategory] = useState('all');
+  const [printOrientation, setPrintOrientation] = useState('landscape');
 
   // Analysis State
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
@@ -220,7 +221,7 @@ const QuestionComparison = () => {
             p { margin-bottom: 10px; }
             @media print {
               body { padding: 0; }
-              @page { margin: 15mm; }
+              @page { size: ${printOrientation}; margin: 15mm; }
             }
           </style>
         </head>
@@ -420,13 +421,23 @@ const QuestionComparison = () => {
               </button>
             )}
 
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all"
-            >
-              <Download className="w-4 h-4" />
-              طباعة / PDF
-            </button>
+            <div className="flex items-center gap-2">
+              <select 
+                value={printOrientation} 
+                onChange={(e) => setPrintOrientation(e.target.value)} 
+                className="bg-white border-2 border-indigo-100 text-indigo-900 text-sm font-black rounded-xl px-4 py-2 outline-none hover:border-indigo-300 transition-all cursor-pointer print:hidden"
+              >
+                <option value="landscape">طباعة (أفقي)</option>
+                <option value="portrait">طباعة (عمودي)</option>
+              </select>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 bg-indigo-950 text-white px-5 py-2 rounded-xl font-black text-sm hover:bg-indigo-900 transition-all"
+              >
+                <Download className="w-4 h-4" />
+                طباعة / PDF
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -552,7 +563,7 @@ const QuestionComparison = () => {
       <style>{`
         @media print {
           @page { 
-            size: A4 landscape; 
+            size: A4 ${printOrientation}; 
             margin: 8mm; 
           }
           
