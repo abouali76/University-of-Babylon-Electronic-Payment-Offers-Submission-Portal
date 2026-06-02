@@ -99,16 +99,16 @@ const PrintTemplate = ({ data, isBlank = false }) => {
       <section style={{ marginBottom: '15px' }}>
         <div style={styles.sectionTitle}>أولاً: معلومات الشركة العامة</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 30px' }}>
-          <InfoRow label="اسم الشركة" value={getVal('companyName', ['companyname'])} styles={styles} />
-          <InfoRow label="تاريخ التقديم" value={getVal('submissionDate', ['submissiondate'])} styles={styles} />
-          <InfoRow label="الممثل الرسمي" value={getVal('representativeName', ['representativename'])} styles={styles} />
-          <InfoRow label="رقم الهاتف" value={getVal('phone')} styles={styles} />
-          <InfoRow label="البريد الإلكتروني" value={getVal('email')} styles={styles} />
-          <InfoRow label="إجازة البنك المركزي" value={getVal('centralBankLicense', ['centralbanklicense'])} styles={styles} />
-          <InfoRow label="سنوات الخبرة" value={getVal('marketExperience', ['marketexperience'])} styles={styles} />
-          <InfoRow label="المؤسسات الحكومية" value={getVal('govInstitutionsCount', ['govinstitutionscount'])} styles={styles} />
-          <InfoRow label="الملاءة المالية" value={getVal('paidCapital', ['paidcapital'])} styles={styles} />
-          <InfoRow label="العنوان الرسمي" value={getVal('officialAddress', ['officialaddress'])} styles={styles} />
+          <InfoRow label="اسم الشركة" value={getVal('companyName', ['companyname'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="تاريخ التقديم" value={getVal('submissionDate', ['submissiondate'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="الممثل الرسمي" value={getVal('representativeName', ['representativename'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="رقم الهاتف" value={getVal('phone')} styles={styles} isBlank={isBlank} />
+          <InfoRow label="البريد الإلكتروني" value={getVal('email')} styles={styles} isBlank={isBlank} />
+          <InfoRow label="إجازة البنك المركزي" value={getVal('centralBankLicense', ['centralbanklicense'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="سنوات الخبرة" value={getVal('marketExperience', ['marketexperience'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="المؤسسات الحكومية" value={getVal('govInstitutionsCount', ['govinstitutionscount'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="الملاءة المالية" value={getVal('paidCapital', ['paidcapital'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="العنوان الرسمي" value={getVal('officialAddress', ['officialaddress'])} styles={styles} isBlank={isBlank} />
         </div>
       </section>
 
@@ -222,21 +222,31 @@ const PrintTemplate = ({ data, isBlank = false }) => {
   );
 };
 
-const InfoRow = ({ label, value, styles }) => (
-  <div style={styles.row}>
-    <span style={styles.label}>{label}:</span>
-    <span style={{ width: '55%' }}>{value || '---'}</span>
-  </div>
-);
+const InfoRow = ({ label, value, styles, isBlank }) => {
+  const valStr = String(value || '');
+  const isEmpty = !valStr || valStr.trim() === '' || valStr === '---' || valStr === 'undefined' || valStr === 'null';
+  if (!isBlank && isEmpty) return null;
+  return (
+    <div style={styles.row}>
+      <span style={styles.label}>{label}:</span>
+      <span style={{ width: '55%' }}>{isEmpty ? '---' : value}</span>
+    </div>
+  );
+};
 
-const QuestionBox = ({ label, value, styles, isBlank }) => (
-  <div style={styles.questionBox}>
-    <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '10px', fontSize: '16px', lineHeight: '1.6' }}>{label}</p>
-    <p style={{ lineHeight: '1.8', fontSize: '15px', color: '#1e293b', whiteSpace: 'pre-wrap', fontWeight: 'bold' }}>
-      {isBlank ? '' : (value || 'لم يتم تقديم إجابة.')}
-    </p>
-    {isBlank && <div style={{ height: '40px' }}></div>}
-  </div>
-);
+const QuestionBox = ({ label, value, styles, isBlank }) => {
+  const valStr = String(value || '');
+  const isEmpty = !valStr || valStr.trim() === '' || valStr === 'لم يتم تقديم إجابة.' || valStr === 'لم يتم إرفاق ملفات.' || valStr === 'undefined' || valStr === 'null';
+  if (!isBlank && isEmpty) return null;
+  return (
+    <div style={styles.questionBox}>
+      <p style={{ fontWeight: '900', color: '#1e1b4b', marginBottom: '10px', fontSize: '16px', lineHeight: '1.6' }}>{label}</p>
+      <p style={{ lineHeight: '1.8', fontSize: '15px', color: '#1e293b', whiteSpace: 'pre-wrap', fontWeight: 'bold' }}>
+        {isBlank ? '' : value}
+      </p>
+      {isBlank && <div style={{ height: '40px' }}></div>}
+    </div>
+  );
+};
 
 export default PrintTemplate;
