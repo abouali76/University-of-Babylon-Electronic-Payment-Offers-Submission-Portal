@@ -545,13 +545,6 @@ const AdminPanel = () => {
               مقارنة سؤال بسؤال
             </button>
 
-            <button 
-              onClick={() => { navigate('/admin/criteria-manager'); setIsMobileMenuOpen(false); }} 
-              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
-            >
-              <Settings className="w-5 h-5" />
-              إدارة معايير التقييم
-            </button>
 
             <button 
               onClick={() => setShowAddUser(!showAddUser)} 

@@ -4,7 +4,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import RankingTable from './components/RankingTable';
-import CriteriaManager from './pages/CriteriaManager';
 import AutoComparison from './pages/AutoComparison';
 import QuestionComparison from './pages/QuestionComparison';
 
@@ -36,10 +35,6 @@ function App() {
             <Route 
               path="/admin" 
               element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/admin/criteria-manager" 
-              element={user?.role === 'admin' ? <CriteriaManager /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/admin/auto-comparison" 
