@@ -4,7 +4,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import RankingTable from './components/RankingTable';
-import AutoComparison from './pages/AutoComparison';
 import QuestionComparison from './pages/QuestionComparison';
 
 function App() {
@@ -37,14 +36,10 @@ function App() {
               element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/login" />} 
             />
             <Route 
-              path="/admin/auto-comparison" 
-              element={user?.role === 'admin' ? <AutoComparison /> : <Navigate to="/login" />} 
-            />
-            <Route 
               path="/admin/question-comparison" 
               element={user?.role === 'admin' ? <QuestionComparison /> : <Navigate to="/login" />} 
             />
-            <Route path="/results" element={<div className="py-20"><RankingTable /></div>} />
+
             <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'} />} />
           </Routes>
         </div>

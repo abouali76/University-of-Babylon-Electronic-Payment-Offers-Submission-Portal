@@ -520,22 +520,8 @@ const AdminPanel = () => {
               <Building2 className="w-5 h-5" />
               قائمة الشركات
             </button>
-            
-            <button 
-              onClick={() => { setView('results'); setIsMobileMenuOpen(false); }} 
-              className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black transition-all ${view === 'results' ? 'bg-amber-500 text-white shadow-xl shadow-amber-100 scale-[1.02]' : 'text-gray-400 hover:bg-gray-50 hover:text-amber-600'}`}
-            >
-              <BarChart3 className="w-5 h-5" />
-              نتائج التصنيف
-            </button>
 
-            <button 
-              onClick={() => { navigate('/admin/auto-comparison'); setIsMobileMenuOpen(false); }} 
-              className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-sm font-black text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
-            >
-              <Trophy className="w-5 h-5" />
-              التصنيف التلقائي
-            </button>
+
 
             <button 
               onClick={() => { navigate('/admin/question-comparison'); setIsMobileMenuOpen(false); }} 
@@ -828,16 +814,7 @@ const AdminPanel = () => {
             </div>
           )}
 
-          {view === 'results' && (
-            <div className="animate-fade-in pb-20">
-              <div className="flex justify-between items-center bg-white p-8 rounded-[2rem] shadow-xl border border-white mb-10">
-                 <button onClick={() => setView('list')} className="flex items-center gap-2 text-indigo-600 font-black hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all"><ArrowRight /> العودة للقائمة</button>
-                 <h2 className="text-2xl font-black text-indigo-950">ترتيب الشركات حسب التقييم النهائي</h2>
-                 <div className="w-32"></div>
-              </div>
-              <RankingTable submissions={allCompanies.filter(c => c.isSubmitted)} />
-            </div>
-          )}
+
 
           {view === 'details' && selectedSubmission && (
             <div className="space-y-8 animate-fade-in pb-20">
