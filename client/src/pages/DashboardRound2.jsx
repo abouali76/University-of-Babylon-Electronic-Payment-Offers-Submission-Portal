@@ -507,7 +507,7 @@ const DashboardRound2 = () => {
 
     if (!formData.signedBy || !formData.position) {
       alert('يرجى كتابة اسم الموقع وصفته الوظيفية قبل الإرسال النهائي.');
-      setCurrentStep(9);
+      setCurrentStep(6);
       return;
     }
 
@@ -552,7 +552,7 @@ const DashboardRound2 = () => {
       </div>
       {!isReadOnly && (
         <button 
-          onClick={() => { setShowReview(false); setCurrentStep(9); }}
+          onClick={() => { setShowReview(false); setCurrentStep(6); }}
           className="w-full py-4 bg-blue-900 text-white rounded-2xl font-black shadow-xl"
         >
           تأكيد وصحة البيانات - المتابعة للتوقيع
@@ -588,104 +588,127 @@ const DashboardRound2 = () => {
               <InputField label="رقم الهاتف المعتمد" value={formData.phone} {...inputProps('phone')} />
               <InputField label="البريد الإلكتروني المعتمد" type="email" value={formData.email} {...inputProps('email')} />
               <InputField label="رقم إجازة البنك المركزي العراقي" value={formData.centralBankLicense} {...inputProps('centralBankLicense')} />
-              <InputField label="سنوات الخبرة في السوق المحلي" value={formData.marketExperience} {...inputProps('marketExperience')} />
-              <InputField label="عدد المؤسسات الحكومية المخدَّمة حالياً" type="number" value={formData.govInstitutionsCount} {...inputProps('govInstitutionsCount')} />
-              <InputField label="رأس المال المدفوع / الملاءة المالية" value={formData.paidCapital} {...inputProps('paidCapital')} />
-              <InputField label="العنوان الرسمي / المقر الرئيسي" value={formData.officialAddress} {...inputProps('officialAddress')} />
+              <InputField label="العنوان (المقر الرئيسي ومقر الحلة)" value={formData.officialAddress} {...inputProps('officialAddress')} />
             </div>
           </div>
         );
       case 2:
         return (
           <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" />
+            <SectionHeader title="ثانياً: الالتزامات التشغيلية والمالية" />
             <div className="space-y-6">
-              <QuestionBox id="q2_1_settlement" label="1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟" value={formData.q2_1_settlement} {...inputProps('q2_1_settlement')} />
-              <QuestionBox id="q2_2_commissions" label="2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟" value={formData.q2_2_commissions} {...inputProps('q2_2_commissions')} />
-              <QuestionBox id="q2_3_intermediary" label="3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية." value={formData.q2_3_intermediary} {...inputProps('q2_3_intermediary')} />
-              <QuestionBox id="q2_4_delayPenalty" label="4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟" value={formData.q2_4_delayPenalty} {...inputProps('q2_4_delayPenalty')} />
-              <QuestionBox id="q2_5_atmCommitment" label="5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟" value={formData.q2_5_atmCommitment} {...inputProps('q2_5_atmCommitment')} />
-              <QuestionBox id="q2_6_studentCards" label="6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)" value={formData.q2_6_studentCards} {...inputProps('q2_6_studentCards')} />
-              <QuestionBox id="q2_7_chargingCenters" label="7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟" value={formData.q2_7_chargingCenters} {...inputProps('q2_7_chargingCenters')} />
-              <QuestionBox id="q2_8_posCommitment" label="8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟" value={formData.q2_8_posCommitment} {...inputProps('q2_8_posCommitment')} />
+              <ChoiceBox id="q2_1_deposit_within_short_period" label="1. هل تلتزمون بإيداع المبالغ في مصرف الرشيد خلال مدة قصيرة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}, {label: 'غير معلوم', value: 'غير معلوم'}
+              ]} value={formData.q2_1_deposit_within_short_period} {...inputProps('q2_1_deposit_within_short_period')} />
+
+              <ChoiceBox id="q2_2_process_end_of_month_payments" label="2. هل بالإمكان معالجة مشكلة التسديدات التي تتم في اليوم الأخير من الشهر، بحيث لا تظهر ضمن حسابات الشهر اللاحق في المصرف؟" options={[
+                {label: 'نعم بالامكان', value: 'نعم بالامكان'}, {label: 'كلا لا يمكن، لان هذا يعتمد على البنك المركزي او المصرف', value: 'كلا لا يمكن، لان هذا يعتمد على البنك المركزي او المصرف'}
+              ]} value={formData.q2_2_process_end_of_month_payments} {...inputProps('q2_2_process_end_of_month_payments')} />
+
+              <ChoiceBox id="q2_3_guarantee_movements_in_rashid" label="3. ضمان ظهور جميع الحركات في حسابات مصرف الرشيد." options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q2_3_guarantee_movements_in_rashid} {...inputProps('q2_3_guarantee_movements_in_rashid')} />
+
+              <PercentageBox id="q2_4_commissions_and_discounts" label="4. ما هي نسب العمولات والخصومات المقترحة والتي يتم ارجاعها الى جامعة مع مراجعتها بشكل دوري وإشعار الجامعة؟ (النسبة المسترجعة من نسبة ارباحكم الخاصة)" value={formData.q2_4_commissions_and_discounts} {...inputProps('q2_4_commissions_and_discounts')} />
+
+              <ChoiceBox id="q2_5_provide_atms_in_university" label="5. هل بالامكان توفير عدد من اجهزة الصراف آلي (ATM) داخل الجامعة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}, {label: 'غير معلوم', value: 'غير معلوم'}
+              ]} value={formData.q2_5_provide_atms_in_university} {...inputProps('q2_5_provide_atms_in_university')} />
+
+              <ChoiceBox id="q2_6_student_cards_free_or_cheap" label="6. هل يتم إصدار بطاقات للطلبة مجانا او باجور بسيطة تختلف عن غير طلبة وتدريسي جامعة بابل حصرا؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}, {label: 'غير معلوم', value: 'غير معلوم'}
+              ]} value={formData.q2_6_student_cards_free_or_cheap} {...inputProps('q2_6_student_cards_free_or_cheap')} />
+
+              <ChoiceBox id="q2_7_charging_centers_in_university" label="7. هل يمكن توفير مراكز تعبئة داخل الجامعة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}, {label: 'غير معلوم', value: 'غير معلوم'}
+              ]} value={formData.q2_7_charging_centers_in_university} {...inputProps('q2_7_charging_centers_in_university')} />
+
+              <ChoiceBox id="q2_8_pos_maintenance_and_free_supplies" label="8. هل تلتزمون بتوفير مستلزمات التشغيل والصيانة والاستبدال (اجهزة PoS حديثة، ورق، بطاريات، الخ) مجاناً؟ (تعاد لاحقا الى الشركة عند انتهاء العقد)" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q2_8_pos_maintenance_and_free_supplies} {...inputProps('q2_8_pos_maintenance_and_free_supplies')} />
+
+              <ChoiceBox id="q2_9_laptop_and_printer" label="9. هل تلتزمون بتوفير حاسبة لاب توب وطابعة ليزرية جديدتان الى شعبة الحسابات للكليات ورئاسة الجامعة مجاناً؟ (تبقى ملك للجامعة)" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}, {label: 'غير معلوم', value: 'غير معلوم'}
+              ]} value={formData.q2_9_laptop_and_printer} {...inputProps('q2_9_laptop_and_printer')} />
+
+              <ChoiceBox id="q2_10_partnership_with_rashid" label="10. هل لديكم تعاون متميز وشراكة دائمة مع مصرف الرشيد فرع الحله الرئيسي لحل جميع المشاكل؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q2_10_partnership_with_rashid} {...inputProps('q2_10_partnership_with_rashid')} />
             </div>
           </div>
         );
       case 3:
         return (
           <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)" />
+            <SectionHeader title="ثالثاً: الالتزامات التقنية والأمنية" />
+            <h3 className="text-xl font-black text-blue-900 mb-6 bg-blue-50 p-4 rounded-xl inline-block border border-blue-100">أ. النظام الإلكتروني والتكامل</h3>
             <div className="space-y-6">
-              <QuestionBox id="q3a_1_integratedSystem" label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟" value={formData.q3a_1_integratedSystem} {...inputProps('q3a_1_integratedSystem')} />
-              <QuestionBox id="q3a_2_techSpecs" label="2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟" value={formData.q3a_2_techSpecs} {...inputProps('q3a_2_techSpecs')} />
-              <QuestionBox id="q3a_3_appSupport" label="3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟" value={formData.q3a_3_appSupport} {...inputProps('q3a_3_appSupport')} />
-              <QuestionBox id="q3a_4_webIntegration" label="4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟" value={formData.q3a_4_webIntegration} {...inputProps('q3a_4_webIntegration')} />
-              <QuestionBox id="q3a_5_reporting" label="5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية." value={formData.q3a_5_reporting} {...inputProps('q3a_5_reporting')} />
-              <QuestionBox id="q3a_6_training" label="6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟" value={formData.q3a_6_training} {...inputProps('q3a_6_training')} />
+              <ChoiceBox id="q3_1_integrated_system" label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية ويقدم التقارير المطلوبة متوفر دائما ولفترات طويلة وقابل للتحديث حسب حاجة الجامعة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q3_1_integrated_system} {...inputProps('q3_1_integrated_system')} />
+
+              <ChoiceBox id="q3_2_safe_link_payment" label="2. هل يمكن توفير الية التسديد عبر رابط آمن دون الحاجة للحضور الشخصي او استخدام اجهزة PoS؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q3_2_safe_link_payment} {...inputProps('q3_2_safe_link_payment')} />
+
+              <ChoiceBox id="q3_3_iban_available" label="3. هل يتوفر رقم IBAN لكل بطاقة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}, {label: 'ممكن لاحقا', value: 'ممكن لاحقا'}
+              ]} value={formData.q3_3_iban_available} {...inputProps('q3_3_iban_available')} />
+            </div>
+
+            <h3 className="text-xl font-black text-blue-900 mt-12 mb-6 bg-blue-50 p-4 rounded-xl inline-block border border-blue-100">ب. الأمن السيبراني والاستمرارية</h3>
+            <div className="space-y-6">
+              <ChoiceBox id="q4_1_confidentiality" label="1. هل جيع الانظمة والعمليات والبيانات المالية بسرية تامة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q4_1_confidentiality} {...inputProps('q4_1_confidentiality')} />
+
+              <ChoiceBox id="q4_2_backups" label="2. هل توفرون نسخاً احتياطية للبيانات ولسنوات طويلة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q4_2_backups} {...inputProps('q4_2_backups')} />
+
+              <ChoiceBox id="q4_3_technical_support" label="3. هل هنالك دعم فني متوفر على مدار الساعة (24/7) ؟ (1- كروب واتساب 2- رقم استجابة سريعة 3- المتابعة شخصية مع مسؤول الحسابات لحل المشاكل او تزويده بالبيانات المطلوبة بسرعة لا تتجاوز اليومان)" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q4_3_technical_support} {...inputProps('q4_3_technical_support')} />
             </div>
           </div>
         );
       case 4:
         return (
           <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)" />
+            <SectionHeader title="رابعاً: الالتزامات القانونية والتعاقدية" />
             <div className="space-y-6">
-              <QuestionBox id="q3b_1_certificates" label="1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)" value={formData.q3b_1_certificates} {...inputProps('q3b_1_certificates')} />
-              <QuestionBox id="q3b_2_encryption" label="2. ما هو بروتوكول التشفير المستخدم في المعاملات؟" value={formData.q3b_2_encryption} {...inputProps('q3b_2_encryption')} />
-              <QuestionBox id="q3b_3_rto_bcp" label="3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟" value={formData.q3b_3_rto_bcp} {...inputProps('q3b_3_rto_bcp')} />
-              <QuestionBox id="q3b_4_backups" label="4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟" value={formData.q3b_4_backups} {...inputProps('q3b_4_backups')} />
-              <QuestionBox id="q3b_5_supportSla" label="5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟" value={formData.q3b_5_supportSla} {...inputProps('q3b_5_supportSla')} />
-              <QuestionBox id="q3b_6_penTest" label="6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟" value={formData.q3b_6_penTest} {...inputProps('q3b_6_penTest')} />
-              <QuestionBox id="q3b_7_monitoring" label="7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)" value={formData.q3b_7_monitoring} {...inputProps('q3b_7_monitoring')} />
-              <QuestionBox id="q3b_8_incident" label="8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟" value={formData.q3b_8_incident} {...inputProps('q3b_8_incident')} />
+              <ChoiceBox id="q5_1_data_ownership" label="1. أن ملكية البيانات تعود للجامعة حصراً، وأنه يحق لها استردادها كاملةً باي وقت تحتاجه؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q5_1_data_ownership} {...inputProps('q5_1_data_ownership')} />
+
+              <ChoiceBox id="q5_2_free_training" label="2. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة عند الحاجة؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q5_2_free_training} {...inputProps('q5_2_free_training')} />
+
+              <ChoiceBox id="q5_3_contract_duration" label="3. مدة العقد المقترحة سنتان (2 سنة) ؟ وقابلة للتجديد لفترة لا تقل عن سنة بعد إعادة التفاوض على الشروط عند كل تجديد ان وجد اي تحديث؟" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا', hasExtra: True}
+              ]} value={formData.q5_3_contract_duration} {...inputProps('q5_3_contract_duration')} extraInputPlaceholder="اذا كلا، ماهي الفترة؟" />
+
+              <ChoiceBox id="q5_4_partial_updates" label="4. بالامكان اضافة اي تحديث جزئي ضمن الاتفاق الموجود لتسهيل الدفع الالكتروني لجامعة بابل. (يكون رسميا الى الشركة من قبل مدير المالية او الرقابة في الجامعة)" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q5_4_partial_updates} {...inputProps('q5_4_partial_updates')} />
+
+              <ChoiceBox id="q5_5_contract_termination_and_fines" label="5. فسخ العقد و تسديد الغرامات المالية ان وجدت وتحمل كافة التبعات القانونية في حالة عدم الالتزام بالشروط المتفق عليها، هذا بعد تنبيه الشركة خلال اسبوعان وبعد تشكيل لجنة تدقيقة من الطرفين تبين وتاكد وجود عدم الالتزام." options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q5_5_contract_termination_and_fines} {...inputProps('q5_5_contract_termination_and_fines')} />
             </div>
           </div>
         );
       case 5:
         return (
           <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="رابعاً: أ- الضمانات وملكية البيانات (3 أسئلة)" />
-            <div className="space-y-6">
-              <QuestionBox id="q4_1_bankGuarantee" label="1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟" value={formData.q4_1_bankGuarantee} {...inputProps('q4_1_bankGuarantee')} />
-              <QuestionBox id="q4_2_penaltyClause" label="2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟" value={formData.q4_2_penaltyClause} {...inputProps('q4_2_penaltyClause')} />
-              <QuestionBox id="q4_3_dataOwnership" label="3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟" value={formData.q4_3_dataOwnership} {...inputProps('q4_3_dataOwnership')} />
+            <SectionHeader title="خامساً: الخدمات الإضافية والمرفقات" />
+            <div className="space-y-6 mb-12">
+              <ChoiceBox id="q6_1_sponsor_support" label="1. هل تستاهمون بالدعم (Sponsor) (تغطية بعض التكاليف) لعدد من فعاليات والمؤتمرات العلمية لكليات الجامعة؟ (بعد الاتفاق معكم وموافقة رئيس الجامعة)" options={[
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+              ]} value={formData.q6_1_sponsor_support} {...inputProps('q6_1_sponsor_support')} />
             </div>
-          </div>
-        );
-      case 6:
-        return (
-          <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" />
-            <div className="space-y-6">
-              <QuestionBox id="q4_4_exitClause" label="4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟" value={formData.q4_4_exitClause} {...inputProps('q4_4_exitClause')} />
-              <QuestionBox id="q4_5_liability" label="5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟" value={formData.q4_5_liability} {...inputProps('q4_5_liability')} />
-              <QuestionBox id="q4_6_jurisdiction" label="6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟" value={formData.q4_6_jurisdiction} {...inputProps('q4_6_jurisdiction')} />
-              <QuestionBox id="q4_7_auditRight" label="7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟" value={formData.q4_7_auditRight} {...inputProps('q4_7_auditRight')} />
-              <QuestionBox id="q4_8_contractDuration" label="8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟" value={formData.q4_8_contractDuration} {...inputProps('q4_8_contractDuration')} />
-              <QuestionBox id="q4_9_renewal" label="9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟" value={formData.q4_9_renewal} {...inputProps('q4_9_renewal')} />
-              <QuestionBox id="q4_10_blacklist" label="10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟" value={formData.q4_10_blacklist} {...inputProps('q4_10_blacklist')} />
-            </div>
-          </div>
-        );
-      case 7:
-        return (
-          <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" />
-            <div className="space-y-6">
-              <QuestionBox id="q5_1_extraFeatures" label="1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟" value={formData.q5_1_extraFeatures} {...inputProps('q5_1_extraFeatures')} />
-              <QuestionBox id="q5_2_innovation" label="2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟" value={formData.q5_2_innovation} {...inputProps('q5_2_innovation')} />
-              <QuestionBox id="q5_3_scholarships" label="3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟" value={formData.q5_3_scholarships} {...inputProps('q5_3_scholarships')} />
-              <QuestionBox id="q5_4_staffTraining" label="4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟" value={formData.q5_4_staffTraining} {...inputProps('q5_4_staffTraining')} />
-              <QuestionBox id="q5_5_posUpdates" label="5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟" value={formData.q5_5_posUpdates} {...inputProps('q5_5_posUpdates')} />
-              <QuestionBox id="q5_6_foreignPayments" label="6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟" value={formData.q5_6_foreignPayments} {...inputProps('q5_6_foreignPayments')} />
-              <QuestionBox id="q5_7_complaints" label="7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟" value={formData.q5_7_complaints} {...inputProps('q5_7_complaints')} />
-              <QuestionBox id="q5_8_socialResp" label="8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟" value={formData.q5_8_socialResp} {...inputProps('q5_8_socialResp')} />
-            </div>
-          </div>
-        );
-      case 8:
-        return (
-          <div className="space-y-8 animate-fade-in">
+
             <SectionHeader title="سادساً: المرفقات والملاحظات" />
             <div className={`bg-white p-12 rounded-[2rem] border-4 border-dashed transition-all flex flex-col items-center text-center ${errors.includes('documentUrl') ? 'border-red-500 bg-red-50' : 'border-gray-100'}`}>
               <FileCheck className={`w-20 h-20 mb-6 opacity-20 ${errors.includes('documentUrl') ? 'text-red-500' : 'text-blue-900'}`} />
@@ -695,7 +718,7 @@ const DashboardRound2 = () => {
               {formData.documentUrl ? (
                 <div className="bg-emerald-50 px-8 py-4 rounded-2xl flex items-center gap-4">
                   <span className="text-emerald-700 font-black text-sm">تم رفع المستند بنجاح ✓</span>
-                  <button onClick={() => setFormData(p => ({...p, documentUrl: ''}))} className="text-red-500 text-xs font-bold underline">حذف</button>
+                  <button type="button" onClick={() => setFormData(p => ({...p, documentUrl: ''}))} className="text-red-500 text-xs font-bold underline">حذف</button>
                 </div>
               ) : (
                 <div className="relative">
@@ -719,16 +742,16 @@ const DashboardRound2 = () => {
             </div>
           </div>
         );
-      case 9:
+      case 6:
         return (
           <div className="space-y-10 animate-fade-in py-10">
             <div className="max-w-2xl mx-auto text-center">
                <ShieldCheck className="w-24 h-24 text-blue-900 mx-auto mb-8" />
-               <h3 className="text-3xl font-black text-blue-950 mb-4">المصادقة والتوقيع النهائي</h3>
+               <h3 className="text-3xl font-black text-blue-950 mb-4">سابعاً: المصادقة والتوقيع النهائي</h3>
                <p className="text-gray-500 font-bold mb-12">يرجى كتابة الاسم الكامل والصفة الوظيفية للمسؤول المخول بالتوقيع قبل إرسال العرض نهائياً.</p>
                
                <div className="space-y-6 text-right">
-                  <InputField label="اسم المفوض بالتوقيع" value={formData.signedBy} {...inputProps('signedBy')} />
+                  <InputField label="اسم المفوض بالتوقيع (الختم الرسمي)" value={formData.signedBy} {...inputProps('signedBy')} />
                   <InputField label="الصفة الوظيفية للموقع" value={formData.position} {...inputProps('position')} />
                </div>
 
@@ -740,7 +763,7 @@ const DashboardRound2 = () => {
                      <p className="text-xs text-slate-600 font-bold leading-relaxed">
                        {isSubmitted && !isReceived 
                          ? "لقد قمت بإرسال العرض مسبقاً، ولكن يمكنك تحديث البيانات طالما لم يتم تأييد الاستلام من قبل الجامعة. سيؤدي الضغط على تحديث العرض إلى تحديث البيانات المرسلة حالياً."
-                         : "بمجرد الضغط على \"إرسال العرض نهائياً\"، تقر الشركة بصحة كافة البيانات المذكورة أعلاه. يمكنك تعديل العرض لاحقاً طالما لم يقم المسؤول بتأييد استلام الطلب."
+                         : 'بمجرد الضغط على "إرسال العرض نهائياً"، تقر الشركة بصحة كافة البيانات المذكورة أعلاه. يمكنك تعديل العرض لاحقاً طالما لم يقم المسؤول بتأييد استلام الطلب.'
                        }
                      </p>
                      <div className="p-4 bg-white rounded-xl border-r-4 border-red-500 shadow-sm">
@@ -754,51 +777,8 @@ const DashboardRound2 = () => {
             </div>
           </div>
         );
-      case 10:
-        return (
-          <div className="space-y-8 animate-fade-in">
-            <SectionHeader title="عاشراً: استمارة المعايير (التقييم التلقائي)" />
-            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex gap-4 mb-6">
-              <Info className="w-6 h-6 text-indigo-600 shrink-0" />
-              <p className="text-xs font-bold text-indigo-900 leading-relaxed">
-                يرجى الإجابة بدقة على هذه الأسئلة. هذه البيانات ستستخدم للمقارنة التلقائية بين الشركات وتحديد الأفضلية التقنية والمالية.
-              </p>
-            </div>
-            <div className="space-y-4">
-              {criteria.map((c) => (
-                <div key={c.id} className="p-6 bg-white border-2 border-gray-50 rounded-3xl shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-grow">
-                      <div className="flex items-center gap-2 mb-2">
-                         <h4 className="font-black text-indigo-950 text-sm">{c.question_text}</h4>
-                         {c.is_mandatory && <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-1 rounded-lg">إلزامي</span>}
-                      </div>
-                      <p className="text-[10px] font-bold text-gray-400">الفئة: {c.category === 'Technical' ? 'فني' : 'مالي'}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      {['accept', 'provide', 'reject'].map((opt) => (
-                        <button
-                          key={opt}
-                          disabled={isLocked}
-                          onClick={() => setEvaluationAnswers(prev => ({ ...prev, [c.id]: opt }))}
-                          className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border-2 ${
-                            evaluationAnswers[c.id] === opt 
-                              ? opt === 'accept' ? 'bg-emerald-600 border-emerald-600 text-white' : opt === 'provide' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-red-600 border-red-600 text-white'
-                              : 'bg-white border-gray-100 text-gray-400 hover:border-indigo-100'
-                          }`}
-                        >
-                          {opt === 'accept' ? 'نعم / قبول' : opt === 'provide' ? 'توفير المستلزمات' : 'لا / رفض'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {criteria.length === 0 && <div className="text-center py-20 text-gray-300 font-bold">لا توجد معايير مضافة حالياً</div>}
-            </div>
-          </div>
-        );
-      default: return null;
+      default:
+        return null;
     }
   };
 
@@ -864,10 +844,10 @@ const DashboardRound2 = () => {
             <div className="mt-8 p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
                <div className="flex justify-between items-end mb-2">
                  <span className="text-[10px] font-black text-gray-400 uppercase">الإكمال</span>
-                 <span className="text-lg font-black text-blue-900">{Math.round((currentStep/9)*100)}%</span>
+                 <span className="text-lg font-black text-blue-900">{Math.round((currentStep/6)*100)}%</span>
                </div>
                <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                 <div className="h-full bg-blue-900 transition-all duration-500" style={{width: `${(currentStep/9)*100}%`}}></div>
+                 <div className="h-full bg-blue-900 transition-all duration-500" style={{width: `${(currentStep/6)*100}%`}}></div>
                </div>
             </div>
           </div>
@@ -935,7 +915,7 @@ const DashboardRound2 = () => {
                     {currentStep < 5 ? (
                       <button type="button" onClick={() => goToStep(currentStep + 1)} className="w-full md:w-auto px-12 py-4 bg-blue-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:bg-blue-900 transition-all">الخطوة التالية <ChevronLeft className="w-5 h-5" /></button>
                     ) : currentStep === 5 ? (
-                      <button type="button" onClick={() => { if(validateStep(6)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
+                      <button type="button" onClick={() => { if(validateStep(5)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
                     ) : (
                       (!isReadOnly && !isReceived && !isSystemClosed) && (
                         <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-16 py-5 bg-blue-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-100 hover:bg-blue-800 transition-all">
@@ -1047,6 +1027,79 @@ const InputField = ({ label, name, value, onChange, type = 'text', disabled, err
       onKeyDown={(e) => { if(e.key === 'Enter') e.preventDefault(); }}
       className={`w-full p-5 rounded-2xl border-2 outline-none font-bold transition-all text-sm ${error ? 'bg-red-50 border-red-200 focus:border-red-500' : 'bg-gray-50/50 border-transparent focus:bg-white focus:border-blue-900'}`} 
     />
+  </div>
+);
+
+
+const ChoiceBox = ({ id, label, options, value, onChange, disabled, error, extraInputPlaceholder }) => {
+  const currentBaseValue = value?.includes(':') ? value.split(':')[0] : value;
+  const extraValue = value?.includes(':') ? value.split(':')[1] : '';
+
+  return (
+    <div className={`p-8 rounded-[2.5rem] border-2 transition-all group shadow-sm ${error ? 'bg-red-50/50 border-red-200' : 'bg-gray-50/30 border-transparent hover:border-blue-50 hover:bg-white'}`}>
+      <div className="flex justify-between items-start mb-4">
+        <label className={`block text-lg font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
+        {error && <span className="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
+      </div>
+      <div className="space-y-4 mt-6">
+        {options.map((opt, idx) => (
+          <label key={idx} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${currentBaseValue === opt.value ? 'border-blue-600 bg-blue-50 shadow-md' : 'border-gray-200 hover:bg-gray-50'}`}>
+            <input
+              type="radio"
+              name={id}
+              value={opt.value}
+              checked={currentBaseValue === opt.value}
+              onChange={(e) => {
+                if (opt.hasExtra) {
+                  onChange({ target: { name: id, value: `${e.target.value}:` } });
+                } else {
+                  onChange({ target: { name: id, value: e.target.value } });
+                }
+              }}
+              disabled={disabled}
+              className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="font-bold text-gray-800">{opt.label}</span>
+          </label>
+        ))}
+        
+        {options.find(o => o.hasExtra && currentBaseValue === o.value) && (
+          <input
+            type="text"
+            placeholder={extraInputPlaceholder || "يرجى التحديد..."}
+            value={extraValue}
+            onChange={(e) => {
+              const baseValue = options.find(o => o.hasExtra).value;
+              onChange({ target: { name: id, value: `${baseValue}:${e.target.value}` } });
+            }}
+            disabled={disabled}
+            className="w-full mt-4 p-4 rounded-xl border-2 border-blue-200 focus:border-blue-600 outline-none font-bold transition-all bg-white"
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const PercentageBox = ({ id, label, value, onChange, disabled, error }) => (
+  <div className={`p-8 rounded-[2.5rem] border-2 transition-all group shadow-sm ${error ? 'bg-red-50/50 border-red-200' : 'bg-gray-50/30 border-transparent hover:border-blue-50 hover:bg-white'}`}>
+    <div className="flex justify-between items-start mb-4">
+      <label className={`block text-lg font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
+      {error && <span className="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
+    </div>
+    <div className="relative mt-6 max-w-sm">
+      <input
+        type="number"
+        name={id}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        placeholder="مثال: 10"
+        className={`w-full pl-12 pr-6 py-4 rounded-xl border-2 focus:ring-4 outline-none font-black text-xl transition-all bg-white text-left dir-ltr ${error ? 'border-red-200 focus:border-red-500 ring-red-50' : 'border-gray-200 focus:border-blue-600 ring-blue-50'}`}
+        dir="ltr"
+      />
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black text-xl">%</span>
+    </div>
   </div>
 );
 

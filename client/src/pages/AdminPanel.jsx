@@ -114,7 +114,6 @@ const AdminPanel = () => {
         usersData = usersResult.data || [];
       }
 
-      
       const subsResult = await supabase
         .from('submissions')
         .select('*')
@@ -137,7 +136,6 @@ const AdminPanel = () => {
       } else {
         subsR2Data = subsR2Result.data || [];
       }
-
 
       const logsResult = await supabase
         .from('activity_logs')
@@ -652,7 +650,6 @@ const AdminPanel = () => {
 
           {view === 'list' && (
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-white overflow-hidden">
-              
               <div className="p-8 bg-gray-50/50">
                 <div className="flex gap-4 mb-4">
                   <button onClick={() => setRoundView('round1')} className={`px-6 py-3 rounded-2xl font-black text-sm transition-all ${roundView === 'round1' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>بيانات الجولة الأولى</button>
@@ -803,7 +800,9 @@ const AdminPanel = () => {
 
               <div className="overflow-x-auto pb-10">
                 <div className="inline-flex gap-8 min-w-full">
-                  <CompareColumn title="المعايير والأسئلة" isHeader fields={[
+                  
+                  {roundView === 'round1' ? (
+                    <CompareColumn title="المعايير والأسئلة" isHeader fields={[
                     { label: 'رأس المال المودع' },
                     { label: 'سنوات الخبرة' },
                     { label: 'المؤسسات الحكومية' },
@@ -815,11 +814,28 @@ const AdminPanel = () => {
                     { label: 'تطبيق الهاتف' },
                     { label: 'التقييم' }
                   ]} />
+                  ) : (
+                    <CompareColumn title="المعايير والأسئلة" isHeader fields={[
+                      { label: 'فترة الإيداع' },
+                      { label: 'الضمانات' },
+                      { label: 'العمولات' },
+                      { label: 'أجهزة الصراف' },
+                      { label: 'البطاقات المجانية' },
+                      { label: 'مراكز الشحن' },
+                      { label: 'صيانة النقاط' },
+                      { label: 'نظام متكامل' },
+                      { label: 'سرية البيانات' },
+                      { label: 'التقييم' }
+                    ]} />
+                  )}
+
 
                   {selectedForCompare.map(username => {
                     const comp = allCompanies.find(c => c.username === username);
                     return (
-                      <CompareColumn key={username} comp={comp} fields={[
+                      
+                      roundView === 'round1' ? (
+                        <CompareColumn key={username} comp={comp} fields={[
                         { key: 'paidCapital' },
                         { key: 'marketExperience' },
                         { key: 'govInstitutionsCount' },
@@ -831,6 +847,21 @@ const AdminPanel = () => {
                         { key: 'q5_1_extraFeatures' },
                         { key: 'evaluation_score', isScore: true }
                       ]} />
+                      ) : (
+                        <CompareColumn key={username} comp={comp} fields={[
+                          { key: 'q2_1_deposit_within_short_period' },
+                          { key: 'q2_3_guarantee_movements_in_rashid' },
+                          { key: 'q2_4_commissions_and_discounts' },
+                          { key: 'q2_5_provide_atms_in_university' },
+                          { key: 'q2_6_student_cards_free_or_cheap' },
+                          { key: 'q2_7_charging_centers_in_university' },
+                          { key: 'q2_8_pos_maintenance_and_free_supplies' },
+                          { key: 'q3_1_integrated_system' },
+                          { key: 'q4_1_confidentiality' },
+                          { key: 'evaluation_score', isScore: true }
+                        ]} />
+                      )
+
                     );
                   })}
                 </div>
@@ -925,104 +956,63 @@ const AdminPanel = () => {
                   
                   {roundView === 'round1' ? (
                     <>
-                      
-                  {roundView === 'round1' ? (
-                    <>
-                      <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" data={c} fields={[
-                        { key: 'q2_1_settlement', label: '1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟' },
-                        { key: 'q2_2_commissions', label: '2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟' },
-                        { key: 'q2_3_intermediary', label: '3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية.' },
-                        { key: 'q2_4_delayPenalty', label: '4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟' },
-                        { key: 'q2_5_atmCommitment', label: '5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟' },
-                        { key: 'q2_6_studentCards', label: '6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)' },
-                        { key: 'q2_7_chargingCenters', label: '7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟' },
-                        { key: 'q2_8_posCommitment', label: '8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟' },
-                      ]} />
+                      <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (8 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q2_1_settlement', label: '1. ما هي الآلية المعتمدة لإجراء التسوية المالية (المقاصة) مع مصرف الرشيد؟ وهل تلتزمون بالإيداع خلال 12 ساعة عمل؟' },
+                    { key: 'q2_2_commissions', label: '2. ما هي نسب العمولات والخصومات المقترحة؟ وهل توافقون على مراجعتها دورياً وإشعار الجامعة قبل 30 يوماً من أي تعديل؟' },
+                    { key: 'q2_3_intermediary', label: '3. هل يوجد وسيط (مصرف آخر) لنقل المبالغ أم مباشرة؟ يرجى ذكر تفاصيل سير الحركات المالية.' },
+                    { key: 'q2_4_delayPenalty', label: '4. ما قيمة غرامة التأخير المقترحة عن كل ساعة تجاوز مدة التسوية المتفق عليها؟' },
+                    { key: 'q2_5_atmCommitment', label: '5. هل تلتزمون بتوفير جهاز صراف آلي (ATM) يملأ دائماً داخل الجامعة؟' },
+                    { key: 'q2_6_studentCards', label: '6. ما هي تفاصيل إصدار بطاقات الطلبة؟ (رسوم الإصدار، التجديد، بدل الضائع، مدة الإصدار)' },
+                    { key: 'q2_7_chargingCenters', label: '7. هل توفرون مراكز تعبئة كافية داخل الكليات؟ وما هي ساعات العمل المقترحة لها؟' },
+                    { key: 'q2_8_posCommitment', label: '8. هل تلتزمون بتجهيز نقاط البيع (PoS) والورق الحراري مجاناً؟ وما هو زمن الاستجابة للصيانة (SLA)؟' },
+                  ]} />
 
-                      <DetailSection title="ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)" data={c} fields={[
-                        { key: 'q3a_1_integratedSystem', label: '1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟' },
-                        { key: 'q3a_2_techSpecs', label: '2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟', aliases: ['q3a_2_techspecs'] },
-                        { key: 'q3a_3_appSupport', label: '3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟', aliases: ['q3a_3_appsupport'] },
-                        { key: 'q3a_4_webIntegration', label: '4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟', aliases: ['q3a_4_webintegration'] },
-                        { key: 'q3a_5_reporting', label: '5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية.' },
-                        { key: 'q3a_6_training', label: '6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟' },
-                      ]} />
+                  <DetailSection title="ثالثاً: أ- النظام الإلكتروني والتكامل (6 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q3a_1_integratedSystem', label: '1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية؟' },
+                    { key: 'q3a_2_techSpecs', label: '2. هل يمكن إصدار بطاقات خاصة بكل كلية أو وحدة إدارية بدون عمولات تحويل داخلية؟', aliases: ['q3a_2_techspecs'] },
+                    { key: 'q3a_3_appSupport', label: '3. هل يمكن للجامعة الحصول على كشف حساب لحظي (Real-time) في أي وقت؟', aliases: ['q3a_3_appsupport'] },
+                    { key: 'q3a_4_webIntegration', label: '4. هل يمكن تحقيق تكامل إلكتروني مع موقع الجامعة يتيح التسديد عبر رابط آمن أو QR كود؟', aliases: ['q3a_4_webintegration'] },
+                    { key: 'q3a_5_reporting', label: '5. هل توفرون خدمة التحويلات خارج العراق؟ يرجى بيان العمولات والحدود اليومية.' },
+                    { key: 'q3a_6_training', label: '6. هل يتوفر رقم IBAN لكل بطاقة؟ وهل هو متوافق مع معايير الدفع الدولية؟' },
+                  ]} />
 
-                      <DetailSection title="ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)" data={c} fields={[
-                        { key: 'q3b_1_certificates', label: '1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)' },
-                        { key: 'q3b_2_encryption', label: '2. ما هو بروتوكول التشفير المستخدم في المعاملات؟', aliases: ['q3b_2_encryption'] },
-                        { key: 'q3b_3_rto_bcp', label: '3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟' },
-                        { key: 'q3b_4_backups', label: '4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟' },
-                        { key: 'q3b_5_supportSla', label: '5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟', aliases: ['q3b_5_supportsla'] },
-                        { key: 'q3b_6_penTest', label: '6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟', aliases: ['q3b_6_pentest'] },
-                        { key: 'q3b_7_monitoring', label: '7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)', aliases: ['q3b_7_monitoring'] },
-                        { key: 'q3b_8_incident', label: '8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟', aliases: ['q3b_8_incident'] },
-                      ]} />
+                  <DetailSection title="ثالثاً: ب- الأمن السيبراني والاستمرارية (8 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q3b_1_certificates', label: '1. ما هي شهادات الأمن المعتمدة لديكم؟ (PCI-DSS / ISO 27001 / غيرها)' },
+                    { key: 'q3b_2_encryption', label: '2. ما هو بروتوكول التشفير المستخدم في المعاملات؟', aliases: ['q3b_2_encryption'] },
+                    { key: 'q3b_3_rto_bcp', label: '3. ما هو الحد الأقصى لوقت استعادة الخدمة عند الانقطاع (RTO)؟' },
+                    { key: 'q3b_4_backups', label: '4. هل توفرون نسخاً احتياطية يومية للبيانات؟ أين تُخزَّن؟' },
+                    { key: 'q3b_5_supportSla', label: '5. ما هو نظام الدعم الفني؟ هل يتوفر على مدار الساعة (24/7)؟', aliases: ['q3b_5_supportsla'] },
+                    { key: 'q3b_6_penTest', label: '6. هل تُجرون اختبارات اختراق أمني (Penetration Testing) دورية؟', aliases: ['q3b_6_pentest'] },
+                    { key: 'q3b_7_monitoring', label: '7. ما هي سياسة شركتكم في الاحتفاظ بالبيانات؟ (المدة الزمنية، مكان التخزين)', aliases: ['q3b_7_monitoring'] },
+                    { key: 'q3b_8_incident', label: '8. ما هي طرائق الاتصالات المستخدمة وهل تحتاج انترنت؟', aliases: ['q3b_8_incident'] },
+                  ]} />
 
-                      <DetailSection title="رابعاً: أ- الضمانات وملكية البيانات (3 أسئلة)" data={c} fields={[
-                        { key: 'q4_1_bankGuarantee', label: '1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟', aliases: ['q4_1_bankguarantee'] },
-                        { key: 'q4_2_penaltyClause', label: '2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟', aliases: ['q4_2_penaltyclause'] },
-                        { key: 'q4_3_dataOwnership', label: '3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟', aliases: ['q4_3_dataownership'] },
-                      ]} />
+                  <DetailSection title="رابعاً: أ- الضمانات وملكية البيانات (3 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q4_1_bankGuarantee', label: '1. خطاب الضمان المصرفي: هل تقدمون خطاب ضمان مصرفي غير مشروط لصالح الجامعة؟', aliases: ['q4_1_bankguarantee'] },
+                    { key: 'q4_2_penaltyClause', label: '2. سرية البيانات: هل تلتزمون بسرية البيانات وتوقيع اتفاقية (NDA) رسمية؟', aliases: ['q4_2_penaltyclause'] },
+                    { key: 'q4_3_dataOwnership', label: '3. ملكية البيانات واستردادها: هل توافقون على أن ملكية البيانات تعود للجامعة حصراً؟', aliases: ['q4_3_dataownership'] },
+                  ]} />
 
-                      <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" data={c} fields={[
-                        { key: 'q4_4_exitClause', label: '4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟', aliases: ['q4_4_exitclause'] },
-                        { key: 'q4_5_liability', label: '5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟', aliases: ['q4_5_liability'] },
-                        { key: 'q4_6_jurisdiction', label: '6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟' },
-                        { key: 'q4_7_auditRight', label: '7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟', aliases: ['q4_7_auditright'] },
-                        { key: 'q4_8_contractDuration', label: '8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟', aliases: ['q4_8_contractduration'] },
-                        { key: 'q4_9_renewal', label: '9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟', aliases: ['q4_9_renewal'] },
-                        { key: 'q4_10_blacklist', label: '10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟' },
-                      ]} />
+                  <DetailSection title="رابعاً: ب- الالتزامات القانونية والتعاقدية (7 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q4_4_exitClause', label: '4. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة؟', aliases: ['q4_4_exitclause'] },
+                    { key: 'q4_5_liability', label: '5. هل توافقون على حق الجامعة بفسخ العقد فورياً عند الإخلال الجوهري؟', aliases: ['q4_5_liability'] },
+                    { key: 'q4_6_jurisdiction', label: '6. هل توافقون على تطبيق القانون العراقي النافذ، واختصاص محاكم محافظة بابل؟' },
+                    { key: 'q4_7_auditRight', label: '7. هل توافقون على اللجوء إلى التحكيم التجاري وفق الأنظمة العراقية؟', aliases: ['q4_7_auditright'] },
+                    { key: 'q4_8_contractDuration', label: '8. ما هي مدة العقد المقترحة؟ وما شروط التجديد والتعديل؟', aliases: ['q4_8_contractduration'] },
+                    { key: 'q4_9_renewal', label: '9. ما هي آلية استقبال ومعالجة شكاوى الطلبة؟ وما الحد الأقصى للمدة؟', aliases: ['q4_9_renewal'] },
+                    { key: 'q4_10_blacklist', label: '10. هل الشركة مسجلة ضمن القائمة السوداء حسب اعمامات البنك المركزي العراقي أو محظور التعامل معها داخل او خارج العراق؟' },
+                  ]} />
 
-                      <DetailSection title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" data={c} fields={[
-                        { key: 'q5_1_extraFeatures', label: '1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟', aliases: ['q5_1_extrafeatures'] },
-                        { key: 'q5_2_innovation', label: '2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟', aliases: ['q5_2_innovation'] },
-                        { key: 'q5_3_scholarships', label: '3. هل تساهمون في دعم نشاطات الجامعة علميا وعمليا؟', aliases: ['q5_3_scholarships'] },
-                        { key: 'q5_4_staffTraining', label: '4. هل تلتزمون بتدريب موظفي الحسابات على استخدام الأنظمة والأجهزة؟', aliases: ['q5_4_stafftraining'] },
-                        { key: 'q5_5_posUpdates', label: '5. هل توافقون على تحديث أجهزة نقاط البيع (PoS) أو استبدالها دورياً؟', aliases: ['q5_5_posupdates'] },
-                        { key: 'q5_6_foreignPayments', label: '6. هل تتيحون خدمة تسديد الرسوم للطلاب المبتعثين خارج العراق بسهولة؟', aliases: ['q5_6_foreignpayments'] },
-                        { key: 'q5_7_complaints', label: '7. ما هي آلية تقديم الملاحظات من قبل الجامعة لتحسين الخدمة؟', aliases: ['q5_7_complaints'] },
-                        { key: 'q5_8_socialResp', label: '8. هل لديكم مبادرات تتعلق بالمسؤولية المجتمعية (CSR) في محافظة بابل؟', aliases: ['q5_8_socialresp'] },
-                      ]} />
-                    </>
-                  ) : (
-                    <>
-                      <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية" data={c} fields={[
-                        { key: 'q2_1_deposit_within_short_period', label: '1. هل تلتزمون بإيداع المبالغ في حسابات الجامعة خلال فترة قصيرة؟' },
-                        { key: 'q2_2_process_end_of_month_payments', label: '2. هل لديكم قدرة على معالجة مدفوعات نهاية الشهر دون تأخير؟' },
-                        { key: 'q2_3_guarantee_movements_in_rashid', label: '3. ما هي الضمانات لتأمين حركات المبالغ في مصرف الرشيد؟' },
-                        { key: 'q2_4_commissions_and_discounts', label: '4. تفاصيل العمولات والخصومات؟' },
-                        { key: 'q2_5_provide_atms_in_university', label: '5. توفير أجهزة صراف آلي داخل الحرم الجامعي؟' },
-                        { key: 'q2_6_student_cards_free_or_cheap', label: '6. إصدار بطاقات جامعية للطلاب بأسعار مخفضة أو مجانية؟' },
-                        { key: 'q2_7_charging_centers_in_university', label: '7. إنشاء مراكز شحن داخل الجامعة؟' },
-                        { key: 'q2_8_pos_maintenance_and_free_supplies', label: '8. صيانة أجهزة نقاط البيع وتوفير المواد مجانا؟' },
-                        { key: 'q2_9_laptop_and_printer', label: '9. توفير جهاز حاسوب وطابعة؟' },
-                        { key: 'q2_10_partnership_with_rashid', label: '10. الشراكة مع مصرف الرشيد؟' },
-                      ]} />
-                      <DetailSection title="ثالثاً: النظام الإلكتروني والتكامل" data={c} fields={[
-                        { key: 'q3_1_integrated_system', label: '1. توفير نظام إلكتروني متكامل؟' },
-                        { key: 'q3_2_safe_link_payment', label: '2. دفع آمن عبر الرابط؟' },
-                        { key: 'q3_3_iban_available', label: '3. توفير رقم آيبان لكل بطاقة؟' },
-                      ]} />
-                      <DetailSection title="رابعاً: الأمن السيبراني والاستمرارية" data={c} fields={[
-                        { key: 'q4_1_confidentiality', label: '1. سرية البيانات والمعلومات؟' },
-                        { key: 'q4_2_backups', label: '2. النسخ الاحتياطية؟' },
-                        { key: 'q4_3_technical_support', label: '3. الدعم الفني؟' },
-                      ]} />
-                      <DetailSection title="خامساً: الالتزامات القانونية" data={c} fields={[
-                        { key: 'q5_1_data_ownership', label: '1. ملكية البيانات؟' },
-                        { key: 'q5_2_free_training', label: '2. التدريب المجاني؟' },
-                        { key: 'q5_3_contract_duration', label: '3. مدة العقد المقترحة؟' },
-                        { key: 'q5_4_partial_updates', label: '4. التحديثات الجزئية؟' },
-                        { key: 'q5_5_contract_termination_and_fines', label: '5. إنهاء العقد والغرامات؟' },
-                      ]} />
-                      <DetailSection title="سادساً: الخدمات الإضافية" data={c} fields={[
-                        { key: 'q6_1_sponsor_support', label: '1. دعم الرعاة (Sponsor)؟' },
-                      ]} />
-                    </>
-                  )}
-
+                  <DetailSection title="خامساً: الخدمات الإضافية والميزات التنافسية (8 أسئلة)" data={selectedSubmission} fields={[
+                    { key: 'q5_1_extraFeatures', label: '1. هل تقدمون تطبيق هاتفي (iOS/Android)؟ ما الخدمات المتاحة فيه؟', aliases: ['q5_1_extrafeatures'] },
+                    { key: 'q5_2_innovation', label: '2. هل تقدمون خدمات مصرفية إضافية مثل: محفظة رقمية، صرف راتب إلكتروني؟', aliases: ['q5_2_innovation'] },
+                    { key: 'q5_3_scholarships', label: '3. ما الحد الأقصى لعدد المعاملات اليومية التي يستطيع نظامكم معالجتها؟', aliases: ['q5_3_scholarships'] },
+                    { key: 'q5_4_staffTraining', label: '4. هل تقدمون الدعم (Sponsor) لتغطية تكاليف الفعاليات والمؤتمرات العلمية؟', aliases: ['q5_4_stafftraining'] },
+                    { key: 'q5_5_posUpdates', label: '5. هل هنالك تحديث دوري لأجهزة PoS والأنظمة الإلكترونية؟', aliases: ['q5_5_mobileApp', 'mobileApp', 'posUpdates'] },
+                    { key: 'q5_6_foreignPayments', label: '6. هل هنالك إمكانية تسديد أجور بعملة الدولار إلى مصارف خارج البلد؟', aliases: ['q5_6_foreignStudents', 'foreignStudents', 'foreignPayments'] },
+                    { key: 'q5_7_complaints', label: '7. هل تقدمون أي ميزات إضافية أو عروض تنافسية لصالح جامعة بابل تحديداً؟', aliases: ['q5_7_complaints'] },
+                    { key: 'q5_8_socialResp', label: '8. ذكر المؤسسات الحكومية المخدَّمة حالياً، وما هي التي تتعامل مع مصرف الرشيد؟', aliases: ['socialResp', 'q5_8_socialresp'] },
+                  ]} />
                     </>
                   ) : (
                     <>
