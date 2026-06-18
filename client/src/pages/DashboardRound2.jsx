@@ -686,7 +686,7 @@ const DashboardRound2 = () => {
               ]} value={formData.q5_2_free_training} {...inputProps('q5_2_free_training')} />
 
               <ChoiceBox id="q5_3_contract_duration" label="3. مدة العقد المقترحة سنتان (2 سنة) ؟ وقابلة للتجديد لفترة لا تقل عن سنة بعد إعادة التفاوض على الشروط عند كل تجديد ان وجد اي تحديث؟" options={[
-                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا', hasExtra: True}
+                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا', hasExtra: true}
               ]} value={formData.q5_3_contract_duration} {...inputProps('q5_3_contract_duration')} extraInputPlaceholder="اذا كلا، ماهي الفترة؟" />
 
               <ChoiceBox id="q5_4_partial_updates" label="4. بالامكان اضافة اي تحديث جزئي ضمن الاتفاق الموجود لتسهيل الدفع الالكتروني لجامعة بابل. (يكون رسميا الى الشركة من قبل مدير المالية او الرقابة في الجامعة)" options={[

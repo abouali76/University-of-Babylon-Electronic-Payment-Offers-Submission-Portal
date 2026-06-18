@@ -161,9 +161,6 @@ const QuestionComparison = () => {
   const [analyzingQuestion, setAnalyzingQuestion] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
 
   const fetchCompanies = async () => {
     setLoading(true);
@@ -191,6 +188,10 @@ const QuestionComparison = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
 
   const filteredCompanies = companies.filter(c =>
     (c.companyName || '').toLowerCase().includes(searchTerm.toLowerCase())
