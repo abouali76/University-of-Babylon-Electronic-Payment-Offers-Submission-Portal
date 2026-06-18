@@ -1036,32 +1036,40 @@ const ChoiceBox = ({ id, label, options, value, onChange, disabled, error, extra
   const extraValue = value?.includes(':') ? value.split(':')[1] : '';
 
   return (
-    <div className={`p-8 rounded-[2.5rem] border-2 transition-all group shadow-sm ${error ? 'bg-red-50/50 border-red-200' : 'bg-gray-50/30 border-transparent hover:border-blue-50 hover:bg-white'}`}>
-      <div className="flex justify-between items-start mb-4">
-        <label className={`block text-lg font-black leading-relaxed ${error ? 'text-red-900' : 'text-blue-950 group-hover:text-blue-900'}`}>{label}</label>
-        {error && <span className="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce">إجابة مطلوبة</span>}
+    <div className={`p-6 rounded-xl border-2 transition-all group shadow-sm flex flex-col md:flex-row md:items-start gap-6 ${error ? 'bg-red-50/50 border-red-200' : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-md'}`}>
+      
+      {/* Question Text */}
+      <div className="flex-1 md:w-3/5">
+        <div className="flex justify-between items-start">
+          <label className={`block text-lg font-bold leading-relaxed ${error ? 'text-red-900' : 'text-slate-800'}`}>{label}</label>
+          {error && <span className="text-xs bg-red-500 text-white px-3 py-1 rounded-full font-black shrink-0 animate-bounce mr-2">مطلوب</span>}
+        </div>
       </div>
-      <div className="space-y-4 mt-6">
-        {options.map((opt, idx) => (
-          <label key={idx} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${currentBaseValue === opt.value ? 'border-blue-600 bg-blue-50 shadow-md' : 'border-gray-200 hover:bg-gray-50'}`}>
-            <input
-              type="radio"
-              name={id}
-              value={opt.value}
-              checked={currentBaseValue === opt.value}
-              onChange={(e) => {
-                if (opt.hasExtra) {
-                  onChange({ target: { name: id, value: `${e.target.value}:` } });
-                } else {
-                  onChange({ target: { name: id, value: e.target.value } });
-                }
-              }}
-              disabled={disabled}
-              className="w-5 h-5 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="font-bold text-gray-800">{opt.label}</span>
-          </label>
-        ))}
+
+      {/* Answers/Checkboxes */}
+      <div className="md:w-2/5 flex flex-col gap-3 md:border-r-2 md:border-gray-100 md:pr-6">
+        <div className="flex flex-wrap gap-3 items-center justify-start">
+          {options.map((opt, idx) => (
+            <label key={idx} className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all ${currentBaseValue === opt.value ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'}`}>
+              <input
+                type="radio"
+                name={id}
+                value={opt.value}
+                checked={currentBaseValue === opt.value}
+                onChange={(e) => {
+                  if (opt.hasExtra) {
+                    onChange({ target: { name: id, value: `${e.target.value}:` } });
+                  } else {
+                    onChange({ target: { name: id, value: e.target.value } });
+                  }
+                }}
+                disabled={disabled}
+                className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="font-bold text-gray-800 whitespace-nowrap">{opt.label}</span>
+            </label>
+          ))}
+        </div>
         
         {options.find(o => o.hasExtra && currentBaseValue === o.value) && (
           <input
@@ -1073,7 +1081,7 @@ const ChoiceBox = ({ id, label, options, value, onChange, disabled, error, extra
               onChange({ target: { name: id, value: `${baseValue}:${e.target.value}` } });
             }}
             disabled={disabled}
-            className="w-full mt-4 p-4 rounded-xl border-2 border-blue-200 focus:border-blue-600 outline-none font-bold transition-all bg-white"
+            className="w-full mt-2 p-3 rounded-xl border-2 border-blue-300 focus:border-blue-600 outline-none font-bold transition-all bg-white"
           />
         )}
       </div>
