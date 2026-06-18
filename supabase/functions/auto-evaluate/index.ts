@@ -20,11 +20,15 @@ serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { submissionId } = await req.json();
+    const { submissionId, round } = await req.json();
 
     if (!submissionId) {
       throw new Error("Submission ID is required");
     }
+
+    const isRound2 = round === 2;
+    const submissionTable = isRound2 ? 'submissions_round2' : 'submissions';
+    const answersTable = isRound2 ? 'company_answers_round2' : 'company_answers';
 
     // 1. Fetch criteria and company answers
     const { data: criteria, error: criteriaError } = await adminClient
@@ -35,7 +39,7 @@ serve(async (req) => {
     if (criteriaError) throw criteriaError;
 
     const { data: answers, error: answersError } = await adminClient
-      .from('company_answers')
+      .from(answersTable)
       .select('*')
       .eq('submission_id', submissionId);
 
@@ -87,15 +91,15 @@ serve(async (req) => {
     };
 
     const { error: updateError } = await adminClient
-      .from('submissions')
+      .from(submissionTable)
       .update(updateData)
       .eq('id', submissionId);
 
     if (updateError) throw updateError;
 
-    // 4. Recalculate rankings for all final submissions
+    // 4. Recalculate rankings for all final submissions in this round
     const { data: allSubs, error: subsError } = await adminClient
-      .from('submissions')
+      .from(submissionTable)
       .select('id, auto_score')
       .eq('status', 'final')
       .is('auto_rejection_reason', null)
@@ -109,11 +113,10 @@ serve(async (req) => {
         auto_ranking: index + 1
       }));
 
-      // Bulk update rankings (Supabase/Postgres handles this via upsert with ID)
-      // Note: In a high-traffic system, this should be a stored procedure
+      // Bulk update rankings
       for (const update of rankUpdates) {
         await adminClient
-          .from('submissions')
+          .from(submissionTable)
           .update({ auto_ranking: update.auto_ranking })
           .eq('id', update.id);
       }

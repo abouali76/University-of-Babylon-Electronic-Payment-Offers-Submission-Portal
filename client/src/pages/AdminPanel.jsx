@@ -222,25 +222,12 @@ const AdminPanel = () => {
 
     try {
       if (type === 'reset' || type === 'confirm_receipt' || type === 'finalize') {
-        if (roundView === 'round1') {
-          // Action for Round 1
-          const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
-            body: { action: type, username }
-          });
-          if (fnError) console.warn('Edge function warning for Round 1:', fnError);
-        } else if (roundView === 'round2') {
-          // Action for Round 2
-          try {
-            if (type === 'reset') {
-              await supabase.from('submissions_round2').delete().eq('username', username);
-            } else if (type === 'confirm_receipt') {
-              await supabase.from('submissions_round2').update({ is_received: true }).eq('username', username);
-            } else if (type === 'finalize') {
-              await supabase.from('submissions_round2').update({ status: 'final', is_received: true, last_updated: new Date().toISOString() }).eq('username', username);
-            }
-          } catch (round2Err) {
-            console.error('Round 2 action failed:', round2Err);
-          }
+        const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+          body: { action: type, username, round: roundView === 'round2' ? 2 : 1 }
+        });
+        if (fnError) {
+          console.warn('Edge function warning:', fnError);
+          throw fnError;
         }
 
         if (type === 'reset') alert('تم تصفير العرض بنجاح.');
@@ -275,9 +262,9 @@ const AdminPanel = () => {
         return;
       }
 
-      console.log(`Updating score for user ${username} to ${scoreValue}`);
+      console.log(`Updating score for user ${username} to ${scoreValue} in ${roundView}`);
       const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
-        body: { action: 'update_score', username, score: scoreValue }
+        body: { action: 'update_score', username, score: scoreValue, round: roundView === 'round2' ? 2 : 1 }
       });
 
       if (fnError) {
@@ -435,7 +422,7 @@ const AdminPanel = () => {
       ...submission,
       ...(submission.data || {}),
       userId: finalUserId, // Standardize as userId everywhere
-      evaluation_score: submission.evaluation_score,
+      evaluation_score: roundView === 'round2' ? submission.auto_score : submission.evaluation_score,
       status: submission.status,
       lastUpdated: submission.last_updated || submission.lastupdated,
       documentUrl: submission.document_path || submission.document_url,
@@ -693,8 +680,8 @@ const AdminPanel = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filteredCompanies.map((c) => (
-                      <tr key={c.username} className={`hover:bg-indigo-50/20 transition-all ${selectedForCompare.includes(c.username) ? 'bg-indigo-50/50 border-r-4 border-indigo-600' : ''}`}>
+                    {filteredCompanies.map((c, idx) => (
+                      <tr key={`${roundView}-${c.id || c.username}`} className={`hover:bg-indigo-50/20 transition-all ${selectedForCompare.includes(c.username) ? 'bg-indigo-50/50 border-r-4 border-indigo-600' : ''}`}>
                         <td className="px-8 py-6">
                            <button onClick={() => toggleCompare(c.username)} className={`p-2 rounded-lg transition-all ${selectedForCompare.includes(c.username) ? 'text-indigo-600 bg-indigo-100' : 'text-gray-200 hover:text-indigo-300'}`}>
                              {selectedForCompare.includes(c.username) ? <CheckSquare /> : <Square />}

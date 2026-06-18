@@ -38,6 +38,9 @@ const DashboardRound2 = () => {
     email: '',
     centralBankLicense: '',
     officialAddress: '',
+    hillaAddress: '',
+    q4_3_support_options: [],
+    q4_3_support_other: '',
     q2_1_deposit_within_short_period: '',
     q2_2_process_end_of_month_payments: '',
     q2_3_guarantee_movements_in_rashid: '',
@@ -78,7 +81,7 @@ const DashboardRound2 = () => {
   const STEP_FIELDS = {
     1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'officialAddress'],
     2: ['q2_1_deposit_within_short_period', 'q2_2_process_end_of_month_payments', 'q2_3_guarantee_movements_in_rashid', 'q2_4_commissions_and_discounts', 'q2_5_provide_atms_in_university', 'q2_6_student_cards_free_or_cheap', 'q2_7_charging_centers_in_university', 'q2_8_pos_maintenance_and_free_supplies', 'q2_9_laptop_and_printer', 'q2_10_partnership_with_rashid'],
-    3: ['q3_1_integrated_system', 'q3_2_safe_link_payment', 'q3_3_iban_available', 'q4_1_confidentiality', 'q4_2_backups', 'q4_3_technical_support'],
+    3: ['q3_1_integrated_system', 'q3_2_safe_link_payment', 'q3_3_iban_available', 'q4_1_confidentiality', 'q4_2_backups', 'q4_3_technical_support', 'q4_3_support_options', 'q4_3_support_other'],
     4: ['q5_1_data_ownership', 'q5_2_free_training', 'q5_3_contract_duration', 'q5_4_partial_updates', 'q5_5_contract_termination_and_fines'],
     5: ['q6_1_sponsor_support', 'additionalNotes', 'documentUrl'],
     6: ['signedBy', 'position']
@@ -204,7 +207,7 @@ const DashboardRound2 = () => {
       // Fetch answers if submission exists
       if (sub?.id) {
         supabase
-          .from('company_answers')
+          .from('company_answers_round2')
           .select('*')
           .eq('submission_id', sub.id)
           .then(({ data: ansData }) => {
@@ -446,7 +449,7 @@ const DashboardRound2 = () => {
         }));
 
         const { error: ansError } = await supabase
-          .from('company_answers')
+          .from('company_answers_round2')
           .upsert(answerPayloads, { onConflict: 'submission_id,criterion_id' });
         
         if (ansError) console.error('Failed to save answers:', ansError);
@@ -454,7 +457,7 @@ const DashboardRound2 = () => {
         // Trigger auto-evaluation edge function
         try {
           await supabase.functions.invoke('auto-evaluate', {
-            body: { submissionId }
+            body: { submissionId, round: 2 }
           });
         } catch (evalErr) {
           console.error('Auto-evaluation trigger failed:', evalErr);
@@ -525,7 +528,7 @@ const DashboardRound2 = () => {
                     {/* Logic to find label for field f */}
                     {findLabelForField(f)}
                   </span>
-                  <span className="font-black text-gray-900 text-left w-2/3 leading-relaxed">{formData[f] || '---'}</span>
+                  <span className="font-black text-gray-900 text-left w-2/3 leading-relaxed">{renderFieldValue(formData[f])}</span>
                 </div>
               ))}
             </div>
@@ -552,6 +555,14 @@ const DashboardRound2 = () => {
     return FIELD_LABELS[fieldName] || fieldName;
   };
 
+  const renderFieldValue = (val) => {
+    if (Array.isArray(val)) {
+      if (val.length === 0) return '---';
+      return val.join('، ');
+    }
+    return val || '---';
+  };
+
   const renderStepContent = () => {
     const isLocked = isReadOnly || isReceived || isSystemClosed;
     const inputProps = (name) => ({ 
@@ -575,7 +586,8 @@ const DashboardRound2 = () => {
               <InputField label="رقم الهاتف المعتمد" value={formData.phone} {...inputProps('phone')} />
               <InputField label="البريد الإلكتروني المعتمد" type="email" value={formData.email} {...inputProps('email')} />
               <InputField label="رقم إجازة البنك المركزي العراقي" value={formData.centralBankLicense} {...inputProps('centralBankLicense')} />
-              <InputField label="العنوان (المقر الرئيسي ومقر الحلة)" value={formData.officialAddress} {...inputProps('officialAddress')} />
+              <InputField label="العنوان (المقر الرئيسي)" value={formData.officialAddress} {...inputProps('officialAddress')} />
+              <InputField label="العنوان (المقر في الحلة)" value={formData.hillaAddress} {...inputProps('hillaAddress')} />
             </div>
           </div>
         );
@@ -653,9 +665,72 @@ const DashboardRound2 = () => {
                 {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
               ]} value={formData.q4_2_backups} {...inputProps('q4_2_backups')} />
 
-              <ChoiceBox id="q4_3_technical_support" label="3. هل هنالك دعم فني متوفر على مدار الساعة (24/7) ؟ (1- كروب واتساب 2- رقم استجابة سريعة 3- المتابعة شخصية مع مسؤول الحسابات لحل المشاكل او تزويده بالبيانات المطلوبة بسرعة لا تتجاوز اليومان)" options={[
-                {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
-              ]} value={formData.q4_3_technical_support} {...inputProps('q4_3_technical_support')} />
+              <div className="space-y-4">
+                <ChoiceBox id="q4_3_technical_support" label="3. هل هنالك دعم فني متوفر على مدار الساعة (24/7) ؟" options={[
+                  {label: 'نعم', value: 'نعم'}, {label: 'كلا', value: 'كلا'}
+                ]} value={formData.q4_3_technical_support} {...inputProps('q4_3_technical_support')} />
+                
+                {formData.q4_3_technical_support === 'نعم' && (
+                  <div className="bg-white border border-gray-100 rounded-2xl p-6 mr-4 shadow-sm animate-fade-in">
+                    <p className="text-sm font-black text-indigo-950 mb-4">[ في حال كانت الاجابة نعم يمكن اختيار اكثر من خيار مما في ادناه ]:</p>
+                    <div className="space-y-3">
+                      {[
+                        'كروب واتساب',
+                        'رقم استجابة سريعة خاص',
+                        'رقم استجابة عام لخدمة الزبائن',
+                        'نظام Help Desk او web ticketing system',
+                        'وكيل محادثة AI',
+                        'المتابعة شخصية مع مسؤول الحسابات لحل المشاكل او تزويده بالبيانات المطلوبة بسرعة لا تتجاوز اليومان'
+                      ].map(opt => (
+                        <label key={opt} className="flex items-center gap-3 cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            disabled={isLocked}
+                            checked={formData.q4_3_support_options?.includes(opt)}
+                            onChange={(e) => {
+                              const opts = formData.q4_3_support_options || [];
+                              if (e.target.checked) {
+                                setFormData({...formData, q4_3_support_options: [...opts, opt]});
+                              } else {
+                                setFormData({...formData, q4_3_support_options: opts.filter(o => o !== opt)});
+                              }
+                            }}
+                            className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 transition-all cursor-pointer"
+                          />
+                          <span className="text-sm font-bold text-gray-700 group-hover:text-indigo-900 transition-all">{opt}</span>
+                        </label>
+                      ))}
+                      
+                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-50">
+                        <label className="flex items-center gap-3 cursor-pointer group whitespace-nowrap">
+                          <input 
+                            type="checkbox" 
+                            disabled={isLocked}
+                            checked={formData.q4_3_support_options?.includes('اخرى')}
+                            onChange={(e) => {
+                              const opts = formData.q4_3_support_options || [];
+                              if (e.target.checked) {
+                                setFormData({...formData, q4_3_support_options: [...opts, 'اخرى']});
+                              } else {
+                                setFormData({...formData, q4_3_support_options: opts.filter(o => o !== 'اخرى'), q4_3_support_other: ''});
+                              }
+                            }}
+                            className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 transition-all cursor-pointer"
+                          />
+                          <span className="text-sm font-bold text-gray-700 group-hover:text-indigo-900 transition-all">اخرى (تذكر إن وجدت):</span>
+                        </label>
+                        <input
+                          type="text"
+                          disabled={isLocked || !formData.q4_3_support_options?.includes('اخرى')}
+                          value={formData.q4_3_support_other || ''}
+                          onChange={(e) => setFormData({...formData, q4_3_support_other: e.target.value})}
+                          className="flex-grow p-2 border-b-2 border-gray-200 focus:border-indigo-600 outline-none font-bold text-sm bg-transparent transition-all disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );

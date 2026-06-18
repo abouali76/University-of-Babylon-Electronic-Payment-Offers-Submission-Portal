@@ -5,7 +5,7 @@ import { ArrowRight, Building2, Search, ChevronDown, ChevronUp, Download, Sparkl
 import ReactMarkdown from 'react-markdown';
 
 // جميع أقسام الأسئلة مع مفاتيح البيانات
-const SECTIONS = [
+const SECTIONS_ROUND1 = [
   {
     id: 'general',
     title: 'أولاً: المعلومات العامة',
@@ -109,6 +109,82 @@ const SECTIONS = [
   }
 ];
 
+const SECTIONS_ROUND2 = [
+  {
+    id: 'general',
+    title: 'أولاً: المعلومات العامة والخبرات',
+    color: '#6366f1',
+    bg: '#eef2ff',
+    questions: [
+      { key: 'centralBankLicense', aliases: ['central_bank_license'], label: 'رقم إجازة البنك المركزي العراقي' },
+      { key: 'officialAddress', aliases: ['official_address'], label: 'العنوان الرسمي / المقر الرئيسي' },
+    ]
+  },
+  {
+    id: 'financial',
+    title: 'ثانياً: الالتزامات التشغيلية والمالية',
+    color: '#059669',
+    bg: '#ecfdf5',
+    questions: [
+      { key: 'q2_1_deposit_within_short_period', label: '1. الالتزام بإيداع المبالغ في مصرف الرشيد خلال مدة قصيرة' },
+      { key: 'q2_2_process_end_of_month_payments', label: '2. معالجة تسديدات اليوم الأخير من الشهر' },
+      { key: 'q2_3_guarantee_movements_in_rashid', label: '3. ضمان ظهور الحركات في مصرف الرشيد' },
+      { key: 'q2_4_commissions_and_discounts', label: '4. نسب العمولات والخصومات المقترحة' },
+      { key: 'q2_5_provide_atms_in_university', label: '5. توفير صراف آلي (ATM) داخل الجامعة' },
+      { key: 'q2_6_student_cards_free_or_cheap', label: '6. إصدار بطاقات للطلبة مجانا او باجور بسيطة' },
+      { key: 'q2_7_charging_centers_in_university', label: '7. توفير مراكز تعبئة داخل الجامعة' },
+      { key: 'q2_8_pos_maintenance_and_free_supplies', label: '8. مستلزمات التشغيل والصيانة والاستبدال مجاناً' },
+      { key: 'q2_9_laptop_and_printer', label: '9. توفير حاسبة لاب توب وطابعة' },
+      { key: 'q2_10_partnership_with_rashid', label: '10. شراكة دائمة مع مصرف الرشيد' },
+    ]
+  },
+  {
+    id: 'technical',
+    title: 'ثالثاً: الالتزامات التقنية والأمنية - أ. النظام الإلكتروني والتكامل',
+    color: '#0ea5e9',
+    bg: '#f0f9ff',
+    questions: [
+      { key: 'q3_1_integrated_system', label: '1. نظام إلكتروني متكامل' },
+      { key: 'q3_2_safe_link_payment', label: '2. التسديد عبر رابط آمن' },
+      { key: 'q3_3_iban_available', label: '3. رقم IBAN لكل بطاقة' },
+    ]
+  },
+  {
+    id: 'security',
+    title: 'ثالثاً: الالتزامات التقنية والأمنية - ب. الأمن السيبراني والاستمرارية',
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    questions: [
+      { key: 'q4_1_confidentiality', label: '1. سرية تامة' },
+      { key: 'q4_2_backups', label: '2. نسخ احتياطية' },
+      { key: 'q4_3_technical_support', label: '3. دعم فني (24/7)' },
+    ]
+  },
+  {
+    id: 'legal',
+    title: 'رابعاً: الالتزامات القانونية والتعاقدية',
+    color: '#dc2626',
+    bg: '#fff1f2',
+    questions: [
+      { key: 'q5_1_data_ownership', label: '1. ملكية البيانات تعود للجامعة' },
+      { key: 'q5_2_free_training', label: '2. برامج تدريبية مجانية' },
+      { key: 'q5_3_contract_duration', label: '3. مدة العقد سنتان' },
+      { key: 'q5_4_partial_updates', label: '4. اضافة تحديث جزئي' },
+      { key: 'q5_5_contract_termination_and_fines', label: '5. فسخ العقد والغرامات المالية' },
+    ]
+  },
+  {
+    id: 'extra',
+    title: 'خامساً: الخدمات الإضافية والمرفقات',
+    color: '#0d9488',
+    bg: '#f0fdfa',
+    questions: [
+      { key: 'q6_1_sponsor_support', label: '1. الدعم (Sponsor)' },
+      { key: 'additionalNotes', aliases: ['additionalnotes', 'additional_notes'], label: 'ملاحظات إضافية' },
+    ]
+  }
+];
+
 const getValue = (company, question) => {
   // Try main key (exact and lowercase)
   let val = company[question.key] || company[question.key?.toLowerCase()];
@@ -154,6 +230,7 @@ const QuestionComparison = () => {
   const [openSections, setOpenSections] = useState({ general: true, financial: true, technical: true, security: true, guarantees: true, legal: true, extra: true });
   const [activeCategory, setActiveCategory] = useState('all');
   const [printConfig, setPrintConfig] = useState('A3 landscape');
+  const [roundView, setRoundView] = useState('round2');
 
   // Analysis State
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
@@ -162,22 +239,32 @@ const QuestionComparison = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
 
+  
   const fetchCompanies = async () => {
     setLoading(true);
     try {
-      const { data: subs, error } = await supabase
+      const { data: subs1, error: err1 } = await supabase
         .from('submissions')
         .select('*')
         .eq('status', 'final')
         .order('last_updated', { ascending: false });
 
-      if (error) throw error;
+      const { data: subs2, error: err2 } = await supabase
+        .from('submissions_round2')
+        .select('*')
+        .eq('status', 'final')
+        .order('last_updated', { ascending: false });
 
-      const mapped = (subs || []).map(sub => ({
+      if (err1) throw err1;
+      if (err2) throw err2;
+
+      const activeSubs = roundView === 'round1' ? (subs1 || []) : (subs2 || []);
+
+      const mapped = activeSubs.map(sub => ({
         ...sub,
         ...(sub.data || {}),
-        companyName: (sub.data?.companyName) || sub.companyname || sub.companyName || sub.username,
-        representativeName: (sub.data?.representativeName) || sub.representativename || '---',
+        companyName: (sub.data?.companyName) || sub.companyname || sub.company_name || sub.companyName || sub.username,
+        representativeName: (sub.data?.representativeName) || sub.representativename || sub.representative_name || '---',
       }));
 
       setCompanies(mapped);
@@ -191,15 +278,16 @@ const QuestionComparison = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+  }, [roundView]);
+
 
   const filteredCompanies = companies.filter(c =>
     (c.companyName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const visibleSections = activeCategory === 'all' 
-    ? SECTIONS 
-    : SECTIONS.filter(sec => CATEGORIES.find(c => c.id === activeCategory)?.sections.includes(sec.id));
+    ? (roundView === 'round1' ? SECTIONS_ROUND1 : SECTIONS_ROUND2) 
+    : (roundView === 'round1' ? SECTIONS_ROUND1 : SECTIONS_ROUND2).filter(sec => CATEGORIES.find(c => c.id === activeCategory)?.sections.includes(sec.id));
 
   const toggleSection = (id) => setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
 

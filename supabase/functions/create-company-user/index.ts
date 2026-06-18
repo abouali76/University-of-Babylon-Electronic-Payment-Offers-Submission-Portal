@@ -209,6 +209,9 @@ serve(async (req) => {
 
     const email = usernameToEmail(username);
 
+    const round = body.round || 1;
+    const submissionTable = round === 2 ? "submissions_round2" : "submissions";
+
     if (action === "delete") {
       // 1. Find user ID from auth
       let targetUserId = null;
@@ -241,8 +244,8 @@ serve(async (req) => {
       }
       
       // 4. Delete database records explicitly
-      // Cascade delete should handle submissions if FK is set, but we be explicit for safety
       await adminClient.from("submissions").delete().eq("username", username);
+      await adminClient.from("submissions_round2").delete().eq("username", username);
       await adminClient.from("users").delete().eq("username", username);
 
       return new Response(JSON.stringify({ success: true }), {
@@ -252,26 +255,26 @@ serve(async (req) => {
     }
 
     if (action === "reset") {
-      const { error } = await adminClient.from("submissions").delete().eq("username", username);
+      const { error } = await adminClient.from(submissionTable).delete().eq("username", username);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "confirm_receipt") {
-      const { error } = await adminClient.from("submissions").update({ is_received: true }).eq("username", username);
+      const { error } = await adminClient.from(submissionTable).update({ is_received: true }).eq("username", username);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "finalize") {
-      const { error } = await adminClient.from("submissions").update({ status: "final", is_received: true, last_updated: new Date().toISOString() }).eq("username", username);
+      const { error } = await adminClient.from(submissionTable).update({ status: "final", is_received: true, last_updated: new Date().toISOString() }).eq("username", username);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "update_score") {
       const score = body.score;
-      const { error } = await adminClient.from("submissions").update({ evaluation_score: score }).eq("username", username);
+      const { error } = await adminClient.from(submissionTable).update({ evaluation_score: score }).eq("username", username);
       if (error) throw error;
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
