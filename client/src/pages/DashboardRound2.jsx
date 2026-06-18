@@ -273,22 +273,35 @@ const DashboardRound2 = () => {
   const fromDbPayload = (dbData) => {
     if (!dbData) return {};
     const data = { ...dbData };
-    data.documentUrl = dbData.document_url || dbData.documentUrl;
+    data.companyName = dbData.company_name;
+    data.submissionDate = dbData.submission_date;
+    data.representativeName = dbData.representative_name;
+    data.centralBankLicense = dbData.central_bank_license;
+    data.officialAddress = dbData.official_address;
+    data.additionalNotes = dbData.additional_notes;
+    data.signedBy = dbData.signed_by;
+    data.documentUrl = dbData.document_url || dbData.document_path || dbData.documentUrl;
     return data;
   };
 
   const toDbPayload = (data) => {
     const payload = {};
-    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id'];
+    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id', 'documentUrl', 'document_url', 'document_path', 'companyName', 'submissionDate', 'representativeName', 'centralBankLicense', 'officialAddress', 'additionalNotes', 'signedBy'];
     
     Object.keys(data).forEach(key => {
-      if (exclude.includes(key.toLowerCase())) return;
-      if (key === 'documentUrl') {
-        payload['document_url'] = data[key];
-      } else {
-        payload[key] = data[key];
-      }
+      if (exclude.includes(key)) return;
+      payload[key] = data[key];
     });
+
+    payload.company_name = data.companyName;
+    payload.submission_date = data.submissionDate;
+    payload.representative_name = data.representativeName;
+    payload.central_bank_license = data.centralBankLicense;
+    payload.official_address = data.officialAddress;
+    payload.additional_notes = data.additionalNotes;
+    payload.signed_by = data.signedBy;
+    payload.document_url = data.documentUrl;
+
     return payload;
   };
 
