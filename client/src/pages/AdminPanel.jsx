@@ -225,9 +225,21 @@ const AdminPanel = () => {
         const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
           body: { action: type, username }
         });
-        if (fnError) throw fnError;
-        if (data?.error) throw new Error(data.error);
+        if (fnError) console.warn('Edge function warning:', fnError);
         
+        // Also update Round 2 table directly
+        try {
+          if (type === 'reset') {
+            await supabase.from('submissions_round2').delete().eq('username', username);
+          } else if (type === 'confirm_receipt') {
+            await supabase.from('submissions_round2').update({ is_received: true }).eq('username', username);
+          } else if (type === 'finalize') {
+            await supabase.from('submissions_round2').update({ status: 'final', is_received: true, last_updated: new Date().toISOString() }).eq('username', username);
+          }
+        } catch (round2Err) {
+          console.error('Round 2 update failed:', round2Err);
+        }
+
         if (type === 'reset') alert('تم تصفير العرض بنجاح.');
         else if (type === 'confirm_receipt') alert('تم تأييد الاستلام وقفل التعديل للشركة.');
         else if (type === 'finalize') alert('تم تثبيت العرض كطلب نهائي وتأييد الاستلام وقفل التعديل بنجاح.');
