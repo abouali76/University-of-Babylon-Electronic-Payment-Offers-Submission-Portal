@@ -294,30 +294,7 @@ const Dashboard = ({ isReadOnly }) => {
     };
     boot();
 
-    // Cleanup: Delete login notification when leaving
-    const cleanup = () => {
-      if (activityLogId.current) {
-        // Use native fetch with keepalive to ensure it finishes even on tab close
-        const url = `${safeUrl}/rest/v1/activity_logs?id=eq.${activityLogId.current}`;
-        fetch(url, {
-          method: 'DELETE',
-          headers: {
-            'apikey': safeAnon,
-            'Authorization': `Bearer ${safeAnon}`,
-            'Content-Type': 'application/json'
-          },
-          keepalive: true
-        });
-      }
-    };
-
-    window.addEventListener('beforeunload', cleanup);
-
-    return () => {
-      window.removeEventListener('beforeunload', cleanup);
-      cleanup();
-    };
-  }, [navigate]);
+      }, [navigate]);
 
   const fromDbPayload = (dbData) => {
     if (!dbData) return {};

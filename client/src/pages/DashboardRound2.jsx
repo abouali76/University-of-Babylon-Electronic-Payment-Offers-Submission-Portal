@@ -222,30 +222,7 @@ const DashboardRound2 = () => {
     };
     boot();
 
-    // Cleanup: Delete login notification when leaving
-    const cleanup = () => {
-      if (activityLogId.current) {
-        // Use native fetch with keepalive to ensure it finishes even on tab close
-        const url = `${safeUrl}/rest/v1/activity_logs?id=eq.${activityLogId.current}`;
-        fetch(url, {
-          method: 'DELETE',
-          headers: {
-            'apikey': safeAnon,
-            'Authorization': `Bearer ${safeAnon}`,
-            'Content-Type': 'application/json'
-          },
-          keepalive: true
-        });
-      }
-    };
-
-    window.addEventListener('beforeunload', cleanup);
-
-    return () => {
-      window.removeEventListener('beforeunload', cleanup);
-      cleanup();
-    };
-  }, [navigate]);
+      }, [navigate]);
 
   const fromDbPayload = (dbData) => {
     if (!dbData) return {};
@@ -255,6 +232,7 @@ const DashboardRound2 = () => {
     data.representativeName = dbData.representative_name;
     data.centralBankLicense = dbData.central_bank_license;
     data.officialAddress = dbData.official_address;
+    data.hillaAddress = dbData.hilla_address;
     data.additionalNotes = dbData.additional_notes;
     data.signedBy = dbData.signed_by;
     data.documentUrl = dbData.document_url || dbData.document_path || dbData.documentUrl;
@@ -263,7 +241,7 @@ const DashboardRound2 = () => {
 
   const toDbPayload = (data) => {
     const payload = {};
-    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id', 'documentUrl', 'document_url', 'document_path', 'companyName', 'submissionDate', 'representativeName', 'centralBankLicense', 'officialAddress', 'additionalNotes', 'signedBy'];
+    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id', 'documentUrl', 'document_url', 'document_path', 'companyName', 'submissionDate', 'representativeName', 'centralBankLicense', 'officialAddress', 'hillaAddress', 'additionalNotes', 'signedBy'];
     
     Object.keys(data).forEach(key => {
       if (exclude.includes(key)) return;
@@ -275,6 +253,7 @@ const DashboardRound2 = () => {
     payload.representative_name = data.representativeName;
     payload.central_bank_license = data.centralBankLicense;
     payload.official_address = data.officialAddress;
+    payload.hilla_address = data.hillaAddress;
     payload.additional_notes = data.additionalNotes;
     payload.signed_by = data.signedBy;
     payload.document_url = data.documentUrl;
