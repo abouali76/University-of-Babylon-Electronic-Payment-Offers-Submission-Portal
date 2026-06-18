@@ -1066,7 +1066,7 @@ const ChoiceBox = ({ id, label, options, value, onChange, disabled, error, extra
                 disabled={disabled}
                 className="w-5 h-5 text-blue-600 focus:ring-blue-500"
               />
-              <span className="font-bold text-gray-800 whitespace-nowrap">{opt.label}</span>
+              <span className="font-bold text-gray-800 break-words">{opt.label}</span>
             </label>
           ))}
         </div>
