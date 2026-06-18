@@ -14,7 +14,7 @@ const Login = () => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('currentUser'));
     if (user) {
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+      navigate(user.role === 'admin' ? '/admin' : '/home');
     }
   }, [navigate]);
 
@@ -104,7 +104,7 @@ const Login = () => {
       };
 
       localStorage.setItem('currentUser', JSON.stringify(userData));
-      navigate(role === 'admin' ? '/admin' : '/dashboard');
+      navigate(role === 'admin' ? '/admin' : '/home');
       window.location.reload();
     } catch (err) {
       console.error('Login error:', err);
