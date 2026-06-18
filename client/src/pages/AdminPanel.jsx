@@ -475,7 +475,7 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row" dir="rtl">
       <div className="hidden print:block w-full bg-white">
-        <PrintTemplate data={selectedSubmission} />
+        <PrintTemplate data={selectedSubmission} round={roundView === 'round2' ? 2 : 1} />
       </div>
 
       {/* Mobile Top Bar */}

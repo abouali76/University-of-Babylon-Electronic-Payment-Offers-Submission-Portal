@@ -83,7 +83,7 @@ const DashboardRound2 = () => {
     2: ['q2_1_deposit_within_short_period', 'q2_2_process_end_of_month_payments', 'q2_3_guarantee_movements_in_rashid', 'q2_4_commissions_and_discounts', 'q2_5_provide_atms_in_university', 'q2_6_student_cards_free_or_cheap', 'q2_7_charging_centers_in_university', 'q2_8_pos_maintenance_and_free_supplies', 'q2_9_laptop_and_printer', 'q2_10_partnership_with_rashid'],
     3: ['q3_1_integrated_system', 'q3_2_safe_link_payment', 'q3_3_iban_available', 'q4_1_confidentiality', 'q4_2_backups', 'q4_3_technical_support'],
     4: ['q5_1_data_ownership', 'q5_2_free_training', 'q5_3_contract_duration', 'q5_4_partial_updates', 'q5_5_contract_termination_and_fines'],
-    5: ['q6_1_sponsor_support', 'additionalNotes', 'documentUrl'],
+    5: ['q6_1_sponsor_support', 'documentUrl'],
     6: ['signedBy', 'position']
   };
 
@@ -830,9 +830,9 @@ const DashboardRound2 = () => {
       {/* Hidden Print Template */}
       <div className="hidden print:block w-full bg-white">
         {printMode === 'blank' ? (
-          <PrintTemplate isBlank={true} />
+          <PrintTemplate isBlank={true} round={2} />
         ) : (
-          <PrintTemplate data={{ ...formData, username: user?.username }} isBlank={false} />
+          <PrintTemplate data={{ ...formData, username: user?.username }} isBlank={false} round={2} />
         )}
       </div>
 

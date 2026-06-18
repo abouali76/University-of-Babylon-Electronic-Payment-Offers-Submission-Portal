@@ -886,9 +886,9 @@ const Dashboard = ({ isReadOnly }) => {
       {/* Hidden Print Template */}
       <div className="hidden print:block w-full bg-white">
         {printMode === 'blank' ? (
-          <PrintTemplate isBlank={true} />
+          <PrintTemplate isBlank={true} round={1} />
         ) : (
-          <PrintTemplate data={{ ...formData, username: user?.username }} isBlank={false} />
+          <PrintTemplate data={{ ...formData, username: user?.username }} isBlank={false} round={1} />
         )}
       </div>
 
