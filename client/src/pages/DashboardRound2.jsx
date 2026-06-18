@@ -146,14 +146,22 @@ const DashboardRound2 = () => {
 
       const username = (currentUser.user_metadata?.username || localUser.username || '').toLowerCase().trim();
       
-      const { data: sub, error: subError } = await supabase
-        .from('submissions_round2')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle();
+      // Parallel fetch for independent data
+      const [
+        subResult,
+        annResult,
+        sysResult,
+        critResult
+      ] = await Promise.all([
+        supabase.from('submissions_round2').select('*').eq('username', username).maybeSingle(),
+        supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1),
+        supabase.from('system_settings').select('*').eq('id', 'global').maybeSingle(),
+        supabase.from('evaluation_criteria').select('*').order('display_order', { ascending: true })
+      ]);
 
-      if (subError) throw subError;
+      if (subResult.error) throw subResult.error;
 
+      const sub = subResult.data;
       if (sub) {
         const mappedData = fromDbPayload(sub);
         setFormData(p => ({ 
@@ -165,82 +173,48 @@ const DashboardRound2 = () => {
         setIsReceived(!!sub.is_received);
       }
 
-      // Log Login Activity
-      try {
-        const { data: logData } = await supabase.from('activity_logs').insert({
-          username: username,
-          event_type: 'login',
-          details: `دخلت الشركة للعمل على الاستمارة`
-        }).select();
-        
+      // Log Login Activity in background (no await)
+      supabase.from('activity_logs').insert({
+        username: username,
+        event_type: 'login',
+        details: `دخلت الشركة للعمل على الاستمارة`
+      }).select().then(({ data: logData }) => {
         if (logData && logData[0]) {
           activityLogId.current = logData[0].id;
         }
-      } catch (logErr) {
-        console.warn('Logging failed (table might not exist yet):', logErr);
+      }).catch(logErr => console.warn('Logging failed:', logErr));
+
+      // Handle announcement
+      if (annResult.data && annResult.data[0]) {
+        setAnnouncement(annResult.data[0]);
+        setShowAnnouncementModal(true);
+        setAnnouncementDismissed(false);
       }
 
-      // Fetch active announcement
-      try {
-        const { data: annData } = await supabase
-          .from('announcements')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(1);
-        
-        if (annData && annData[0]) {
-          const ann = annData[0];
-          setAnnouncement(ann);
-          // Always show on entry as per user request
-          setShowAnnouncementModal(true);
-          setAnnouncementDismissed(false);
-        }
-      } catch (annErr) {
-        console.warn('Announcement fetch failed:', annErr);
+      // Handle system settings
+      if (sysResult.data && sysResult.data.close_at) {
+        const closeDate = new Date(sysResult.data.close_at);
+        setSystemCloseTime(closeDate);
+        if (new Date() > closeDate) setIsSystemClosed(true);
       }
 
-      // Fetch system settings
-      try {
-        const { data: sysData } = await supabase
-          .from('system_settings')
-          .select('*')
-          .eq('id', 'global')
-          .maybeSingle();
-        
-        if (sysData && sysData.close_at) {
-          const closeDate = new Date(sysData.close_at);
-          setSystemCloseTime(closeDate);
-          if (new Date() > closeDate) {
-            setIsSystemClosed(true);
-          }
-        }
-      } catch (sysErr) {
-        console.warn('System settings fetch failed:', sysErr);
-      }
+      // Handle criteria
+      setCriteria(critResult.data || []);
 
-      // Fetch evaluation criteria
-      try {
-        const { data: critData } = await supabase
-          .from('evaluation_criteria')
+      // Fetch answers if submission exists
+      if (sub?.id) {
+        supabase
+          .from('company_answers')
           .select('*')
-          .order('display_order', { ascending: true });
-        setCriteria(critData || []);
-
-        if (sub?.id) {
-          const { data: ansData } = await supabase
-            .from('company_answers')
-            .select('*')
-            .eq('submission_id', sub.id);
-          
-          if (ansData) {
-            const ansMap = {};
-            ansData.forEach(a => { ansMap[a.criterion_id] = a.answer_value; });
-            setEvaluationAnswers(ansMap);
-          }
-        }
-      } catch (critErr) {
-        console.warn('Criteria fetch failed:', critErr);
+          .eq('submission_id', sub.id)
+          .then(({ data: ansData }) => {
+            if (ansData) {
+              const ansMap = {};
+              ansData.forEach(a => { ansMap[a.criterion_id] = a.answer_value; });
+              setEvaluationAnswers(ansMap);
+            }
+          })
+          .catch(err => console.warn('Answers fetch failed', err));
       }
     };
     boot();
