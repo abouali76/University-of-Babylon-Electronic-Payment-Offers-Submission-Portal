@@ -67,7 +67,7 @@ const CompanyHome = () => {
           <div className="text-center mb-10">
             <h2 className="text-2xl font-black text-gray-800 mb-4">يرجى اختيار الجولة</h2>
             <p className="text-gray-500 text-sm font-bold max-w-lg mx-auto">
-              يمكنك الآن تقديم العرض الفني والمالي الخاص بالجولة الثانية. أما معلومات الجولة الأولى فهي متاحة للاطلاع والقراءة فقط.
+              يمكنك الدخول إلى أي من الجولتين لتقديم العرض أو الاطلاع على بياناتك السابقة بناءً على مرحلة شركتك.
             </p>
           </div>
 
@@ -83,13 +83,13 @@ const CompanyHome = () => {
                   <FileText className="w-7 h-7" />
                 </div>
                 <span className="text-xs font-black px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
-                  للقراءة فقط
+                  متاح
                 </span>
               </div>
               
               <h3 className="text-xl font-black text-gray-800 mb-2">استمارة الجولة الأولى</h3>
               <p className="text-gray-500 text-sm mb-6 font-bold leading-relaxed">
-                عرض البيانات والمرفقات السابقة التي تم تقديمها خلال الجولة الأولى.
+                تقديم أو عرض البيانات والمرفقات السابقة الخاصة بالجولة الأولى.
               </p>
               
               <div className="flex items-center text-gray-400 group-hover:text-blue-600 font-bold text-sm gap-2 transition-all">

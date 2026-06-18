@@ -35,7 +35,7 @@ function App() {
             />
             <Route 
               path="/dashboard" 
-              element={user?.role === 'company' ? <Dashboard isReadOnly={true} /> : <Navigate to="/login" />} 
+              element={user?.role === 'company' ? <Dashboard /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/dashboard-round2" 

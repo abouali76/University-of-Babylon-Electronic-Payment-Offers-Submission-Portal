@@ -222,22 +222,25 @@ const AdminPanel = () => {
 
     try {
       if (type === 'reset' || type === 'confirm_receipt' || type === 'finalize') {
-        const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
-          body: { action: type, username }
-        });
-        if (fnError) console.warn('Edge function warning:', fnError);
-        
-        // Also update Round 2 table directly
-        try {
-          if (type === 'reset') {
-            await supabase.from('submissions_round2').delete().eq('username', username);
-          } else if (type === 'confirm_receipt') {
-            await supabase.from('submissions_round2').update({ is_received: true }).eq('username', username);
-          } else if (type === 'finalize') {
-            await supabase.from('submissions_round2').update({ status: 'final', is_received: true, last_updated: new Date().toISOString() }).eq('username', username);
+        if (roundView === 'round1') {
+          // Action for Round 1
+          const { data, error: fnError } = await supabase.functions.invoke('create-company-user', {
+            body: { action: type, username }
+          });
+          if (fnError) console.warn('Edge function warning for Round 1:', fnError);
+        } else if (roundView === 'round2') {
+          // Action for Round 2
+          try {
+            if (type === 'reset') {
+              await supabase.from('submissions_round2').delete().eq('username', username);
+            } else if (type === 'confirm_receipt') {
+              await supabase.from('submissions_round2').update({ is_received: true }).eq('username', username);
+            } else if (type === 'finalize') {
+              await supabase.from('submissions_round2').update({ status: 'final', is_received: true, last_updated: new Date().toISOString() }).eq('username', username);
+            }
+          } catch (round2Err) {
+            console.error('Round 2 action failed:', round2Err);
           }
-        } catch (round2Err) {
-          console.error('Round 2 update failed:', round2Err);
         }
 
         if (type === 'reset') alert('تم تصفير العرض بنجاح.');
