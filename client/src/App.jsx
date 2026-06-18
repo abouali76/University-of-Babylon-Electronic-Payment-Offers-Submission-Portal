@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import RankingTable from './components/RankingTable';
 import QuestionComparison from './pages/QuestionComparison';
+import CompanyHome from './pages/CompanyHome';
+import DashboardRound2 from './pages/DashboardRound2';
 
 function App() {
   // Read synchronously to prevent flicker - localStorage is synchronous
@@ -28,8 +30,16 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route 
+              path="/home" 
+              element={user?.role === 'company' ? <CompanyHome /> : <Navigate to="/login" />} 
+            />
+            <Route 
               path="/dashboard" 
-              element={user?.role === 'company' ? <Dashboard /> : <Navigate to="/login" />} 
+              element={user?.role === 'company' ? <Dashboard isReadOnly={true} /> : <Navigate to="/login" />} 
+            />
+            <Route 
+              path="/dashboard-round2" 
+              element={user?.role === 'company' ? <DashboardRound2 /> : <Navigate to="/login" />} 
             />
             <Route 
               path="/admin" 
@@ -40,7 +50,7 @@ function App() {
               element={user?.role === 'admin' ? <QuestionComparison /> : <Navigate to="/login" />} 
             />
 
-            <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'} />} />
+            <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/home') : '/login'} />} />
           </Routes>
         </div>
       </div>

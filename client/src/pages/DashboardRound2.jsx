@@ -9,7 +9,8 @@ import {
 import { supabase, safeUrl, safeAnon } from '../utils/supabaseClient';
 import PrintTemplate from '../components/PrintTemplate';
 
-const Dashboard = ({ isReadOnly }) => {
+const DashboardRound2 = () => {
+  const isReadOnly = false;
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -36,50 +37,29 @@ const Dashboard = ({ isReadOnly }) => {
     phone: '',
     email: '',
     centralBankLicense: '',
-    marketExperience: '',
-    govInstitutionsCount: '',
-    paidCapital: '',
     officialAddress: '',
-    q2_1_settlement: '',
-    q2_2_commissions: '',
-    q2_3_intermediary: '',
-    q2_4_delayPenalty: '',
-    q2_5_atmCommitment: '',
-    q2_6_studentCards: '',
-    q2_7_chargingCenters: '',
-    q2_8_posCommitment: '',
-    q3a_1_integratedSystem: '',
-    q3a_2_techSpecs: '',
-    q3a_3_appSupport: '',
-    q3a_4_webIntegration: '',
-    q3a_5_reporting: '',
-    q3a_6_training: '',
-    q3b_1_certificates: '',
-    q3b_2_encryption: '',
-    q3b_3_rto_bcp: '',
-    q3b_4_backups: '',
-    q3b_5_supportSla: '',
-    q3b_6_penTest: '',
-    q3b_7_monitoring: '',
-    q3b_8_incident: '',
-    q4_1_bankGuarantee: '',
-    q4_2_penaltyClause: '',
-    q4_3_dataOwnership: '',
-    q4_4_exitClause: '',
-    q4_5_liability: '',
-    q4_6_jurisdiction: '',
-    q4_7_auditRight: '',
-    q4_8_contractDuration: '',
-    q4_9_renewal: '',
-    q4_10_blacklist: '',
-    q5_1_extraFeatures: '',
-    q5_2_innovation: '',
-    q5_3_scholarships: '',
-    q5_4_staffTraining: '',
-    q5_5_posUpdates: '',
-    q5_6_foreignPayments: '',
-    q5_7_complaints: '',
-    q5_8_socialResp: '',
+    q2_1_deposit_within_short_period: '',
+    q2_2_process_end_of_month_payments: '',
+    q2_3_guarantee_movements_in_rashid: '',
+    q2_4_commissions_and_discounts: '',
+    q2_5_provide_atms_in_university: '',
+    q2_6_student_cards_free_or_cheap: '',
+    q2_7_charging_centers_in_university: '',
+    q2_8_pos_maintenance_and_free_supplies: '',
+    q2_9_laptop_and_printer: '',
+    q2_10_partnership_with_rashid: '',
+    q3_1_integrated_system: '',
+    q3_2_safe_link_payment: '',
+    q3_3_iban_available: '',
+    q4_1_confidentiality: '',
+    q4_2_backups: '',
+    q4_3_technical_support: '',
+    q5_1_data_ownership: '',
+    q5_2_free_training: '',
+    q5_3_contract_duration: '',
+    q5_4_partial_updates: '',
+    q5_5_contract_termination_and_fines: '',
+    q6_1_sponsor_support: '',
     additionalNotes: '',
     signedBy: '',
     position: '',
@@ -87,85 +67,56 @@ const Dashboard = ({ isReadOnly }) => {
   });
 
   const steps = [
-    { id: 1, title: 'المعلومات العامة' },
+    { id: 1, title: 'معلومات الشركة' },
     { id: 2, title: 'الالتزامات التشغيلية والمالية' },
-    { id: 3, title: 'النظام الإلكتروني والتكامل' },
-    { id: 4, title: 'الأمن السيبراني والاستمرارية' },
-    { id: 5, title: 'الضمانات وملكية البيانات' },
-    { id: 6, title: 'الالتزامات القانونية' },
-    { id: 7, title: 'الخدمات الإضافية والميزات' },
-    { id: 8, title: 'المرفقات والملاحظات' },
-    { id: 9, title: 'المصادقة والتوقيع النهائي' },
-    { id: 10, title: 'استمارة التقييم التلقائي' }
+    { id: 3, title: 'النظام الإلكتروني والأمن' },
+    { id: 4, title: 'الالتزامات القانونية' },
+    { id: 5, title: 'الخدمات الإضافية والمرفقات' },
+    { id: 6, title: 'المصادقة والتوقيع النهائي' }
   ];
 
   const STEP_FIELDS = {
-    1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'marketExperience', 'govInstitutionsCount', 'paidCapital', 'officialAddress'],
-    2: ['q2_1_settlement', 'q2_2_commissions', 'q2_3_intermediary', 'q2_4_delayPenalty', 'q2_5_atmCommitment', 'q2_6_studentCards', 'q2_7_chargingCenters', 'q2_8_posCommitment'],
-    3: ['q3a_1_integratedSystem', 'q3a_2_techSpecs', 'q3a_3_appSupport', 'q3a_4_webIntegration', 'q3a_5_reporting', 'q3a_6_training'],
-    4: ['q3b_1_certificates', 'q3b_2_encryption', 'q3b_3_rto_bcp', 'q3b_4_backups', 'q3b_5_supportSla', 'q3b_6_penTest', 'q3b_7_monitoring', 'q3b_8_incident'],
-    5: ['q4_1_bankGuarantee', 'q4_2_penaltyClause', 'q4_3_dataOwnership'],
-    6: ['q4_4_exitClause', 'q4_5_liability', 'q4_6_jurisdiction', 'q4_7_auditRight', 'q4_8_contractDuration', 'q4_9_renewal', 'q4_10_blacklist'],
-    7: ['q5_1_extraFeatures', 'q5_2_innovation', 'q5_3_scholarships', 'q5_4_staffTraining', 'q5_5_posUpdates', 'q5_6_foreignPayments', 'q5_7_complaints', 'q5_8_socialResp'],
-    8: ['documentUrl'],
-    9: ['signedBy', 'position'],
-    10: [] // Answers handled separately
+    1: ['companyName', 'submissionDate', 'representativeName', 'phone', 'email', 'centralBankLicense', 'officialAddress'],
+    2: ['q2_1_deposit_within_short_period', 'q2_2_process_end_of_month_payments', 'q2_3_guarantee_movements_in_rashid', 'q2_4_commissions_and_discounts', 'q2_5_provide_atms_in_university', 'q2_6_student_cards_free_or_cheap', 'q2_7_charging_centers_in_university', 'q2_8_pos_maintenance_and_free_supplies', 'q2_9_laptop_and_printer', 'q2_10_partnership_with_rashid'],
+    3: ['q3_1_integrated_system', 'q3_2_safe_link_payment', 'q3_3_iban_available', 'q4_1_confidentiality', 'q4_2_backups', 'q4_3_technical_support'],
+    4: ['q5_1_data_ownership', 'q5_2_free_training', 'q5_3_contract_duration', 'q5_4_partial_updates', 'q5_5_contract_termination_and_fines'],
+    5: ['q6_1_sponsor_support', 'additionalNotes', 'documentUrl'],
+    6: ['signedBy', 'position']
   };
 
   const FIELD_LABELS = {
     companyName: 'اسم الشركة',
     submissionDate: 'تاريخ تقديم العرض',
     representativeName: 'اسم ممثل الشركة',
-    phone: 'رقم الهاتف المعتمد',
-    email: 'البريد الإلكتروني المعتمد',
-    centralBankLicense: 'رقم إجازة البنك المركزي العراقي',
-    marketExperience: 'سنوات الخبرة في السوق المحلي',
-    govInstitutionsCount: 'عدد المؤسسات الحكومية المخدَّمة',
-    paidCapital: 'رأس المال / الملاءة المالية',
-    officialAddress: 'العنوان الرسمي / المقر الرئيسي',
-    q2_1_settlement: '1. آلية التسوية المالية (المقاصة)',
-    q2_2_commissions: '2. نسب العمولات والخصومات المقترحة',
-    q2_3_intermediary: '3. تفاصيل البنك الوسيط (إن وجد)',
-    q2_4_delayPenalty: '4. قيمة غرامة التأخير المقترحة',
-    q2_5_atmCommitment: '5. الالتزام بتوفير أجهزة ATM',
-    q2_6_studentCards: '6. تفاصيل إصدار بطاقات الطلبة',
-    q2_7_chargingCenters: '7. مراكز التعبئة وساعات العمل',
-    q2_8_posCommitment: '8. تجهيز PoS والورق الحراري والصيانة',
-    q3a_1_integratedSystem: '1. توفر نظام إلكتروني متكامل للتقارير',
-    q3a_2_techSpecs: '2. إصدار بطاقات خاصة بالوحدات الإدارية',
-    q3a_3_appSupport: '3. كشف حساب لحظي (Real-time)',
-    q3a_4_webIntegration: '4. التكامل مع موقع الجامعة (QR/رابط)',
-    q3a_5_reporting: '5. خدمة التحويلات خارج العراق',
-    q3a_6_training: '6. توفر رقم IBAN لكل بطاقة',
-    q3b_1_certificates: '1. شهادات الأمن (PCI-DSS / ISO)',
-    q3b_2_encryption: '2. بروتوكول التشفير المستخدم',
-    q3b_3_rto_bcp: '3. وقت استعادة الخدمة (RTO)',
-    q3b_4_backups: '4. سياسة النسخ الاحتياطي ومكان التخزين',
-    q3b_5_supportSla: '5. نظام الدعم الفني (24/7)',
-    q3b_6_penTest: '6. اختبارات الاختراق الأمني الدورية',
-    q3b_7_monitoring: '7. سياسة الاحتفاظ بالبيانات',
-    q3b_8_incident: '8. طرائق الاتصال والحاجة للإنترنت',
-    q4_1_bankGuarantee: '1. خطاب الضمان المصرفي غير المشروط',
-    q4_2_penaltyClause: '2. الالتزام بسرية البيانات (NDA)',
-    q4_3_dataOwnership: '3. ملكية البيانات للجامعة حصراً',
-    q4_4_exitClause: '4. برامج تدريبية مجانية للموظفين',
-    q4_5_liability: '5. حق الجامعة بفسخ العقد فورياً',
-    q4_6_jurisdiction: '6. القانون العراقي واختصاص محاكم بابل',
-    q4_7_auditRight: '7. اللجوء للتحكيم التجاري العراقي',
-    q4_8_contractDuration: '8. مدة العقد وشروط التجديد',
-    q4_9_renewal: '9. آلية معالجة شكاوى الطلبة',
-    q4_10_blacklist: '10. القائمة السوداء (البنك المركزي)',
-    q5_1_extraFeatures: '1. تطبيق هاتفي (iOS/Android)',
-    q5_2_innovation: '2. خدمات مصرفية إضافية ومحافظ رقمية',
-    q5_3_scholarships: '3. الطاقة الاستيعابية لمعالجة الحركات',
-    q5_4_staffTraining: '4. دعم الفعاليات والمؤتمرات العلمية',
-    q5_5_posUpdates: '5. التحديث الدوري للأجهزة والأنظمة',
-    q5_6_foreignPayments: '6. تسديد أجور بالدولار للخارج',
-    q5_7_complaints: '7. ميزات إضافية لصالح جامعة بابل',
-    q5_8_socialResp: '8. المؤسسات الحكومية المخدَّمة حالياً',
+    phone: 'رقم الهاتف',
+    email: 'البريد الإلكتروني',
+    centralBankLicense: 'رقم إجازة البنك المركزي',
+    officialAddress: 'العنوان (المقر الرئيسي وفي الحلة)',
+    q2_1_deposit_within_short_period: 'الإيداع في مصرف الرشيد خلال مدة قصيرة',
+    q2_2_process_end_of_month_payments: 'معالجة مشكلة التسديدات في اليوم الأخير',
+    q2_3_guarantee_movements_in_rashid: 'ضمان ظهور جميع الحركات في الحسابات',
+    q2_4_commissions_and_discounts: 'العمولات والخصومات والنسبة المسترجعة',
+    q2_5_provide_atms_in_university: 'توفير أجهزة صراف آلي داخل الجامعة',
+    q2_6_student_cards_free_or_cheap: 'إصدار بطاقات الطلبة مجانا أو بأجور بسيطة',
+    q2_7_charging_centers_in_university: 'توفير مراكز تعبئة داخل الجامعة',
+    q2_8_pos_maintenance_and_free_supplies: 'توفير مستلزمات التشغيل والصيانة',
+    q2_9_laptop_and_printer: 'توفير حاسبة وطابعة لشعبة الحسابات',
+    q2_10_partnership_with_rashid: 'التعاون مع مصرف الرشيد لحل المشاكل',
+    q3_1_integrated_system: 'النظام الإلكتروني والتقارير',
+    q3_2_safe_link_payment: 'آلية التسديد عبر رابط آمن',
+    q3_3_iban_available: 'توفر رقم IBAN',
+    q4_1_confidentiality: 'سرية الأنظمة والبيانات',
+    q4_2_backups: 'توفير نسخ احتياطية',
+    q4_3_technical_support: 'الدعم الفني المتاح 24/7',
+    q5_1_data_ownership: 'ملكية البيانات للجامعة',
+    q5_2_free_training: 'برامج تدريبية لموظفي الجامعة',
+    q5_3_contract_duration: 'مدة العقد سنتان قابلة للتجديد',
+    q5_4_partial_updates: 'تحديث جزئي لتسهيل الدفع',
+    q5_5_contract_termination_and_fines: 'فسخ العقد والغرامات',
+    q6_1_sponsor_support: 'دعم فعاليات الجامعة',
     documentUrl: 'الملف المرفق (PDF)',
-    signedBy: 'اسم المفوض بالتوقيع',
-    position: 'الصفة الوظيفية للموقع'
+    signedBy: 'الاسم',
+    position: 'المنصب'
   };
 
   useEffect(() => {
@@ -196,7 +147,7 @@ const Dashboard = ({ isReadOnly }) => {
       const username = (currentUser.user_metadata?.username || localUser.username || '').toLowerCase().trim();
       
       const { data: sub, error: subError } = await supabase
-        .from('submissions')
+        .from('submissions_round2')
         .select('*')
         .eq('username', username)
         .maybeSingle();
@@ -321,73 +272,22 @@ const Dashboard = ({ isReadOnly }) => {
 
   const fromDbPayload = (dbData) => {
     if (!dbData) return {};
-    const data = {};
-    
-    // Comprehensive Map of DB lowercase columns to React camelCase keys
-    const mapping = {
-      companyname: 'companyName',
-      submissiondate: 'submissionDate',
-      representativename: 'representativeName',
-      centralbanklicense: 'centralBankLicense',
-      marketexperience: 'marketExperience',
-      govinstitutionscount: 'govInstitutionsCount',
-      paidcapital: 'paidCapital',
-      officialaddress: 'officialAddress',
-      // Step 2-7 questions
-      q2_2_commissions: 'q2_2_commissions',
-      q2_4_delaypenalty: 'q2_4_delayPenalty',
-      q2_5_atmcommitment: 'q2_5_atmCommitment',
-      q2_6_studentcards: 'q2_6_studentCards',
-      q2_7_chargingcenters: 'q2_7_chargingCenters',
-      q2_8_poscommitment: 'q2_8_posCommitment',
-      q3a_1_integratedsystem: 'q3a_1_integratedSystem',
-      q3a_2_techspecs: 'q3a_2_techSpecs',
-      q3a_3_appsupport: 'q3a_3_appSupport',
-      q3a_4_webintegration: 'q3a_4_webIntegration',
-      q3b_1_certificates: 'q3b_1_certificates',
-      q3b_5_supportsla: 'q3b_5_supportSla',
-      q3b_6_pentest: 'q3b_6_penTest',
-      q4_1_bankguarantee: 'q4_1_bankGuarantee',
-      q4_2_penaltyclause: 'q4_2_penaltyClause',
-      q4_3_dataownership: 'q4_3_dataOwnership',
-      q4_4_exitclause: 'q4_4_exitClause',
-      q4_7_auditright: 'q4_7_auditRight',
-      q4_8_contractduration: 'q4_8_contractDuration',
-      q5_1_extrafeatures: 'q5_1_extraFeatures',
-      q5_4_stafftraining: 'q5_4_staffTraining',
-      q5_5_posupdates: 'q5_5_posUpdates',
-      q5_6_foreignpayments: 'q5_6_foreignPayments',
-      q5_8_socialresp: 'q5_8_socialResp',
-      // Other fields
-      document_url: 'documentUrl',
-      document_path: 'documentUrl',
-      additionalnotes: 'additionalNotes',
-      signedby: 'signedBy',
-      is_received: 'isReceived'
-    };
-
-    Object.keys(dbData).forEach(dbKey => {
-      const reactKey = mapping[dbKey] || dbKey;
-      data[reactKey] = dbData[dbKey];
-    });
+    const data = { ...dbData };
+    data.documentUrl = dbData.document_url || dbData.documentUrl;
     return data;
   };
 
   const toDbPayload = (data) => {
     const payload = {};
-    // Fields to exclude from the company's update payload
-    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id'];
+    const exclude = ['isreceived', 'is_received', 'isReceived', 'evaluation_score', 'lastupdated', 'last_updated', 'created_at', 'id'];
     
     Object.keys(data).forEach(key => {
-      // Convert to lowercase by default to match most DB setups
-      let dbKey = key.toLowerCase();
-      
-      if (exclude.includes(dbKey)) return;
-
-      // Specifically handle underscore cases
-      if (dbKey === 'documenturl') dbKey = 'document_url';
-      
-      payload[dbKey] = data[key];
+      if (exclude.includes(key.toLowerCase())) return;
+      if (key === 'documentUrl') {
+        payload['document_url'] = data[key];
+      } else {
+        payload[key] = data[key];
+      }
     });
     return payload;
   };
@@ -399,7 +299,7 @@ const Dashboard = ({ isReadOnly }) => {
       if (!userId) return;
 
       const { data, error } = await supabase
-        .from('submissions')
+        .from('submissions_round2')
         .select('is_received, status')
         .eq('user_id', userId)
         .maybeSingle();
@@ -525,7 +425,7 @@ const Dashboard = ({ isReadOnly }) => {
 
       // Ensure we update the existing record and check if it's locked
       const { data: existing } = await supabase
-        .from('submissions')
+        .from('submissions_round2')
         .select('id, is_received')
         .eq('username', (user.username || '').toLowerCase().trim())
         .maybeSingle();
@@ -543,7 +443,7 @@ const Dashboard = ({ isReadOnly }) => {
       }
 
       const { data: upsertData, error } = await supabase
-        .from('submissions')
+        .from('submissions_round2')
         .upsert(payload)
         .select();
 
@@ -1032,10 +932,10 @@ const Dashboard = ({ isReadOnly }) => {
                   </div>
                   
                   <div className="flex gap-4 w-full md:w-auto">
-                    {currentStep < 8 ? (
+                    {currentStep < 5 ? (
                       <button type="button" onClick={() => goToStep(currentStep + 1)} className="w-full md:w-auto px-12 py-4 bg-blue-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:bg-blue-900 transition-all">الخطوة التالية <ChevronLeft className="w-5 h-5" /></button>
-                    ) : currentStep === 8 ? (
-                      <button type="button" onClick={() => { if(validateStep(8)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
+                    ) : currentStep === 5 ? (
+                      <button type="button" onClick={() => { if(validateStep(6)) setShowReview(true); }} className="w-full md:w-auto px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all">مراجعة كافة البيانات <FileCheck className="w-5 h-5" /></button>
                     ) : (
                       (!isReadOnly && !isReceived && !isSystemClosed) && (
                         <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-16 py-5 bg-blue-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-100 hover:bg-blue-800 transition-all">
@@ -1166,4 +1066,4 @@ const QuestionBox = ({ id, label, value, onChange, disabled, error }) => (
   </div>
 );
 
-export default Dashboard;
+export default DashboardRound2;
