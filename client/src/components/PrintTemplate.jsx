@@ -195,49 +195,49 @@ const PrintTemplate = ({ data, isBlank = false, round = 1 }) => {
           <section style={{ marginBottom: '15px' }}>
             <div style={styles.sectionTitle}>ثانياً: الالتزامات التشغيلية والمالية (الجولة الثانية)</div>
             <div style={{ fontSize: '10px' }}>
-              <QuestionBox label="1. الإيداع في مصرف الرشيد خلال مدة قصيرة" value={getVal('q2_1_deposit_within_short_period')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="2. معالجة مشكلة التسديدات في اليوم الأخير" value={getVal('q2_2_process_end_of_month_payments')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="3. ضمان ظهور جميع الحركات في الحسابات" value={getVal('q2_3_guarantee_movements_in_rashid')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="4. العمولات والخصومات والنسبة المسترجعة" value={getVal('q2_4_commissions_and_discounts')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="5. توفير أجهزة صراف آلي داخل الجامعة" value={getVal('q2_5_provide_atms_in_university')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="6. إصدار بطاقات الطلبة مجانا أو بأجور بسيطة" value={getVal('q2_6_student_cards_free_or_cheap')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="7. توفير مراكز تعبئة داخل الجامعة" value={getVal('q2_7_charging_centers_in_university')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="8. توفير مستلزمات التشغيل والصيانة" value={getVal('q2_8_pos_maintenance_and_free_supplies')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="9. توفير حاسبة وطابعة لشعبة الحسابات" value={getVal('q2_9_laptop_and_printer')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="10. التعاون مع مصرف الرشيد لحل المشاكل" value={getVal('q2_10_partnership_with_rashid')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="1. هل تلتزمون بإيداع المبالغ في مصرف الرشيد خلال مدة قصيرة؟" value={getVal('q2_1_deposit_within_short_period')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="2. هل بالإمكان معالجة مشكلة التسديدات التي تتم في اليوم الأخير من الشهر، بحيث لا تظهر ضمن حسابات الشهر اللاحق في المصرف؟" value={getVal('q2_2_process_end_of_month_payments')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="3. ضمان ظهور جميع الحركات في حسابات مصرف الرشيد." value={getVal('q2_3_guarantee_movements_in_rashid')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="4. ما هي نسب العمولات والخصومات المقترحة والتي يتم ارجاعها الى جامعة مع مراجعتها بشكل دوري وإشعار الجامعة؟ (النسبة المسترجعة من نسبة ارباحكم الخاصة)" value={getVal('q2_4_commissions_and_discounts')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="5. هل بالامكان توفير عدد من اجهزة الصراف آلي (ATM) داخل الجامعة؟" value={getVal('q2_5_provide_atms_in_university')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="6. هل يتم إصدار بطاقات للطلبة مجانا او باجور بسيطة تختلف عن غير طلبة وتدريسي جامعة بابل حصرا؟" value={getVal('q2_6_student_cards_free_or_cheap')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="7. هل يمكن توفير مراكز تعبئة داخل الجامعة؟" value={getVal('q2_7_charging_centers_in_university')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="8. هل تلتزمون بتوفير مستلزمات التشغيل والصيانة والاستبدال (اجهزة PoS حديثة، ورق، بطاريات، الخ) مجاناً؟ (تعاد لاحقا الى الشركة عند انتهاء العقد)" value={getVal('q2_8_pos_maintenance_and_free_supplies')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="9. هل تلتزمون بتوفير حاسبة لاب توب وطابعة ليزرية جديدتان الى شعبة الحسابات للكليات ورئاسة الجامعة مجاناً؟ (تبقى ملك للجامعة)" value={getVal('q2_9_laptop_and_printer')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="10. هل لديكم تعاون متميز وشراكة دائمة مع مصرف الرشيد فرع الحله الرئيسي لحل جميع المشاكل؟" value={getVal('q2_10_partnership_with_rashid')} styles={styles} isBlank={isBlank} />
             </div>
           </section>
 
           <section style={{ marginBottom: '15px' }}>
             <div style={styles.sectionTitle}>ثالثاً: النظام الإلكتروني والأمن (الجولة الثانية)</div>
             <div style={{ fontSize: '10px' }}>
-              <QuestionBox label="1. النظام الإلكتروني والتقارير" value={getVal('q3_1_integrated_system')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="2. آلية التسديد عبر رابط آمن" value={getVal('q3_2_safe_link_payment')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="3. توفر رقم IBAN" value={getVal('q3_3_iban_available')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="4. سرية الأنظمة والبيانات" value={getVal('q4_1_confidentiality')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="5. توفير نسخ احتياطية" value={getVal('q4_2_backups')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="6. الدعم الفني المتاح 24/7" value={getVal('q4_3_technical_support') + 
-                 (getVal('q4_3_support_options') ? ' - ' + (Array.isArray(getVal('q4_3_support_options')) ? getVal('q4_3_support_options').join(', ') : getVal('q4_3_support_options')) : '') + 
+              <QuestionBox label="1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية ويقدم التقارير المطلوبة متوفر دائما ولفترات طويلة وقابل للتحديث حسب حاجة الجامعة؟" value={getVal('q3_1_integrated_system')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="2. هل يمكن توفير الية التسديد عبر رابط آمن دون الحاجة للحضور الشخصي او استخدام اجهزة PoS؟" value={getVal('q3_2_safe_link_payment')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="3. هل يتوفر رقم IBAN لكل بطاقة؟" value={getVal('q3_3_iban_available')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="4. هل جيع الانظمة والعمليات والبيانات المالية بسرية تامة؟" value={getVal('q4_1_confidentiality')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="5. هل توفرون نسخاً احتياطية للبيانات ولسنوات طويلة؟" value={getVal('q4_2_backups')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="6. هل هنالك دعم فني متوفر على مدار الساعة (24/7) ؟" value={getVal('q4_3_technical_support') + 
+                 (getVal('q4_3_support_options') ? ' - ' + (Array.isArray(getVal('q4_3_support_options')) ? getVal('q4_3_support_options').join('، ') : getVal('q4_3_support_options')) : '') + 
                  (getVal('q4_3_support_other') ? ' (' + getVal('q4_3_support_other') + ')' : '')
               } styles={styles} isBlank={isBlank} />
             </div>
           </section>
 
           <section style={{ marginBottom: '15px' }}>
-            <div style={styles.sectionTitle}>رابعاً: الالتزامات القانونية (الجولة الثانية)</div>
+            <div style={styles.sectionTitle}>رابعاً: الالتزامات القانونية والتعاقدية (الجولة الثانية)</div>
             <div style={{ fontSize: '10px' }}>
-              <QuestionBox label="1. ملكية البيانات للجامعة" value={getVal('q5_1_data_ownership')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="2. برامج تدريبية لموظفي الجامعة" value={getVal('q5_2_free_training')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="3. مدة العقد سنتان قابلة للتجديد" value={getVal('q5_3_contract_duration')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="4. تحديث جزئي لتسهيل الدفع" value={getVal('q5_4_partial_updates')} styles={styles} isBlank={isBlank} />
-              <QuestionBox label="5. فسخ العقد والغرامات" value={getVal('q5_5_contract_termination_and_fines')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="1. أن ملكية البيانات تعود للجامعة حصراً، وأنه يحق لها استردادها كاملةً باي وقت تحتاجه؟" value={getVal('q5_1_data_ownership')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="2. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة عند الحاجة؟" value={getVal('q5_2_free_training')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="3. مدة العقد المقترحة سنتان (2 سنة) ؟ وقابلة للتجديد لفترة لا تقل عن سنة بعد إعادة التفاوض على الشروط عند كل تجديد ان وجد اي تحديث؟" value={getVal('q5_3_contract_duration')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="4. بالامكان اضافة اي تحديث جزئي ضمن الاتفاق الموجود لتسهيل الدفع الالكتروني لجامعة بابل. (يكون رسميا الى الشركة من قبل مدير المالية او الرقابة في الجامعة)" value={getVal('q5_4_partial_updates')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="5. فسخ العقد و تسديد الغرامات المالية ان وجدت وتحمل كافة التبعات القانونية في حالة عدم الالتزام بالشروط المتفق عليها، هذا بعد تنبيه الشركة خلال اسبوعان وبعد تشكيل لجنة تدقيقة من الطرفين تبين وتاكد وجود عدم الالتزام." value={getVal('q5_5_contract_termination_and_fines')} styles={styles} isBlank={isBlank} />
             </div>
           </section>
 
           <section style={{ marginBottom: '15px' }}>
-            <div style={styles.sectionTitle}>خامساً: الخدمات الإضافية (الجولة الثانية)</div>
+            <div style={styles.sectionTitle}>خامساً: الخدمات الإضافية والمرفقات (الجولة الثانية)</div>
             <div style={{ fontSize: '10px' }}>
-              <QuestionBox label="1. دعم فعاليات الجامعة" value={getVal('q6_1_sponsor_support')} styles={styles} isBlank={isBlank} />
+              <QuestionBox label="1. هل تستاهمون بالدعم (Sponsor) (تغطية بعض التكاليف) لعدد من فعاليات والمؤتمرات العلمية لكليات الجامعة؟ (بعد الاتفاق معكم وموافقة رئيس الجامعة)" value={getVal('q6_1_sponsor_support')} styles={styles} isBlank={isBlank} />
             </div>
           </section>
         </>
