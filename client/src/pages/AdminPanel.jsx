@@ -953,6 +953,7 @@ const AdminPanel = () => {
                     { key: 'govInstitutionsCount', label: 'عدد المؤسسات الحكومية المخدَّمة حالياً', aliases: ['govinstitutionscount'] },
                     { key: 'paidCapital', label: 'رأس المال المدفوع / الملاءة المالية', aliases: ['paidcapital'] },
                     { key: 'officialAddress', label: 'العنوان الرسمي / المقر الرئيسي', aliases: ['officialaddress'] },
+                    { key: 'hillaAddress', label: 'العنوان (المقر في الحلة)', aliases: ['hilla_address', 'hillaaddress'] },
                   ]} />
 
                   
@@ -1018,37 +1019,39 @@ const AdminPanel = () => {
                     </>
                   ) : (
                     <>
-                      <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية" data={selectedSubmission} fields={[
-                        { key: 'q2_1_deposit_within_short_period', label: '1. هل تلتزمون بإيداع المبالغ في حسابات الجامعة خلال فترة قصيرة؟' },
-                        { key: 'q2_2_process_end_of_month_payments', label: '2. هل لديكم قدرة على معالجة مدفوعات نهاية الشهر دون تأخير؟' },
-                        { key: 'q2_3_guarantee_movements_in_rashid', label: '3. ما هي الضمانات لتأمين حركات المبالغ في مصرف الرشيد؟' },
-                        { key: 'q2_4_commissions_and_discounts', label: '4. تفاصيل العمولات والخصومات؟' },
-                        { key: 'q2_5_provide_atms_in_university', label: '5. توفير أجهزة صراف آلي داخل الحرم الجامعي؟' },
-                        { key: 'q2_6_student_cards_free_or_cheap', label: '6. إصدار بطاقات جامعية للطلاب بأسعار مخفضة أو مجانية؟' },
-                        { key: 'q2_7_charging_centers_in_university', label: '7. إنشاء مراكز شحن داخل الجامعة؟' },
-                        { key: 'q2_8_pos_maintenance_and_free_supplies', label: '8. صيانة أجهزة نقاط البيع وتوفير المواد مجانا؟' },
-                        { key: 'q2_9_laptop_and_printer', label: '9. توفير جهاز حاسوب وطابعة؟' },
-                        { key: 'q2_10_partnership_with_rashid', label: '10. الشراكة مع مصرف الرشيد؟' },
+                      <DetailSection title="ثانياً: الالتزامات التشغيلية والمالية (10 أسئلة)" data={selectedSubmission} fields={[
+                        { key: 'q2_1_deposit_within_short_period', label: '1. هل تلتزمون بإيداع المبالغ في مصرف الرشيد خلال مدة قصيرة؟' },
+                        { key: 'q2_2_process_end_of_month_payments', label: '2. هل بالإمكان معالجة مشكلة التسديدات التي تتم في اليوم الأخير من الشهر، بحيث لا تظهر ضمن حسابات الشهر اللاحق في المصرف؟' },
+                        { key: 'q2_3_guarantee_movements_in_rashid', label: '3. ضمان ظهور جميع الحركات في حسابات مصرف الرشيد.' },
+                        { key: 'q2_4_commissions_and_discounts', label: '4. ما هي نسب العمولات والخصومات المقترحة والتي يتم ارجاعها الى جامعة مع مراجعتها بشكل دوري وإشعار الجامعة؟ (النسبة المسترجعة من نسبة ارباحكم الخاصة)' },
+                        { key: 'q2_5_provide_atms_in_university', label: '5. هل بالامكان توفير عدد من اجهزة الصراف آلي (ATM) داخل الجامعة؟' },
+                        { key: 'q2_6_student_cards_free_or_cheap', label: '6. هل يتم إصدار بطاقات للطلبة مجانا او باجور بسيطة تختلف عن غير طلبة وتدريسي جامعة بابل حصرا؟' },
+                        { key: 'q2_7_charging_centers_in_university', label: '7. هل يمكن توفير مراكز تعبئة داخل الجامعة؟' },
+                        { key: 'q2_8_pos_maintenance_and_free_supplies', label: '8. هل تلتزمون بتوفير مستلزمات التشغيل والصيانة والاستبدال (اجهزة PoS حديثة، ورق، بطاريات، الخ) مجاناً؟ (تعاد لاحقا الى الشركة عند انتهاء العقد)' },
+                        { key: 'q2_9_laptop_and_printer', label: '9. هل تلتزمون بتوفير حاسبة لاب توب وطابعة ليزرية جديدتان الى شعبة الحسابات للكليات ورئاسة الجامعة مجاناً؟ (تبقى ملك للجامعة)' },
+                        { key: 'q2_10_partnership_with_rashid', label: '10. هل لديكم تعاون متميز وشراكة دائمة مع مصرف الرشيد فرع الحله الرئيسي لحل جميع المشاكل؟' },
                       ]} />
-                      <DetailSection title="ثالثاً: النظام الإلكتروني والتكامل" data={selectedSubmission} fields={[
-                        { key: 'q3_1_integrated_system', label: '1. توفير نظام إلكتروني متكامل؟' },
-                        { key: 'q3_2_safe_link_payment', label: '2. دفع آمن عبر الرابط؟' },
-                        { key: 'q3_3_iban_available', label: '3. توفير رقم آيبان لكل بطاقة؟' },
+                      <DetailSection title="ثالثاً: أ- النظام الإلكتروني والتكامل" data={selectedSubmission} fields={[
+                        { key: 'q3_1_integrated_system', label: '1. هل يتوفر لديكم نظام إلكتروني متكامل يُبيّن جميع الحركات المالية ويقدم التقارير المطلوبة متوفر دائما ولفترات طويلة وقابل للتحديث حسب حاجة الجامعة؟' },
+                        { key: 'q3_2_safe_link_payment', label: '2. هل يمكن توفير الية التسديد عبر رابط آمن دون الحاجة للحضور الشخصي او استخدام اجهزة PoS؟' },
+                        { key: 'q3_3_iban_available', label: '3. هل يتوفر رقم IBAN لكل بطاقة؟' },
                       ]} />
-                      <DetailSection title="رابعاً: الأمن السيبراني والاستمرارية" data={selectedSubmission} fields={[
-                        { key: 'q4_1_confidentiality', label: '1. سرية البيانات والمعلومات؟' },
-                        { key: 'q4_2_backups', label: '2. النسخ الاحتياطية؟' },
-                        { key: 'q4_3_technical_support', label: '3. الدعم الفني؟' },
+                      <DetailSection title="ثالثاً: ب- الأمن السيبراني والاستمرارية" data={selectedSubmission} fields={[
+                        { key: 'q4_1_confidentiality', label: '1. هل جيع الانظمة والعمليات والبيانات المالية بسرية تامة؟' },
+                        { key: 'q4_2_backups', label: '2. هل توفرون نسخاً احتياطية للبيانات ولسنوات طويلة؟' },
+                        { key: 'q4_3_technical_support', label: '3. هل هنالك دعم فني متوفر على مدار الساعة (24/7) ؟' },
+                        { key: 'q4_3_support_options', label: 'خيارات الدعم الفني المتوفرة' },
+                        { key: 'q4_3_support_other', label: 'دعم فني آخر' },
                       ]} />
-                      <DetailSection title="خامساً: الالتزامات القانونية" data={selectedSubmission} fields={[
-                        { key: 'q5_1_data_ownership', label: '1. ملكية البيانات؟' },
-                        { key: 'q5_2_free_training', label: '2. التدريب المجاني؟' },
-                        { key: 'q5_3_contract_duration', label: '3. مدة العقد المقترحة؟' },
-                        { key: 'q5_4_partial_updates', label: '4. التحديثات الجزئية؟' },
-                        { key: 'q5_5_contract_termination_and_fines', label: '5. إنهاء العقد والغرامات؟' },
+                      <DetailSection title="رابعاً: الالتزامات القانونية والتعاقدية (5 أسئلة)" data={selectedSubmission} fields={[
+                        { key: 'q5_1_data_ownership', label: '1. أن ملكية البيانات تعود للجامعة حصراً، وأنه يحق لها استردادها كاملةً باي وقت تحتاجه؟' },
+                        { key: 'q5_2_free_training', label: '2. هل تقدمون برامج تدريبية مجانية لموظفي الجامعة عند الحاجة؟' },
+                        { key: 'q5_3_contract_duration', label: '3. مدة العقد المقترحة سنتان (2 سنة) ؟ وقابلة للتجديد لفترة لا تقل عن سنة بعد إعادة التفاوض على الشروط عند كل تجديد ان وجد اي تحديث؟' },
+                        { key: 'q5_4_partial_updates', label: '4. بالامكان اضافة اي تحديث جزئي ضمن الاتفاق الموجود لتسهيل الدفع الالكتروني لجامعة بابل. (يكون رسميا الى الشركة من قبل مدير المالية او الرقابة في الجامعة)' },
+                        { key: 'q5_5_contract_termination_and_fines', label: '5. فسخ العقد و تسديد الغرامات المالية ان وجدت وتحمل كافة التبعات القانونية في حالة عدم الالتزام بالشروط المتفق عليها، هذا بعد تنبيه الشركة خلال اسبوعان وبعد تشكيل لجنة تدقيقة من الطرفين تبين وتاكد وجود عدم الالتزام.' },
                       ]} />
-                      <DetailSection title="سادساً: الخدمات الإضافية" data={selectedSubmission} fields={[
-                        { key: 'q6_1_sponsor_support', label: '1. دعم الرعاة (Sponsor)؟' },
+                      <DetailSection title="خامساً: الخدمات الإضافية والمرفقات" data={selectedSubmission} fields={[
+                        { key: 'q6_1_sponsor_support', label: '1. هل تستاهمون بالدعم (Sponsor) (تغطية بعض التكاليف) لعدد من فعاليات والمؤتمرات العلمية لكليات الجامعة؟ (بعد الاتفاق معكم وموافقة رئيس الجامعة)' },
                       ]} />
                     </>
                   )}

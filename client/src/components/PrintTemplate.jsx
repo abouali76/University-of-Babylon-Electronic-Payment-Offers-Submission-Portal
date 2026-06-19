@@ -109,6 +109,7 @@ const PrintTemplate = ({ data, isBlank = false, round = 1 }) => {
           <InfoRow label="المؤسسات الحكومية" value={getVal('govInstitutionsCount', ['govinstitutionscount'])} styles={styles} isBlank={isBlank} />
           <InfoRow label="الملاءة المالية" value={getVal('paidCapital', ['paidcapital'])} styles={styles} isBlank={isBlank} />
           <InfoRow label="العنوان الرسمي" value={getVal('officialAddress', ['officialaddress'])} styles={styles} isBlank={isBlank} />
+          <InfoRow label="العنوان (المقر في الحلة)" value={getVal('hillaAddress', ['hilla_address', 'hillaaddress'])} styles={styles} isBlank={isBlank} />
         </div>
       </section>
 
